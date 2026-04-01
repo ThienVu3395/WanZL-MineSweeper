@@ -1,6 +1,6 @@
 # Development Log
 
-## Commit: Initial core models and documentation
+## Commit 1 - Initial core models and documentation
 
 ### Summary
 This commit establishes the initial project foundation for the MineSweeper product.
@@ -20,3 +20,19 @@ This commit establishes the initial project foundation for the MineSweeper produ
 ### Notes
 At this stage, the project focuses on establishing a clean structure rather than gameplay features.
 The next steps will introduce actual game behavior and automated tests in small, traceable commits.
+
+## Commit 2 - Board initialization tests
+
+### Summary
+Introduced the first set of unit tests to validate the Board model.
+
+### Completed
+- Added unit tests for:
+  - Board dimensions
+  - Cell initialization
+  - Cell coordinates
+  - Default cell state
+
+### Notes
+This commit establishes a testing baseline for the project.
+Future gameplay features will be developed alongside corresponding tests.
