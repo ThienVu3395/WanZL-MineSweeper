@@ -39,7 +39,7 @@ public class MineSweeperGameTests
 
         // Assert
         Assert.NotNull(game.Board);
-        Assert.Equal(16, game.Board.Rows);
+        Assert.Equal(16, game.Board!.Rows);
         Assert.Equal(16, game.Board.Columns);
         Assert.Equal(40, game.Board.MineCount);
     }
@@ -81,5 +81,68 @@ public class MineSweeperGameTests
         Assert.Equal(16, game.Board.Rows);
         Assert.Equal(16, game.Board.Columns);
         Assert.Equal(40, game.Board.MineCount);
+    }
+
+    /// <summary>
+    /// Verifies that the exact configured number of mines is placed on the board.
+    /// </summary>
+    [Fact]
+    public void StartNewGame_ShouldPlaceExpectedNumberOfMines()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+        int expectedMineCount = 10;
+
+        // Act
+        game.StartNewGame(9, 9, expectedMineCount);
+
+        // Assert
+        Assert.NotNull(game.Board);
+
+        int actualMineCount = 0;
+
+        foreach (var cell in game.Board!.Cells)
+        {
+            if (cell.IsMine)
+            {
+                actualMineCount++;
+            }
+        }
+
+        Assert.Equal(expectedMineCount, actualMineCount);
+    }
+
+    /// <summary>
+    /// Verifies that mine placement does not create duplicate mine entries
+    /// and all mined cells occupy unique board positions.
+    /// </summary>
+    [Fact]
+    public void StartNewGame_ShouldPlaceMinesInUniqueCells()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+
+        // Act
+        game.StartNewGame(9, 9, 10);
+
+        // Assert
+        Assert.NotNull(game.Board);
+
+        var minedPositions = new HashSet<string>();
+
+        foreach (var cell in game.Board!.Cells)
+        {
+            if (!cell.IsMine)
+            {
+                continue;
+            }
+
+            string positionKey = $"{cell.Row}-{cell.Column}";
+            bool isUnique = minedPositions.Add(positionKey);
+
+            Assert.True(isUnique);
+        }
+
+        Assert.Equal(10, minedPositions.Count);
     }
 }

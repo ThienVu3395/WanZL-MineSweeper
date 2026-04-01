@@ -54,3 +54,19 @@ Introduced the first version of the game service responsible for starting a new 
 ### Notes
 This commit intentionally keeps the game service simple.
 Mine placement and gameplay rules will be introduced in the next commits.
+
+## Commit 4 - Mine placement logic
+
+### Summary
+Added random mine placement to the game service when starting a new MineSweeper session.
+
+### Completed
+- Extended `MineSweeperGame` to place mines during game initialization
+- Ensured mine placement does not duplicate occupied cells
+- Added unit tests to verify:
+  - exact mine count
+  - unique mine positions
+
+### Notes
+This commit focuses only on mine placement.
+Adjacent mine calculation and reveal behavior will be introduced in later commits.
