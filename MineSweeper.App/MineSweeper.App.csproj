@@ -8,4 +8,8 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\MineSweeper.Core\MineSweeper.Core.csproj" />
+  </ItemGroup>
+
 </Project>

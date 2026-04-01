@@ -36,3 +36,21 @@ Introduced the first set of unit tests to validate the Board model.
 ### Notes
 This commit establishes a testing baseline for the project.
 Future gameplay features will be developed alongside corresponding tests.
+
+## Commit 3 - Initial game service
+
+### Summary
+Introduced the first version of the game service responsible for starting a new MineSweeper session.
+
+### Completed
+- Added `MineSweeperGame` as the central service for game lifecycle management
+- Implemented `StartNewGame(rows, columns, mineCount)`
+- Added unit tests for:
+  - board creation
+  - board configuration
+  - initial game state transition
+  - board replacement when starting a new game again
+
+### Notes
+This commit intentionally keeps the game service simple.
+Mine placement and gameplay rules will be introduced in the next commits.
