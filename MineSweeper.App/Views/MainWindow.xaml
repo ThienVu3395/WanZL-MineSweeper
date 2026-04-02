@@ -91,7 +91,6 @@
                                     <Setter Property="BorderThickness" Value="1" />
                                     <Setter Property="Foreground" Value="Black" />
                                     <Setter Property="Padding" Value="0" />
-                                    <Setter Property="Opacity" Value="0.6" />
 
                                     <Style.Triggers>
 
@@ -116,17 +115,72 @@
                                             <Setter Property="Foreground" Value="DarkRed" />
                                         </DataTrigger>
 
-                                        <!-- Mine revealed -->
+                                        <!-- Mine revealed (Colored numbers - classic Minesweeper style) -->
                                         <MultiDataTrigger>
                                             <MultiDataTrigger.Conditions>
-                                                <Condition Binding="{Binding IsMine}" Value="True" />
-                                                <Condition Binding="{Binding IsRevealed}" Value="True" />
+                                                <Condition Binding="{Binding IsRevealed}" Value="True"/>
+                                                <Condition Binding="{Binding AdjacentMines}" Value="1"/>
                                             </MultiDataTrigger.Conditions>
-                                            <Setter Property="Background" Value="#FFB3B3" />
-                                            <Setter Property="Foreground" Value="DarkRed" />
+                                            <Setter Property="Foreground" Value="Blue"/>
                                         </MultiDataTrigger>
 
-                                        <!-- 🔥 Disable visual when game finished -->
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding IsRevealed}" Value="True"/>
+                                                <Condition Binding="{Binding AdjacentMines}" Value="2"/>
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Foreground" Value="Green"/>
+                                        </MultiDataTrigger>
+
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding IsRevealed}" Value="True"/>
+                                                <Condition Binding="{Binding AdjacentMines}" Value="3"/>
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Foreground" Value="Red"/>
+                                        </MultiDataTrigger>
+
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding IsRevealed}" Value="True"/>
+                                                <Condition Binding="{Binding AdjacentMines}" Value="4"/>
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Foreground" Value="DarkBlue"/>
+                                        </MultiDataTrigger>
+
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding IsRevealed}" Value="True"/>
+                                                <Condition Binding="{Binding AdjacentMines}" Value="5"/>
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Foreground" Value="Brown"/>
+                                        </MultiDataTrigger>
+
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding IsRevealed}" Value="True"/>
+                                                <Condition Binding="{Binding AdjacentMines}" Value="6"/>
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Foreground" Value="Cyan"/>
+                                        </MultiDataTrigger>
+
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding IsRevealed}" Value="True"/>
+                                                <Condition Binding="{Binding AdjacentMines}" Value="7"/>
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Foreground" Value="Black"/>
+                                        </MultiDataTrigger>
+
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding IsRevealed}" Value="True"/>
+                                                <Condition Binding="{Binding AdjacentMines}" Value="8"/>
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Foreground" Value="Gray"/>
+                                        </MultiDataTrigger>
+
+                                        <!-- Disable visual when game finished -->
                                         <DataTrigger Binding="{Binding DataContext.IsGameFinished, RelativeSource={RelativeSource AncestorType=Window}}"
                                                      Value="True">
                                             <Setter Property="Opacity" Value="0.8" />

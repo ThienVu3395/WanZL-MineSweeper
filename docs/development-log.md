@@ -253,3 +253,17 @@ Added live mine and flag counters to improve gameplay awareness and bring the in
 ### Notes
 This commit improves gameplay clarity by giving the player immediate feedback about board progress and flag usage.
 It also makes the desktop application feel closer to a complete game product.
+
+## Commit 16 - Colored numbers for revealed cells
+
+### Summary
+Enhanced the visual clarity of the game by applying color coding to numbers representing adjacent mines.
+
+### Completed
+- Added color styling for numbers 1 to 8 based on classic MineSweeper conventions
+- Applied conditional UI triggers based on cell state and adjacent mine count
+- Improved readability and visual distinction between different cell values
+
+### Notes
+This change aligns the UI with traditional MineSweeper design,
+making the game more intuitive and visually recognizable.
