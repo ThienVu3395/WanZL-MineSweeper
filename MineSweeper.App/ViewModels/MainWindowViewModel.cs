@@ -15,6 +15,9 @@ namespace MineSweeper.App.ViewModels;
 public class MainWindowViewModel : INotifyPropertyChanged
 {
     private readonly MineSweeperGame _game;
+    private readonly RelayCommand _revealCellCommand;
+    private readonly RelayCommand _toggleFlagCommand;
+    private readonly RelayCommand _newGameCommand;
 
     private DifficultyLevel _selectedDifficulty;
 
@@ -39,12 +42,13 @@ public class MainWindowViewModel : INotifyPropertyChanged
         _selectedDifficulty = DifficultyLevel.Beginner;
 
         // Command dùng để xử lý khi user click vào cell
-        RevealCellCommand = new RelayCommand(OnRevealCell);
+        _revealCellCommand = new RelayCommand(OnRevealCell, CanRevealCell);
 
         // Command dùng để xử lý khi user right-click vào cell
-        ToggleFlagCommand = new RelayCommand(OnToggleFlag);
+        _toggleFlagCommand = new RelayCommand(OnToggleFlag, CanToggleFlag);
 
-        NewGameCommand = new RelayCommand(_ => StartNewGameByDifficulty());
+        // Command dùng để bắt đầu game mới
+        _newGameCommand = new RelayCommand(_ => StartNewGameByDifficulty());
 
         // Khởi tạo game đầu tiên
         StartNewGameByDifficulty();
@@ -54,6 +58,11 @@ public class MainWindowViewModel : INotifyPropertyChanged
     /// Gets the collection of cells used for UI binding.
     /// </summary>
     public ObservableCollection<CellViewModel> Cells { get; }
+
+    /// <summary>
+    /// Gets the available difficulty levels for the UI.
+    /// </summary>
+    public ObservableCollection<DifficultyLevel> AvailableDifficulties { get; }
 
     /// <summary>
     /// Gets or sets the currently selected difficulty level.
@@ -82,29 +91,42 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public int Columns => _game.Board?.Columns ?? 0;
 
     /// <summary>
-    /// Gets the current game status as a string for UI display.
+    /// Gets whether the game is finished.
     /// </summary>
-    public string GameStatus => _game.State.ToString();
+    public bool IsGameFinished => _game.State == GameState.Won || _game.State == GameState.Lost;
+
+    /// <summary>
+    /// Gets the current game status text for UI display.
+    /// </summary>
+    public string GameStatus
+    {
+        get
+        {
+            return _game.State switch
+            {
+                GameState.NotStarted => "Game not started",
+                GameState.InProgress => "Game in progress",
+                GameState.Won => "🎉 You won!",
+                GameState.Lost => "💥 You hit a mine!",
+                _ => string.Empty
+            };
+        }
+    }
 
     /// <summary>
     /// Command used to reveal a cell when user clicks on it.
     /// </summary>
-    public ICommand RevealCellCommand { get; }
+    public ICommand RevealCellCommand => _revealCellCommand;
 
     /// <summary>
     /// Command used to toggle flag on a cell (right-click).
     /// </summary>
-    public ICommand ToggleFlagCommand { get; }
+    public ICommand ToggleFlagCommand => _toggleFlagCommand;
 
     /// <summary>
     /// Command used to start a new game with the selected difficulty.
     /// </summary>
-    public ICommand NewGameCommand { get; }
-
-    /// <summary>
-    /// Gets the available difficulty levels for the UI.
-    /// </summary>
-    public ObservableCollection<DifficultyLevel> AvailableDifficulties { get; }
+    public ICommand NewGameCommand => _newGameCommand;
 
     /// <summary>
     /// Starts a new game and rebuilds the UI cell collection.
@@ -130,6 +152,11 @@ public class MainWindowViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(Rows));
         OnPropertyChanged(nameof(Columns));
         OnPropertyChanged(nameof(GameStatus));
+        OnPropertyChanged(nameof(IsGameFinished));
+
+        // Cập nhật trạng thái enable/disable của command
+        _revealCellCommand.RaiseCanExecuteChanged();
+        _toggleFlagCommand.RaiseCanExecuteChanged();
     }
 
     /// <summary>
@@ -159,6 +186,23 @@ public class MainWindowViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Gets the description of the selected difficulty (board size and mine count).
+    /// </summary>
+    public string DifficultyDescription
+    {
+        get
+        {
+            return SelectedDifficulty switch
+            {
+                DifficultyLevel.Beginner => "9 x 9 | 10 mines",
+                DifficultyLevel.Intermediate => "16 x 16 | 40 mines",
+                DifficultyLevel.Expert => "16 x 30 | 99 mines",
+                _ => string.Empty
+            };
+        }
+    }
+
+    /// <summary>
     /// Handles the reveal cell action triggered from the UI.
     /// </summary>
     /// <param name="parameter">The clicked cell view model.</param>
@@ -167,40 +211,25 @@ public class MainWindowViewModel : INotifyPropertyChanged
         if (parameter is not CellViewModel cellVm)
             return;
 
-        // Nếu game đã kết thúc thì không cho click nữa
-        if (_game.State == GameState.Won || _game.State == GameState.Lost)
-            return;
-
-        // Gọi logic reveal từ core
         _game.RevealCell(cellVm.Row, cellVm.Column);
 
-        // Refresh lại toàn bộ UI
         RefreshBoard();
-
-        // Update trạng thái game (Won / Lost)
         OnPropertyChanged(nameof(GameStatus));
-    }
+        OnPropertyChanged(nameof(IsGameFinished));
 
-    /// <summary>
-    /// Refreshes all cell view models to reflect updated game state.
-    /// </summary>
-    private void RefreshBoard()
-    {
-        foreach (var cell in Cells)
+        // Cập nhật trạng thái enable/disable của command
+        _revealCellCommand.RaiseCanExecuteChanged();
+        _toggleFlagCommand.RaiseCanExecuteChanged();
+
+        // Nếu game kết thúc thì hiển thị message
+        if (_game.State == GameState.Won)
         {
-            cell.Refresh();
+            System.Windows.MessageBox.Show("Congratulations! You cleared all cells!", "Victory 🎉");
         }
-    }
-
-
-    public event PropertyChangedEventHandler? PropertyChanged;
-
-    /// <summary>
-    /// Raises property changed notification for UI binding.
-    /// </summary>
-    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        else if (_game.State == GameState.Lost)
+        {
+            System.Windows.MessageBox.Show("Boom! You hit a mine.", "Game Over 💥");
+        }
     }
 
     /// <summary>
@@ -214,5 +243,50 @@ public class MainWindowViewModel : INotifyPropertyChanged
         _game.ToggleFlag(cellVm.Row, cellVm.Column);
 
         RefreshBoard();
+        OnPropertyChanged(nameof(GameStatus));
+        OnPropertyChanged(nameof(IsGameFinished));
+
+        // Cập nhật trạng thái command sau khi toggle flag
+        _revealCellCommand.RaiseCanExecuteChanged();
+        _toggleFlagCommand.RaiseCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// Determines whether a cell can be revealed.
+    /// Prevents interaction when the game is finished.
+    /// </summary>
+    private bool CanRevealCell(object? parameter)
+    {
+        return _game.State == GameState.InProgress;
+    }
+
+    /// <summary>
+    /// Determines whether a cell can be flagged.
+    /// Prevents interaction when the game is finished.
+    /// </summary>
+    private bool CanToggleFlag(object? parameter)
+    {
+        return _game.State == GameState.InProgress;
+    }
+
+    /// <summary>
+    /// Refreshes all cell view models to reflect updated game state.
+    /// </summary>
+    private void RefreshBoard()
+    {
+        foreach (var cell in Cells)
+        {
+            cell.Refresh();
+        }
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    /// <summary>
+    /// Raises property changed notification for UI binding.
+    /// </summary>
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

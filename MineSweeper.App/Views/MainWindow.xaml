@@ -10,13 +10,16 @@
         WindowStartupLocation="CenterScreen">
 
     <DockPanel Margin="16">
+
+        <!-- HEADER -->
         <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
             <TextBlock Text="MineSweeper"
-                       FontSize="24"
+                       FontSize="26"
                        FontWeight="Bold"
-                       Margin="0,0,0,8" />
+                       Margin="0,0,0,10" />
 
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+            <!-- Difficulty + New Game -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,12,10">
                 <TextBlock Text="Difficulty:"
                            VerticalAlignment="Center"
                            Margin="0,0,8,0" />
@@ -27,21 +30,26 @@
                           Margin="0,0,12,0" />
 
                 <Button Content="New Game"
-                        Width="100"
+                        Width="110"
+                        Height="30"
                         Command="{Binding NewGameCommand}" />
             </StackPanel>
 
+            <!-- Game status -->
             <TextBlock Text="{Binding GameStatus}"
                        FontSize="14"
                        FontWeight="SemiBold" />
         </StackPanel>
 
+        <!-- GAME BOARD -->
         <ScrollViewer HorizontalScrollBarVisibility="Auto"
                       VerticalScrollBarVisibility="Auto">
+
             <ItemsControl ItemsSource="{Binding Cells}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <UniformGrid Rows="{Binding Rows}" Columns="{Binding Columns}" />
+                        <UniformGrid Rows="{Binding Rows}"
+                                     Columns="{Binding Columns}" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
 
@@ -49,13 +57,69 @@
                     <DataTemplate>
                         <Button Content="{Binding DisplayText}"
                                 Margin="2"
-                                FontSize="16"
+                                FontSize="18"
+                                FontFamily="Segoe UI Emoji"
                                 FontWeight="Bold"
-                                MinWidth="32"
-                                MinHeight="32"
+                                MinWidth="36"
+                                MinHeight="36"
                                 Command="{Binding DataContext.RevealCellCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
-                                MouseRightButtonUp="Cell_RightClick" />
+                                MouseRightButtonUp="Cell_RightClick">
+
+                            <Button.Style>
+                                <Style TargetType="Button">
+
+                                    <!-- Default (hidden cell) -->
+                                    <Setter Property="Background" Value="LightGray" />
+                                    <Setter Property="BorderBrush" Value="Gray" />
+                                    <Setter Property="BorderThickness" Value="1" />
+                                    <Setter Property="Foreground" Value="Black" />
+                                    <Setter Property="Padding" Value="0" />
+                                    <Setter Property="Opacity" Value="0.6" />
+
+                                    <Style.Triggers>
+
+                                        <!-- Hover -->
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#DCDCDC" />
+                                        </Trigger>
+
+                                        <!-- Disabled -->
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter Property="Opacity" Value="0.6"/>
+                                        </Trigger>
+
+                                        <!-- Revealed -->
+                                        <DataTrigger Binding="{Binding IsRevealed}" Value="True">
+                                            <Setter Property="Background" Value="#F3F3F3" />
+                                            <Setter Property="BorderBrush" Value="#C8C8C8" />
+                                        </DataTrigger>
+
+                                        <!-- Flag -->
+                                        <DataTrigger Binding="{Binding IsFlagged}" Value="True">
+                                            <Setter Property="Foreground" Value="DarkRed" />
+                                        </DataTrigger>
+
+                                        <!-- Mine revealed -->
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding IsMine}" Value="True" />
+                                                <Condition Binding="{Binding IsRevealed}" Value="True" />
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Background" Value="#FFB3B3" />
+                                            <Setter Property="Foreground" Value="DarkRed" />
+                                        </MultiDataTrigger>
+
+                                        <!-- 🔥 Disable visual when game finished -->
+                                        <DataTrigger Binding="{Binding DataContext.IsGameFinished, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                     Value="True">
+                                            <Setter Property="Opacity" Value="0.8" />
+                                        </DataTrigger>
+
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>

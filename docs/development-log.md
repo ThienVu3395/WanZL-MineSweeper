@@ -220,3 +220,20 @@ Added user controls to start a new game and select difficulty directly from the 
 ### Notes
 This commit improves usability by allowing the player to restart the game and switch difficulty without restarting the application.
 It also makes the product feel more complete and closer to a real desktop game.
+
+## Commit 14 - WPF UI polish and endgame interaction lock
+
+### Summary
+Improved the WPF user interface with clearer visual states, friendlier endgame feedback, and disabled interaction after the game is finished.
+
+### Completed
+- Improved visual styling for hidden, revealed, flagged, and mined cells
+- Replaced text-based mine and flag symbols with emoji icons (`💣`, `🚩`)
+- Added hover feedback and clearer cell state presentation
+- Enhanced game status text with user-friendly win and lose messages
+- Added popup notifications for win and lose conditions
+- Disabled further reveal and flag interactions after the game ends using command state control
+
+### Notes
+This commit focuses on usability and presentation quality.
+The game now feels more polished and communicates the endgame state more clearly to the player.

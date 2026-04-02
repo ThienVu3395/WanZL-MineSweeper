@@ -47,6 +47,11 @@ public class CellViewModel : INotifyPropertyChanged
     public bool IsMine => _cell.IsMine;
 
     /// <summary>
+    /// Gets whether the cell is hidden and not yet revealed.
+    /// </summary>
+    public bool IsHidden => !IsRevealed;
+
+    /// <summary>
     /// Gets the number of adjacent mines.
     /// </summary>
     public int AdjacentMines => _cell.AdjacentMines;
@@ -68,7 +73,7 @@ public class CellViewModel : INotifyPropertyChanged
 
             // Nếu là mìn
             if (IsMine)
-                return "*";
+                return "💣";
 
             // Nếu không có mìn xung quanh
             if (AdjacentMines == 0)
@@ -85,6 +90,7 @@ public class CellViewModel : INotifyPropertyChanged
     public void Refresh()
     {
         OnPropertyChanged(nameof(IsRevealed));
+        OnPropertyChanged(nameof(IsHidden));
         OnPropertyChanged(nameof(IsFlagged));
         OnPropertyChanged(nameof(IsMine));
         OnPropertyChanged(nameof(AdjacentMines));
