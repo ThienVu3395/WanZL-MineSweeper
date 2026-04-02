@@ -153,4 +153,69 @@ public class MineSweeperGameTests
 
         Assert.Equal(10, minedPositions.Count);
     }
+
+    /// <summary>
+    /// Verifies that adjacent mine counts are calculated correctly
+    /// for each non-mine cell after manual mine placement.
+    /// </summary>
+    [Fact]
+    public void StartNewGame_ShouldCalculateAdjacentMinesCorrectly()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+
+        game.StartNewGame(3, 3, 0);
+
+        var board = game.Board!;
+
+        // Manually place mines (bỏ random để test chính xác)
+        // Đặt 2 mìn tại (0,0) và (0,1)
+        board.Cells[0, 0].IsMine = true;
+        board.Cells[0, 1].IsMine = true;
+
+        // Act - gọi logic tính số mìn xung quanh
+        game.CalculateAdjacentMines(board);
+
+        // Assert - kiểm tra các ô xung quanh có giá trị đúng
+
+        // Ô (1,0) nằm dưới 2 mìn → phải là 2
+        Assert.Equal(2, board.Cells[1, 0].AdjacentMines);
+
+        // Ô (1,1) nằm gần cả 2 mìn → phải là 2
+        Assert.Equal(2, board.Cells[1, 1].AdjacentMines);
+
+        // Ô (0,2) chỉ gần 1 mìn → phải là 1
+        Assert.Equal(1, board.Cells[0, 2].AdjacentMines);
+    }
+
+    /// <summary>
+    /// Verifies that adjacent mine calculation correctly handles
+    /// edge and corner cells without causing out-of-bounds errors.
+    /// </summary>
+    [Fact]
+    public void CalculateAdjacentMines_ShouldHandleBoardEdgesCorrectly()
+    {
+        // Arrange - tạo board 3x3 không có mìn ban đầu
+        var game = new MineSweeperGame();
+        game.StartNewGame(3, 3, 0);
+
+        var board = game.Board!;
+
+        // Đặt mìn ở góc trên bên trái (0,0) - Đây là case dễ gây lỗi vì ít neighbor nhất
+        board.Cells[0, 0].IsMine = true;
+
+        // Act - tính số mìn xung quanh
+        game.CalculateAdjacentMines(board);
+
+        // Assert - chỉ các ô hợp lệ xung quanh mới được tính
+
+        // Ô (0,1) nằm bên phải mìn → có 1 mìn
+        Assert.Equal(1, board.Cells[0, 1].AdjacentMines);
+
+        // Ô (1,0) nằm dưới mìn → có 1 mìn
+        Assert.Equal(1, board.Cells[1, 0].AdjacentMines);
+
+        // Ô (1,1) nằm chéo mìn → có 1 mìn
+        Assert.Equal(1, board.Cells[1, 1].AdjacentMines);
+    }
 }
