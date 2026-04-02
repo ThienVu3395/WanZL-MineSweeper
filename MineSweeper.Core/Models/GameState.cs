@@ -2,6 +2,7 @@
 {
     /// <summary>
     /// Represents the current lifecycle state of a MineSweeper game session.
+    /// - Chứa trạng thái của game
     /// </summary>
     public enum GameState
     {

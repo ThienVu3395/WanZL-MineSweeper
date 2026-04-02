@@ -8,6 +8,8 @@ namespace MineSweeper.Core.Services;
 /// </summary>
 public class MineSweeperGame
 {
+    // Random dùng để generate vị trí mìn (đây là engine sinh số ngẫu nhiên)
+    // Dùng cách này để tạo 1 lần nhưng Reuse nhiều lần, Random ổn định hơn
     private readonly Random _random = new();
 
     /// <summary>
@@ -28,10 +30,13 @@ public class MineSweeperGame
     /// <param name="mineCount">The number of mines configured for the new board.</param>
     public void StartNewGame(int rows, int columns, int mineCount)
     {
+        // Khởi tạo board mới với cấu hình truyền vào
         Board = new Board(rows, columns, mineCount);
 
+        // Đặt mìn ngẫu nhiên lên board
         PlaceMines(Board);
 
+        // Chuyển trạng thái game sang đang chơi
         State = GameState.InProgress;
     }
 
@@ -43,18 +48,22 @@ public class MineSweeperGame
     {
         int placedMines = 0;
 
+        // Lặp đến khi đặt đủ số mìn
         while (placedMines < board.MineCount)
         {
+            // Random vị trí (trả về số nguyên có giá trị 0 <= số < max)
             int row = _random.Next(board.Rows);
             int column = _random.Next(board.Columns);
 
             var cell = board.Cells[row, column];
 
+            // Nếu ô đã có mìn → bỏ qua (tránh trùng)
             if (cell.IsMine)
             {
                 continue;
             }
 
+            // Đặt mìn vào ô
             cell.IsMine = true;
             placedMines++;
         }

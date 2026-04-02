@@ -10,19 +10,20 @@ namespace MineSweeper.Tests.Core
     {
         /// <summary>
         /// Verifies that the board is created with the correct dimensions.
+        /// - Đảm bảo board được tạo đúng kích thước
         /// </summary>
         [Fact]
         public void Constructor_ShouldInitializeBoard_WithCorrectDimensions()
         {
-            // Arrange
+            // Arrange - chuẩn bị dữ liệu đầu vào
             int rows = 9;
             int columns = 9;
             int mineCount = 10;
 
-            // Act
+            // Act - thực thi logic
             var board = new Board(rows, columns, mineCount);
 
-            // Assert
+            // Assert - kiểm tra kết quả
             Assert.Equal(rows, board.Rows);
             Assert.Equal(columns, board.Columns);
             Assert.Equal(mineCount, board.MineCount);
@@ -30,6 +31,7 @@ namespace MineSweeper.Tests.Core
 
         /// <summary>
         /// Verifies that all cells are initialized and not null.
+        /// - Kiểm tra toàn bộ cell đã được khởi tạo (không null)
         /// </summary>
         [Fact]
         public void Constructor_ShouldInitializeAllCells()
@@ -54,6 +56,7 @@ namespace MineSweeper.Tests.Core
 
         /// <summary>
         /// Verifies that each cell has the correct row and column indices.
+        /// - Đảm bảo mỗi cell biết đúng vị trí của nó
         /// </summary>
         [Fact]
         public void Constructor_ShouldAssignCorrectCellCoordinates()
@@ -81,6 +84,7 @@ namespace MineSweeper.Tests.Core
 
         /// <summary>
         /// Verifies that all cells are initialized with default state.
+        /// - Kiểm tra trạng thái mặc định của cell
         /// </summary>
         [Fact]
         public void Constructor_ShouldInitializeCellsWithDefaultState()
@@ -91,9 +95,16 @@ namespace MineSweeper.Tests.Core
             // Act & Assert
             foreach (var cell in board.Cells)
             {
+                // Ban đầu chưa có mìn
                 Assert.False(cell.IsMine);
+
+                // Chưa mở
                 Assert.False(cell.IsRevealed);
+
+                // Chưa flag
                 Assert.False(cell.IsFlagged);
+
+                // Chưa có số mìn xung quanh
                 Assert.Equal(0, cell.AdjacentMines);
             }
         }

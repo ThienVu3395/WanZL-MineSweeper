@@ -19,21 +19,25 @@
 
         /// <summary>
         /// Gets or sets a value indicating whether this cell contains a mine.
+        /// - Có chứa mìn không
         /// </summary>
         public bool IsMine { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this cell has been revealed by the player.
+        /// - Đã mở chưa
         /// </summary>
         public bool IsRevealed { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this cell is currently flagged by the player.
+        /// - Có bị đánh dấu cờ không
         /// </summary>
         public bool IsFlagged { get; set; }
 
         /// <summary>
         /// Gets or sets the number of mines adjacent to this cell.
+        /// - Số mìn xung quanh
         /// </summary>
         public int AdjacentMines { get; set; }
     }

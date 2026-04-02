@@ -11,6 +11,7 @@ public class MineSweeperGameTests
 {
     /// <summary>
     /// Verifies that a new game starts with a board instance.
+    /// - Kiểm tra game khi start phải tạo board
     /// </summary>
     [Fact]
     public void StartNewGame_ShouldCreateBoard()
@@ -27,6 +28,7 @@ public class MineSweeperGameTests
 
     /// <summary>
     /// Verifies that a new game starts with the correct board configuration.
+    /// -  Đảm bảo config truyền vào được áp dụng đúng
     /// </summary>
     [Fact]
     public void StartNewGame_ShouldInitializeBoardWithCorrectSettings()
@@ -46,6 +48,7 @@ public class MineSweeperGameTests
 
     /// <summary>
     /// Verifies that starting a new game changes the state to InProgress.
+    /// - Khi start game → state phải chuyển sang InProgress
     /// </summary>
     [Fact]
     public void StartNewGame_ShouldSetStateToInProgress()
@@ -62,6 +65,7 @@ public class MineSweeperGameTests
 
     /// <summary>
     /// Verifies that starting a new game replaces the previous board instance.
+    /// - Start game lần 2 phải replace board cũ (không reuse)
     /// </summary>
     [Fact]
     public void StartNewGame_ShouldReplacePreviousBoard()
@@ -85,6 +89,7 @@ public class MineSweeperGameTests
 
     /// <summary>
     /// Verifies that the exact configured number of mines is placed on the board.
+    /// - Kiểm tra số lượng mìn được đặt đúng
     /// </summary>
     [Fact]
     public void StartNewGame_ShouldPlaceExpectedNumberOfMines()
@@ -115,6 +120,7 @@ public class MineSweeperGameTests
     /// <summary>
     /// Verifies that mine placement does not create duplicate mine entries
     /// and all mined cells occupy unique board positions.
+    /// - Kiểm tra không có 2 mìn trùng vị trí
     /// </summary>
     [Fact]
     public void StartNewGame_ShouldPlaceMinesInUniqueCells()
@@ -138,6 +144,8 @@ public class MineSweeperGameTests
             }
 
             string positionKey = $"{cell.Row}-{cell.Column}";
+
+            // HashSet.Add sẽ trả false nếu trùng
             bool isUnique = minedPositions.Add(positionKey);
 
             Assert.True(isUnique);

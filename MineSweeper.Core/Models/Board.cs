@@ -3,6 +3,10 @@
     /// <summary>
     /// Represents the game board that contains all cells
     /// and basic board configuration such as dimensions and mine count.
+    /// - Quản lý toàn bộ grid, chứa:
+    /// + Kích thước
+    /// + Danh sách Cell
+    /// + Logic generate mìn
     /// </summary>
     public class Board
     {

@@ -2,6 +2,7 @@
 {
     /// <summary>
     /// Represents the supported difficulty presets for the MineSweeper game.
+    /// - Cấu hình độ khó cho game (có thể sử dụng sau)
     /// </summary>
     public enum DifficultyLevel
     {
