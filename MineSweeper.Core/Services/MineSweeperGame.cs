@@ -125,6 +125,29 @@ public class MineSweeperGame
     }
 
     /// <summary>
+    /// Toggles the flagged state of a cell.
+    /// A flagged cell is marked as a potential mine by the player.
+    /// - Người chơi có thể đánh dấu (flag) vào ô nghi là mìn và Không cho phép flag vào ô đã được mở
+    /// </summary>
+    /// <param name="row">The row index of the cell.</param>
+    /// <param name="column">The column index of the cell.</param>
+    public void ToggleFlag(int row, int column)
+    {
+        // Chỉ cho phép thao tác khi game đang chơi
+        if (Board == null || State != GameState.InProgress)
+            return;
+
+        var cell = Board.Cells[row, column];
+
+        // Nếu ô đã được mở thì không được flag
+        if (cell.IsRevealed)
+            return;
+
+        // Toggle flag
+        cell.IsFlagged = !cell.IsFlagged;
+    }
+
+    /// <summary>
     /// Recursively reveals cells starting from the given position.
     /// Expands to neighboring cells if no adjacent mines are present.
     /// - Nếu ô không có mìn xung quanh (AdjacentMines = 0) thì tiếp tục mở lan các ô xung quanh (flood fill)

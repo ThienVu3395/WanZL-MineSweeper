@@ -307,4 +307,65 @@ public class MineSweeperGameTests
         // Assert
         Assert.Equal(GameState.Won, game.State);
     }
+
+    /// <summary>
+    /// Verifies that a cell can be flagged.
+    /// </summary>
+    [Fact]
+    public void ToggleFlag_ShouldFlagCell()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+        game.StartNewGame(3, 3, 0);
+
+        var board = game.Board!;
+
+        // Act
+        game.ToggleFlag(1, 1);
+
+        // Assert
+        Assert.True(board.Cells[1, 1].IsFlagged);
+    }
+
+    /// <summary>
+    /// Verifies that a flagged cell can be unflagged.
+    /// </summary>
+    [Fact]
+    public void ToggleFlag_ShouldUnflagCell()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+        game.StartNewGame(3, 3, 0);
+
+        var board = game.Board!;
+
+        game.ToggleFlag(1, 1);
+
+        // Act
+        game.ToggleFlag(1, 1);
+
+        // Assert
+        Assert.False(board.Cells[1, 1].IsFlagged);
+    }
+
+    /// <summary>
+    /// Verifies that a revealed cell cannot be flagged.
+    /// </summary>
+    [Fact]
+    public void ToggleFlag_ShouldNotFlag_WhenCellIsRevealed()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+        game.StartNewGame(3, 3, 0);
+
+        var board = game.Board!;
+
+        game.RevealCell(1, 1);
+
+        // Act
+        game.ToggleFlag(1, 1);
+
+        // Assert
+        Assert.False(board.Cells[1, 1].IsFlagged);
+    }
 }
