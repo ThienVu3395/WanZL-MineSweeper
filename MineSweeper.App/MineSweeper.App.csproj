@@ -12,4 +12,9 @@
     <ProjectReference Include="..\MineSweeper.Core\MineSweeper.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Assets\" />
+    <Folder Include="Helpers\" />
+  </ItemGroup>
+
 </Project>
