@@ -16,6 +16,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
 {
     private readonly MineSweeperGame _game;
 
+    private DifficultyLevel _selectedDifficulty;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="MainWindowViewModel"/> class.
     /// </summary>
@@ -25,20 +27,49 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
         Cells = new ObservableCollection<CellViewModel>();
 
+        // Danh sách độ khó hiển thị trên UI
+        AvailableDifficulties = new ObservableCollection<DifficultyLevel>
+        {
+            DifficultyLevel.Beginner,
+            DifficultyLevel.Intermediate,
+            DifficultyLevel.Expert
+        };
+
+        // Mặc định chọn Beginner
+        _selectedDifficulty = DifficultyLevel.Beginner;
+
         // Command dùng để xử lý khi user click vào cell
         RevealCellCommand = new RelayCommand(OnRevealCell);
 
         // Command dùng để xử lý khi user right-click vào cell
         ToggleFlagCommand = new RelayCommand(OnToggleFlag);
 
-        // Khởi tạo game mặc định
-        StartNewGame(9, 9, 10);
+        NewGameCommand = new RelayCommand(_ => StartNewGameByDifficulty());
+
+        // Khởi tạo game đầu tiên
+        StartNewGameByDifficulty();
     }
 
     /// <summary>
     /// Gets the collection of cells used for UI binding.
     /// </summary>
     public ObservableCollection<CellViewModel> Cells { get; }
+
+    /// <summary>
+    /// Gets or sets the currently selected difficulty level.
+    /// </summary>
+    public DifficultyLevel SelectedDifficulty
+    {
+        get => _selectedDifficulty;
+        set
+        {
+            if (_selectedDifficulty == value)
+                return;
+
+            _selectedDifficulty = value;
+            OnPropertyChanged();
+        }
+    }
 
     /// <summary>
     /// Gets the number of rows of the current board.
@@ -66,6 +97,16 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public ICommand ToggleFlagCommand { get; }
 
     /// <summary>
+    /// Command used to start a new game with the selected difficulty.
+    /// </summary>
+    public ICommand NewGameCommand { get; }
+
+    /// <summary>
+    /// Gets the available difficulty levels for the UI.
+    /// </summary>
+    public ObservableCollection<DifficultyLevel> AvailableDifficulties { get; }
+
+    /// <summary>
     /// Starts a new game and rebuilds the UI cell collection.
     /// </summary>
     /// <param name="rows">Number of rows.</param>
@@ -89,6 +130,32 @@ public class MainWindowViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(Rows));
         OnPropertyChanged(nameof(Columns));
         OnPropertyChanged(nameof(GameStatus));
+    }
+
+    /// <summary>
+    /// Starts a new game based on the selected difficulty level.
+    /// </summary>
+    private void StartNewGameByDifficulty()
+    {
+        // Map độ khó sang cấu hình board
+        switch (SelectedDifficulty)
+        {
+            case DifficultyLevel.Beginner:
+                StartNewGame(9, 9, 10);
+                break;
+
+            case DifficultyLevel.Intermediate:
+                StartNewGame(16, 16, 40);
+                break;
+
+            case DifficultyLevel.Expert:
+                StartNewGame(16, 30, 99);
+                break;
+
+            default:
+                StartNewGame(9, 9, 10);
+                break;
+        }
     }
 
     /// <summary>
@@ -124,6 +191,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
             cell.Refresh();
         }
     }
+
 
     public event PropertyChangedEventHandler? PropertyChanged;
 

@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="MineSweeper"
-        Height="600"
-        Width="500"
+        Height="700"
+        Width="700"
         WindowStartupLocation="CenterScreen">
 
     <DockPanel Margin="16">
@@ -16,31 +16,49 @@
                        FontWeight="Bold"
                        Margin="0,0,0,8" />
 
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBlock Text="Difficulty:"
+                           VerticalAlignment="Center"
+                           Margin="0,0,8,0" />
+
+                <ComboBox Width="150"
+                          ItemsSource="{Binding AvailableDifficulties}"
+                          SelectedItem="{Binding SelectedDifficulty}"
+                          Margin="0,0,12,0" />
+
+                <Button Content="New Game"
+                        Width="100"
+                        Command="{Binding NewGameCommand}" />
+            </StackPanel>
+
             <TextBlock Text="{Binding GameStatus}"
                        FontSize="14"
                        FontWeight="SemiBold" />
         </StackPanel>
 
-        <ItemsControl ItemsSource="{Binding Cells}">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <UniformGrid Rows="{Binding Rows}" Columns="{Binding Columns}" />
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
+        <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Cells}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Rows="{Binding Rows}" Columns="{Binding Columns}" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
 
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Button Content="{Binding DisplayText}"
-                            Margin="2"
-                            FontSize="16"
-                            FontWeight="Bold"
-                            MinWidth="40"
-                            MinHeight="40"
-                            Command="{Binding DataContext.RevealCellCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                            CommandParameter="{Binding}" 
-                            MouseRightButtonUp="Cell_RightClick" />
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Content="{Binding DisplayText}"
+                                Margin="2"
+                                FontSize="16"
+                                FontWeight="Bold"
+                                MinWidth="32"
+                                MinHeight="32"
+                                Command="{Binding DataContext.RevealCellCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}"
+                                MouseRightButtonUp="Cell_RightClick" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
     </DockPanel>
 </Window>

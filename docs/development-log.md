@@ -202,3 +202,21 @@ Implemented right-click flag functionality to mark suspected mine cells.
 ### Notes
 This commit completes the core MineSweeper gameplay loop.
 The application now supports both revealing and flagging cells, aligning with standard game behavior.
+
+## Commit 13 - New game control and difficulty selection
+
+### Summary
+Added user controls to start a new game and select difficulty directly from the WPF interface.
+
+### Completed
+- Added difficulty selection using the existing `DifficultyLevel` enum
+- Exposed available difficulty options in `MainWindowViewModel`
+- Added `SelectedDifficulty` property for UI binding
+- Added `NewGameCommand` to start a new game based on the selected difficulty
+- Mapped difficulty levels to standard board configurations
+- Updated the WPF UI to include a difficulty dropdown and a new game button
+- Added scroll support for larger boards
+
+### Notes
+This commit improves usability by allowing the player to restart the game and switch difficulty without restarting the application.
+It also makes the product feel more complete and closer to a real desktop game.
