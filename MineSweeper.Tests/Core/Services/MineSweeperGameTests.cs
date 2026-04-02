@@ -1,7 +1,7 @@
 ﻿using MineSweeper.Core.Models;
 using MineSweeper.Core.Services;
 
-namespace MineSweeper.Tests.Core;
+namespace MineSweeper.Tests.Core.Services;
 
 /// <summary>
 /// Contains unit tests for verifying the behavior of the MineSweeperGame service.
@@ -217,5 +217,68 @@ public class MineSweeperGameTests
 
         // Ô (1,1) nằm chéo mìn → có 1 mìn
         Assert.Equal(1, board.Cells[1, 1].AdjacentMines);
+    }
+
+    /// <summary>
+    /// Verifies that revealing a non-mine cell marks it as revealed.
+    /// </summary>
+    [Fact]
+    public void RevealCell_ShouldRevealNonMineCell()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+        game.StartNewGame(3, 3, 0);
+
+        var board = game.Board!;
+
+        // Act
+        game.RevealCell(1, 1);
+
+        // Assert
+        Assert.True(board.Cells[1, 1].IsRevealed);
+    }
+
+    /// <summary>
+    /// Verifies that revealing a mine cell sets the game state to Lost.
+    /// </summary>
+    [Fact]
+    public void RevealCell_ShouldSetStateToLost_WhenMineIsRevealed()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+        game.StartNewGame(3, 3, 0);
+
+        var board = game.Board!;
+        board.Cells[1, 1].IsMine = true;
+
+        // Act
+        game.RevealCell(1, 1);
+
+        // Assert
+        Assert.Equal(GameState.Lost, game.State);
+    }
+
+    /// <summary>
+    /// Verifies that revealing a cell with zero adjacent mines
+    /// triggers recursive reveal (flood fill).
+    /// </summary>
+    [Fact]
+    public void RevealCell_ShouldRevealAdjacentCells_WhenNoAdjacentMines()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+        game.StartNewGame(3, 3, 0);
+
+        var board = game.Board!;
+
+        // Act
+        game.RevealCell(1, 1);
+
+        // Assert
+        // Tất cả cell đều được mở vì không có mìn
+        foreach (var cell in board.Cells)
+        {
+            Assert.True(cell.IsRevealed);
+        }
     }
 }

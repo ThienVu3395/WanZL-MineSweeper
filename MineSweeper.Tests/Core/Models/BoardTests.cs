@@ -1,6 +1,6 @@
 ﻿using MineSweeper.Core.Models;
 
-namespace MineSweeper.Tests.Core
+namespace MineSweeper.Tests.Core.Models
 {
     /// <summary>
     /// Contains unit tests for verifying the behavior of the Board model.

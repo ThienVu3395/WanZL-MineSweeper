@@ -94,6 +94,70 @@ public class MineSweeperGame
     }
 
     /// <summary>
+    /// Reveals a cell at the specified position.
+    /// If the cell is a mine, the game ends.
+    /// If the cell has zero adjacent mines, flood fill is triggered.
+    /// </summary>
+    public void RevealCell(int row, int column)
+    {
+        if (Board == null || State != GameState.InProgress)
+            return;
+
+        var cell = Board.Cells[row, column];
+
+        // Nếu đã mở rồi thì bỏ qua
+        if (cell.IsRevealed)
+            return;
+
+        // Nếu click trúng mìn thì thua game
+        if (cell.IsMine)
+        {
+            cell.IsRevealed = true;
+            State = GameState.Lost;
+            return;
+        }
+
+        // Nếu không phải mìn thì mở ô
+        RevealRecursive(row, column);
+    }
+
+    /// <summary>
+    /// Recursively reveals cells starting from the given position.
+    /// Expands to neighboring cells if no adjacent mines are present.
+    /// - Nếu ô không có mìn xung quanh (AdjacentMines = 0) thì tiếp tục mở lan các ô xung quanh (flood fill)
+    /// </summary>
+    private void RevealRecursive(int row, int column)
+    {
+        var cell = Board!.Cells[row, column];
+
+        // Nếu đã mở rồi thì dừng
+        if (cell.IsRevealed)
+            return;
+
+        // Đánh dấu đã mở
+        cell.IsRevealed = true;
+
+        // Nếu có số mìn xung quanh → không lan tiếp
+        if (cell.AdjacentMines > 0)
+            return;
+
+        // Duyệt 8 ô xung quanh
+        for (int r = row - 1; r <= row + 1; r++)
+        {
+            for (int c = column - 1; c <= column + 1; c++)
+            {
+                if (r == row && c == column)
+                    continue;
+
+                if (r < 0 || r >= Board.Rows || c < 0 || c >= Board.Columns)
+                    continue;
+
+                RevealRecursive(r, c);
+            }
+        }
+    }
+
+    /// <summary>
     /// Places mines randomly on the board without duplicating positions.
     /// </summary>
     /// <param name="board">The board that will receive mine placement.</param>
