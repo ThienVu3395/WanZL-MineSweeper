@@ -117,8 +117,11 @@ public class MineSweeperGame
             return;
         }
 
-        // Nếu không phải mìn thì mở ô
+        // Mở ô hiện tại (và có thể mở lan nếu AdjacentMines = 0)
         RevealRecursive(row, column);
+
+        // Sau khi mở xong thì kiểm tra điều kiện thắng
+        CheckWinCondition();
     }
 
     /// <summary>
@@ -184,5 +187,30 @@ public class MineSweeperGame
             cell.IsMine = true;
             placedMines++;
         }
+    }
+
+    /// <summary>
+    /// Checks whether all non-mine cells on the board have been revealed.
+    /// If all safe cells are revealed, the game state is updated to Won.
+    /// </summary>
+    /// <remarks>
+    /// A MineSweeper game is considered won when every cell that does not contain a mine
+    /// has been revealed. This method iterates through all cells to verify that condition.
+    /// </remarks>
+    private void CheckWinCondition()
+    {
+        // Duyệt toàn bộ các ô trên board
+        foreach (var cell in Board!.Cells)
+        {
+            // Nếu tồn tại ô KHÔNG phải mìn mà chưa được mở
+            // → chưa thỏa điều kiện thắng
+            if (!cell.IsMine && !cell.IsRevealed)
+            {
+                return;
+            }
+        }
+
+        // Nếu tất cả ô an toàn đã được mở → người chơi thắng
+        State = GameState.Won;
     }
 }

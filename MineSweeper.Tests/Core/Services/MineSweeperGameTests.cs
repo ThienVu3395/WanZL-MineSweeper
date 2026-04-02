@@ -281,4 +281,30 @@ public class MineSweeperGameTests
             Assert.True(cell.IsRevealed);
         }
     }
+
+    /// <summary>
+    /// Verifies that the game is marked as won when all non-mine cells are revealed.
+    /// </summary>
+    [Fact]
+    public void RevealCell_ShouldSetStateToWon_WhenAllSafeCellsRevealed()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+        game.StartNewGame(2, 2, 0);
+
+        var board = game.Board!;
+
+        // Đặt 1 mìn
+        board.Cells[0, 0].IsMine = true;
+
+        game.CalculateAdjacentMines(board);
+
+        // Act - mở tất cả ô không phải mìn
+        game.RevealCell(0, 1);
+        game.RevealCell(1, 0);
+        game.RevealCell(1, 1);
+
+        // Assert
+        Assert.Equal(GameState.Won, game.State);
+    }
 }
