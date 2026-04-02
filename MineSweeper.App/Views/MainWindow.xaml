@@ -37,7 +37,8 @@
                             MinWidth="40"
                             MinHeight="40"
                             Command="{Binding DataContext.RevealCellCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                            CommandParameter="{Binding}" />
+                            CommandParameter="{Binding}" 
+                            MouseRightButtonUp="Cell_RightClick" />
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>

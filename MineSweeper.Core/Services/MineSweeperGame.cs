@@ -109,6 +109,10 @@ public class MineSweeperGame
         if (cell.IsRevealed)
             return;
 
+        // Nếu đã flag rồi thì bỏ qua
+        if (cell.IsFlagged)
+            return;
+
         // Nếu click trúng mìn thì thua game
         if (cell.IsMine)
         {

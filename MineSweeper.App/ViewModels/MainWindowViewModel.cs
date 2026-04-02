@@ -28,6 +28,9 @@ public class MainWindowViewModel : INotifyPropertyChanged
         // Command dùng để xử lý khi user click vào cell
         RevealCellCommand = new RelayCommand(OnRevealCell);
 
+        // Command dùng để xử lý khi user right-click vào cell
+        ToggleFlagCommand = new RelayCommand(OnToggleFlag);
+
         // Khởi tạo game mặc định
         StartNewGame(9, 9, 10);
     }
@@ -56,6 +59,11 @@ public class MainWindowViewModel : INotifyPropertyChanged
     /// Command used to reveal a cell when user clicks on it.
     /// </summary>
     public ICommand RevealCellCommand { get; }
+
+    /// <summary>
+    /// Command used to toggle flag on a cell (right-click).
+    /// </summary>
+    public ICommand ToggleFlagCommand { get; }
 
     /// <summary>
     /// Starts a new game and rebuilds the UI cell collection.
@@ -125,5 +133,18 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    /// <summary>
+    /// Handles the right-click flag toggle action.
+    /// </summary>
+    private void OnToggleFlag(object? parameter)
+    {
+        if (parameter is not CellViewModel cellVm)
+            return;
+
+        _game.ToggleFlag(cellVm.Row, cellVm.Column);
+
+        RefreshBoard();
     }
 }

@@ -185,3 +185,20 @@ This commit completes the core interaction loop between the UI and the game logi
 The game is now fully playable through the WPF interface.
 
 The next step will focus on implementing right-click flag functionality to align with standard MineSweeper behavior.
+
+## Commit 12 - Flag toggle functionality
+
+### Summary
+Implemented right-click flag functionality to mark suspected mine cells.
+
+### Completed
+- Added `ToggleFlag` method in game service
+- Prevented revealing flagged cells
+- Implemented `ToggleFlagCommand` in ViewModel
+- Handled right-click interaction in WPF UI
+- Updated UI to display flag indicator (🚩)
+- Ensured UI refresh after flag toggle
+
+### Notes
+This commit completes the core MineSweeper gameplay loop.
+The application now supports both revealing and flagging cells, aligning with standard game behavior.
