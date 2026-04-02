@@ -39,6 +39,22 @@
             <TextBlock Text="{Binding GameStatus}"
                        FontSize="14"
                        FontWeight="SemiBold" />
+
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                <TextBlock Text="{Binding TotalMines, StringFormat=Mines: {0}}"
+               FontSize="13"
+               FontWeight="SemiBold"
+               Margin="0,0,16,0" />
+
+                <TextBlock Text="{Binding FlagCount, StringFormat=Flags: {0}}"
+               FontSize="13"
+               FontWeight="SemiBold"
+               Margin="0,0,16,0" />
+
+                <TextBlock Text="{Binding RemainingMines, StringFormat=Remaining: {0}}"
+               FontSize="13"
+               FontWeight="SemiBold" />
+            </StackPanel>
         </StackPanel>
 
         <!-- GAME BOARD -->

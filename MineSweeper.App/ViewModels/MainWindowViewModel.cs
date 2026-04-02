@@ -96,6 +96,21 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public bool IsGameFinished => _game.State == GameState.Won || _game.State == GameState.Lost;
 
     /// <summary>
+    /// Gets the total number of mines on the current board.
+    /// </summary>
+    public int TotalMines => _game.Board?.MineCount ?? 0;
+
+    /// <summary>
+    /// Gets the number of currently flagged cells.
+    /// </summary>
+    public int FlagCount => Cells.Count(cell => cell.IsFlagged);
+
+    /// <summary>
+    /// Gets the estimated number of mines remaining based on placed flags.
+    /// </summary>
+    public int RemainingMines => TotalMines - FlagCount;
+
+    /// <summary>
     /// Gets the current game status text for UI display.
     /// </summary>
     public string GameStatus
@@ -153,6 +168,9 @@ public class MainWindowViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(Columns));
         OnPropertyChanged(nameof(GameStatus));
         OnPropertyChanged(nameof(IsGameFinished));
+        OnPropertyChanged(nameof(TotalMines));
+        OnPropertyChanged(nameof(FlagCount));
+        OnPropertyChanged(nameof(RemainingMines));
 
         // Cập nhật trạng thái enable/disable của command
         _revealCellCommand.RaiseCanExecuteChanged();
@@ -216,6 +234,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
         RefreshBoard();
         OnPropertyChanged(nameof(GameStatus));
         OnPropertyChanged(nameof(IsGameFinished));
+        OnPropertyChanged(nameof(FlagCount));
+        OnPropertyChanged(nameof(RemainingMines));
 
         // Cập nhật trạng thái enable/disable của command
         _revealCellCommand.RaiseCanExecuteChanged();
@@ -243,6 +263,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
         _game.ToggleFlag(cellVm.Row, cellVm.Column);
 
         RefreshBoard();
+        OnPropertyChanged(nameof(FlagCount));
+        OnPropertyChanged(nameof(RemainingMines));
         OnPropertyChanged(nameof(GameStatus));
         OnPropertyChanged(nameof(IsGameFinished));
 

@@ -237,3 +237,19 @@ Improved the WPF user interface with clearer visual states, friendlier endgame f
 ### Notes
 This commit focuses on usability and presentation quality.
 The game now feels more polished and communicates the endgame state more clearly to the player.
+
+## Commit 15 - Mine counter and flag tracking
+
+### Summary
+Added live mine and flag counters to improve gameplay awareness and bring the interface closer to a classic MineSweeper experience.
+
+### Completed
+- Added total mine count display
+- Added current flag count display
+- Added remaining mine estimate based on placed flags
+- Updated the UI to refresh counter values during gameplay
+- Integrated counter updates into new game and flag interactions
+
+### Notes
+This commit improves gameplay clarity by giving the player immediate feedback about board progress and flag usage.
+It also makes the desktop application feel closer to a complete game product.
