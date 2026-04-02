@@ -1,15 +1,7 @@
-﻿using System.Text;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+﻿using System.Windows;
+using MineSweeper.App.ViewModels;
 
-namespace MineSweeper.App
+namespace MineSweeper.App.Views
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -19,6 +11,10 @@ namespace MineSweeper.App
         public MainWindow()
         {
             InitializeComponent();
+
+            // Gắn ViewModel cho Window để XAML binding hoạt động
+            // Nghĩa là: Toàn bộ binding trong MainWindow.xaml sẽ lấy dữ liệu từ MainWindowViewModel
+            DataContext = new MainWindowViewModel();
         }
     }
 }

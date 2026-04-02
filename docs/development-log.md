@@ -165,3 +165,23 @@ Reorganized the WPF application structure and introduced a clean MVVM architectu
 ### Notes
 This commit focuses on setting up a maintainable UI architecture rather than full gameplay interaction.
 The next steps will integrate user interactions such as cell reveal and flagging into the MVVM structure.
+
+## Commit 11 - WPF cell interaction with MVVM command binding
+
+### Summary
+Enabled user interaction in the WPF UI by connecting cell click actions to the core game logic using MVVM command binding.
+
+### Completed
+- Added `RelayCommand` to support command-based interaction in MVVM
+- Implemented `RevealCellCommand` in `MainWindowViewModel`
+- Handled cell click events and mapped them to the `RevealCell` logic in the game service
+- Passed `CellViewModel` as command parameter from the UI
+- Implemented UI refresh mechanism via `CellViewModel.Refresh()`
+- Updated game status dynamically after each interaction
+- Fixed application startup issue after restructuring by updating `StartupUri` in `App.xaml`
+
+### Notes
+This commit completes the core interaction loop between the UI and the game logic.
+The game is now fully playable through the WPF interface.
+
+The next step will focus on implementing right-click flag functionality to align with standard MineSweeper behavior.
