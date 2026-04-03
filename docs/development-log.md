@@ -348,3 +348,16 @@ Improved recursive reveal behavior to ensure flagged cells are not automatically
 ### Notes
 Previously, flagged cells could be unintentionally revealed during recursive expansion.
 This update ensures that player-marked cells are respected by the flood fill algorithm.
+
+## Commit 22 - Reveal all mines on lose
+
+### Summary
+Improved lose-state behavior by revealing all mine cells when the player hits a mine.
+
+### Completed
+- Added logic to reveal all mines after a losing move
+- Preserved existing lose condition handling
+- Added unit test to verify that all mines become visible when the game ends in loss
+
+### Notes
+This change improves gameplay feedback and aligns the lose-state behavior more closely with standard MineSweeper implementations.

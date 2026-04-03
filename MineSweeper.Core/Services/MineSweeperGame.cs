@@ -117,6 +117,7 @@ public class MineSweeperGame
         if (cell.IsMine)
         {
             cell.IsRevealed = true;
+            RevealAllMines();
             State = GameState.Lost;
             return;
         }
@@ -242,5 +243,19 @@ public class MineSweeperGame
 
         // Nếu tất cả ô an toàn đã được mở → người chơi thắng
         State = GameState.Won;
+    }
+
+    /// <summary>
+    /// Reveals all mine cells on the board after the player loses.
+    /// </summary>
+    private void RevealAllMines()
+    {
+        foreach (var cell in Board!.Cells)
+        {
+            if (cell.IsMine)
+            {
+                cell.IsRevealed = true;
+            }
+        }
     }
 }

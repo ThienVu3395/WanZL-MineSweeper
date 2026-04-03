@@ -404,4 +404,27 @@ public class MineSweeperGameTests
 
         Assert.True(board.Cells[1, 1].IsFlagged);
     }
+
+    [Fact]
+    public void RevealCell_ShouldRevealAllMines_WhenPlayerLoses()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+        game.StartNewGame(3, 3, 0);
+
+        var board = game.Board!;
+
+        board.Cells[0, 0].IsMine = true;
+        board.Cells[2, 2].IsMine = true;
+
+        game.CalculateAdjacentMines(board);
+
+        // Act
+        game.RevealCell(0, 0);
+
+        // Assert
+        Assert.Equal(GameState.Lost, game.State);
+        Assert.True(board.Cells[0, 0].IsRevealed);
+        Assert.True(board.Cells[2, 2].IsRevealed);
+    }
 }
