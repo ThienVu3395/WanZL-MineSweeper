@@ -334,3 +334,17 @@ Improved the difficulty selection experience by showing board size and mine coun
 ### Notes
 This commit focuses on usability rather than core gameplay logic.
 The difficulty selector now provides more context to the player and makes the interface feel more complete.
+
+## Commit 21 - Recursive reveal safety improvement
+
+### Summary
+Improved recursive reveal behavior to ensure flagged cells are not automatically revealed during flood fill.
+
+### Completed
+- Updated recursive reveal logic to skip flagged cells
+- Preserved existing flood fill behavior for empty regions
+- Improved consistency with standard MineSweeper gameplay rules
+
+### Notes
+Previously, flagged cells could be unintentionally revealed during recursive expansion.
+This update ensures that player-marked cells are respected by the flood fill algorithm.

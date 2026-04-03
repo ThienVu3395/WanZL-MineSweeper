@@ -164,6 +164,9 @@ public class MineSweeperGame
         if (cell.IsRevealed)
             return;
 
+        if (cell.IsFlagged)
+            return;
+
         // Đánh dấu đã mở
         cell.IsRevealed = true;
 

@@ -368,4 +368,40 @@ public class MineSweeperGameTests
         // Assert
         Assert.False(board.Cells[1, 1].IsFlagged);
     }
+
+    [Fact]
+    public void RevealCell_ShouldNotRevealFlaggedCells_DuringFloodFill()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+        game.StartNewGame(3, 3, 0);
+
+        var board = game.Board!;
+
+        // Flag một ô ở giữa
+        game.ToggleFlag(1, 1);
+
+        // Act - click ô khác để trigger flood fill
+        game.RevealCell(0, 0);
+
+        // Assert
+        // Ô flagged không được mở
+        Assert.False(board.Cells[1, 1].IsRevealed);
+        Assert.True(board.Cells[1, 1].IsFlagged);
+    }
+
+    [Fact]
+    public void RevealCell_ShouldNotRemoveFlag_WhenFloodFillOccurs()
+    {
+        var game = new MineSweeperGame();
+        game.StartNewGame(3, 3, 0);
+
+        var board = game.Board!;
+
+        game.ToggleFlag(1, 1);
+
+        game.RevealCell(0, 0);
+
+        Assert.True(board.Cells[1, 1].IsFlagged);
+    }
 }
