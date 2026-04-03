@@ -284,3 +284,19 @@ Implemented a basic toast notification system to display warning messages (e.g.,
 - Current implementation does not handle animation interruption or message clearing properly
 - Known issue: toast may remain visible with empty content when message is cleared
 - This will be addressed in a separate commit (toast state synchronization improvement)
+
+## Commit 18: Resolve toast visibility bug when message is cleared
+
+### Summary
+Fixed an issue where the toast notification remained visible without content when the message was cleared.
+
+### Details
+- Cleared `Message` property when:
+  - Flag is toggled successfully (unflag or valid flag)
+  - A cell is revealed
+  - A new game is started
+- Updated toast display logic to hide the toast when message is null or empty
+- Prevented animation from running when there is no message content
+
+### Root Cause
+Toast animation was still running even after `Message` was cleared, resulting in an empty visible toast.

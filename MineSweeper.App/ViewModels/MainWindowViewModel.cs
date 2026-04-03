@@ -252,6 +252,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
         if (parameter is not CellViewModel cellVm)
             return;
 
+        Message = null;
+
         _game.RevealCell(cellVm.Row, cellVm.Column);
 
         RefreshBoard();

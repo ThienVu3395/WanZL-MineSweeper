@@ -46,33 +46,49 @@ namespace MineSweeper.App.Views
 
         private void Vm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == "Message")
+            if (e.PropertyName == nameof(MainWindowViewModel.Message))
             {
-                var vm = (MainWindowViewModel)DataContext;
-
-                if (!string.IsNullOrEmpty(vm.Message))
-                {
-                    ShowToast();
-                }
+                ShowToast();
             }
         }
 
         private void ShowToast()
         {
+            // Nếu không có nội dung thì ẩn toast ngay
+            if (DataContext is MainWindowViewModel vm && string.IsNullOrWhiteSpace(vm.Message))
+            {
+                ToastMessage.BeginAnimation(OpacityProperty, null);
+                ToastMessage.Opacity = 0;
+                return;
+            }
+
+            // Hủy animation cũ
             ToastMessage.BeginAnimation(OpacityProperty, null);
+            ToastMessage.Opacity = 0;
 
             var animation = new DoubleAnimationUsingKeyFrames();
 
-            animation.KeyFrames.Add(new DiscreteDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.Zero)));
-            animation.KeyFrames.Add(new EasingDoubleKeyFrame(1, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(200)))
-            {
-                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
-            });
-            animation.KeyFrames.Add(new DiscreteDoubleKeyFrame(1, KeyTime.FromTimeSpan(TimeSpan.FromSeconds(3))));
-            animation.KeyFrames.Add(new EasingDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.FromSeconds(3.9)))
-            {
-                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
-            });
+            // Bắt đầu từ 0
+            animation.KeyFrames.Add(
+                new DiscreteDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.Zero)));
+
+            // Fade in nhanh
+            animation.KeyFrames.Add(
+                new EasingDoubleKeyFrame(1, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(200)))
+                {
+                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+                });
+
+            // Giữ nguyên một lúc
+            animation.KeyFrames.Add(
+                new DiscreteDoubleKeyFrame(1, KeyTime.FromTimeSpan(TimeSpan.FromSeconds(3))));
+
+            // Fade out mượt
+            animation.KeyFrames.Add(
+                new EasingDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.FromSeconds(3.9)))
+                {
+                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+                });
 
             ToastMessage.BeginAnimation(OpacityProperty, animation);
         }
