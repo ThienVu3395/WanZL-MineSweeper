@@ -301,7 +301,7 @@ Fixed an issue where the toast notification remained visible without content whe
 ### Root Cause
 Toast animation was still running even after `Message` was cleared, resulting in an empty visible toast.
 
-## Commit 19: add advanced unit tests for MainWindowViewModel and CellViewModel
+## Commit 19 & 19+: add unit tests for ViewModels (MainWindowViewModel, CellViewModel) and Helpers (NullToVisibilityConverter, RelayCommand)
 
 ### Summary
 Added test suite for the MVVM application layer.
@@ -313,6 +313,9 @@ Added test suite for the MVVM application layer.
 - Tested command enable/disable behavior when the game finishes
 - Verified PropertyChanged notifications for important ViewModel properties
 - Added CellViewModel tests for display text mapping and model synchronization
+
+- Tested NullToVisibilityConverter for null, empty, and non-empty values
+- Verified RelayCommand execution, CanExecute behavior, and event triggering
 
 ### Notes
 These tests focus on behavior and state transitions in the ViewModel layer rather than WPF rendering.
