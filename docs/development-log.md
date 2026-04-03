@@ -320,3 +320,17 @@ Added test suite for the MVVM application layer.
 ### Notes
 These tests focus on behavior and state transitions in the ViewModel layer rather than WPF rendering.
 The goal is to improve confidence in MVVM correctness and reduce regression risk as new features are added.
+
+## Commit 20 - Difficulty description display
+
+### Summary
+Improved the difficulty selection experience by showing board size and mine count information in the UI.
+
+### Completed
+- Added formatted difficulty descriptions for all supported game modes
+- Displayed board dimensions and mine count directly in the difficulty selector
+- Improved clarity so players can understand each difficulty before starting a new game
+
+### Notes
+This commit focuses on usability rather than core gameplay logic.
+The difficulty selector now provides more context to the player and makes the interface feel more complete.

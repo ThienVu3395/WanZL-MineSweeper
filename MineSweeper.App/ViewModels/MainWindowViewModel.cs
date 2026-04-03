@@ -227,23 +227,6 @@ public class MainWindowViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Gets the description of the selected difficulty (board size and mine count).
-    /// </summary>
-    public string DifficultyDescription
-    {
-        get
-        {
-            return SelectedDifficulty switch
-            {
-                DifficultyLevel.Beginner => "9 x 9 | 10 mines",
-                DifficultyLevel.Intermediate => "16 x 16 | 40 mines",
-                DifficultyLevel.Expert => "16 x 30 | 99 mines",
-                _ => string.Empty
-            };
-        }
-    }
-
-    /// <summary>
     /// Handles the reveal cell action triggered from the UI.
     /// </summary>
     /// <param name="parameter">The clicked cell view model.</param>
