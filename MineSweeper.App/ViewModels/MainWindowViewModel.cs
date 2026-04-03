@@ -110,6 +110,27 @@ public class MainWindowViewModel : INotifyPropertyChanged
     /// </summary>
     public int RemainingMines => TotalMines - FlagCount;
 
+    private string? _message;
+
+    /// <summary>
+    /// Gets or sets temporary UI message (e.g., warnings).
+    /// </summary>
+    public string? Message
+    {
+        get => _message;
+        private set
+        {
+            _message = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private void ShowFlagLimitMessage()
+    {
+        Message = null;
+        Message = "⚠️ All flags are used!";
+    }
+
     /// <summary>
     /// Gets the current game status text for UI display.
     /// </summary>
@@ -162,6 +183,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
         {
             Cells.Add(new CellViewModel(cell));
         }
+
+        Message = null;
 
         // Notify UI update
         OnPropertyChanged(nameof(Rows));
@@ -259,6 +282,16 @@ public class MainWindowViewModel : INotifyPropertyChanged
     {
         if (parameter is not CellViewModel cellVm)
             return;
+
+        // Không cho flag nếu đã đạt max
+        if (!cellVm.IsFlagged && FlagCount >= TotalMines)
+        {
+            ShowFlagLimitMessage();
+            return;
+        }
+
+        // clear message
+        Message = null;
 
         _game.ToggleFlag(cellVm.Row, cellVm.Column);
 

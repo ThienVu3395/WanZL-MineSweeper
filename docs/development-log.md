@@ -267,3 +267,20 @@ Enhanced the visual clarity of the game by applying color coding to numbers repr
 ### Notes
 This change aligns the UI with traditional MineSweeper design,
 making the game more intuitive and visually recognizable.
+
+## Commit 17 - Add toast notification for flag limit warning
+
+### Summary
+Implemented a basic toast notification system to display warning messages (e.g., when user exceeds flag limit).
+
+### Details
+- Added `Message` property in `MainWindowViewModel` for temporary UI messages
+- Displayed message below game status in the UI
+- Implemented `ShowFlagLimitMessage()` to notify when all flags are used
+- Integrated toast animation in `MainWindow.xaml.cs` using fade in/out effect
+- Toast is triggered when user attempts to place more flags than allowed
+
+### Notes
+- Current implementation does not handle animation interruption or message clearing properly
+- Known issue: toast may remain visible with empty content when message is cleared
+- This will be addressed in a separate commit (toast state synchronization improvement)

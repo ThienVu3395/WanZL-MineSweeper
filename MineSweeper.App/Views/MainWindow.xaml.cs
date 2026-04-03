@@ -1,5 +1,7 @@
-﻿using System.Windows;
+﻿using System.ComponentModel;
+using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media.Animation;
 using MineSweeper.App.ViewModels;
 
 namespace MineSweeper.App.Views
@@ -15,7 +17,10 @@ namespace MineSweeper.App.Views
 
             // Gắn ViewModel cho Window để XAML binding hoạt động
             // Nghĩa là: Toàn bộ binding trong MainWindow.xaml sẽ lấy dữ liệu từ MainWindowViewModel
-            DataContext = new MainWindowViewModel();
+            var vm = new MainWindowViewModel();
+            DataContext = vm;
+
+            vm.PropertyChanged += Vm_PropertyChanged;
         }
 
         /// <summary>
@@ -30,8 +35,46 @@ namespace MineSweeper.App.Views
 
             if (sender is FrameworkElement element && element.DataContext is CellViewModel cellVm)
             {
-                vm.ToggleFlagCommand.Execute(cellVm);
+                if (vm.ToggleFlagCommand.CanExecute(cellVm))
+                {
+                    vm.ToggleFlagCommand.Execute(cellVm);
+                }
             }
+
+            e.Handled = true;
+        }
+
+        private void Vm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == "Message")
+            {
+                var vm = (MainWindowViewModel)DataContext;
+
+                if (!string.IsNullOrEmpty(vm.Message))
+                {
+                    ShowToast();
+                }
+            }
+        }
+
+        private void ShowToast()
+        {
+            ToastMessage.BeginAnimation(OpacityProperty, null);
+
+            var animation = new DoubleAnimationUsingKeyFrames();
+
+            animation.KeyFrames.Add(new DiscreteDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.Zero)));
+            animation.KeyFrames.Add(new EasingDoubleKeyFrame(1, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(200)))
+            {
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+            });
+            animation.KeyFrames.Add(new DiscreteDoubleKeyFrame(1, KeyTime.FromTimeSpan(TimeSpan.FromSeconds(3))));
+            animation.KeyFrames.Add(new EasingDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.FromSeconds(3.9)))
+            {
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+            });
+
+            ToastMessage.BeginAnimation(OpacityProperty, animation);
         }
     }
 }

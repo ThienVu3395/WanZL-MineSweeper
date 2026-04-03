@@ -3,196 +3,256 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:conv="clr-namespace:MineSweeper.App.Helpers"
         mc:Ignorable="d"
         Title="MineSweeper"
         Height="700"
         Width="700"
         WindowStartupLocation="CenterScreen">
 
-    <DockPanel Margin="16">
+    <!-- RESOURCES -->
+    <Window.Resources>
+        <conv:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+    </Window.Resources>
 
-        <!-- HEADER -->
-        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
-            <TextBlock Text="MineSweeper"
-                       FontSize="26"
-                       FontWeight="Bold"
-                       Margin="0,0,0,10" />
+    <!-- ROOT GRID -->
+    <Grid>
 
-            <!-- Difficulty + New Game -->
-            <StackPanel Orientation="Horizontal" Margin="0,0,12,10">
-                <TextBlock Text="Difficulty:"
-                           VerticalAlignment="Center"
-                           Margin="0,0,8,0" />
+        <!-- ================= MAIN UI ================= -->
+        <DockPanel Margin="16">
 
-                <ComboBox Width="150"
-                          ItemsSource="{Binding AvailableDifficulties}"
-                          SelectedItem="{Binding SelectedDifficulty}"
-                          Margin="0,0,12,0" />
+            <!-- HEADER -->
+            <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
 
-                <Button Content="New Game"
-                        Width="110"
-                        Height="30"
-                        Command="{Binding NewGameCommand}" />
+                <TextBlock Text="MineSweeper"
+                           FontSize="26"
+                           FontWeight="Bold"
+                           Margin="0,0,0,10" />
+
+                <!-- Difficulty + New Game -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,12,10">
+                    <TextBlock Text="Difficulty:"
+                               VerticalAlignment="Center"
+                               Margin="0,0,8,0" />
+
+                    <ComboBox Width="150"
+                              ItemsSource="{Binding AvailableDifficulties}"
+                              SelectedItem="{Binding SelectedDifficulty}"
+                              Margin="0,0,12,0" />
+
+                    <Button Content="New Game"
+                            Width="110"
+                            Height="30"
+                            Command="{Binding NewGameCommand}" />
+                </StackPanel>
+
+                <!-- Game Status -->
+                <TextBlock Text="{Binding GameStatus}"
+                           FontSize="14"
+                           FontWeight="SemiBold" />
+
+                <!-- Optional inline message (fallback nếu không dùng toast) -->
+                <TextBlock Text="{Binding Message}"
+                           Foreground="OrangeRed"
+                           FontSize="12"
+                           Margin="0,4,0,0"
+                           Visibility="{Binding Message, Converter={StaticResource NullToVisibilityConverter}}" />
+
+                <!-- Counters -->
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+
+                    <TextBlock Text="{Binding TotalMines, StringFormat=Mines: {0}}"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               Margin="0,0,16,0" />
+
+                    <TextBlock Text="{Binding FlagCount, StringFormat=Flags: {0}}"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               Margin="0,0,16,0" />
+
+                    <TextBlock Text="{Binding RemainingMines, StringFormat=Remaining: {0}}"
+                               FontSize="13"
+                               FontWeight="SemiBold" />
+                </StackPanel>
+
             </StackPanel>
 
-            <!-- Game status -->
-            <TextBlock Text="{Binding GameStatus}"
+            <!-- GAME BOARD -->
+            <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Auto">
+
+                <ItemsControl ItemsSource="{Binding Cells}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Rows="{Binding Rows}"
+                                         Columns="{Binding Columns}" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+
+                            <Button Content="{Binding DisplayText}"
+                                    Margin="2"
+                                    FontSize="18"
+                                    FontFamily="Segoe UI Emoji"
+                                    FontWeight="Bold"
+                                    MinWidth="36"
+                                    MinHeight="36"
+                                    Command="{Binding DataContext.RevealCellCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    CommandParameter="{Binding}"
+                                    MouseRightButtonUp="Cell_RightClick">
+
+                                <Button.Style>
+                                    <Style TargetType="Button">
+
+                                        <!-- Default -->
+                                        <Setter Property="Background" Value="LightGray" />
+                                        <Setter Property="BorderBrush" Value="Gray" />
+                                        <Setter Property="BorderThickness" Value="1" />
+                                        <Setter Property="Foreground" Value="Black" />
+                                        <Setter Property="Padding" Value="0" />
+
+                                        <Style.Triggers>
+
+                                            <!-- Hover -->
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#DCDCDC" />
+                                            </Trigger>
+
+                                            <!-- Disabled -->
+                                            <Trigger Property="IsEnabled" Value="False">
+                                                <Setter Property="Opacity" Value="0.6"/>
+                                            </Trigger>
+
+                                            <!-- Revealed -->
+                                            <DataTrigger Binding="{Binding IsRevealed}" Value="True">
+                                                <Setter Property="Background" Value="#F3F3F3" />
+                                                <Setter Property="BorderBrush" Value="#C8C8C8" />
+                                            </DataTrigger>
+
+                                            <!-- Flag -->
+                                            <DataTrigger Binding="{Binding IsFlagged}" Value="True">
+                                                <Setter Property="Foreground" Value="DarkRed" />
+                                            </DataTrigger>
+
+                                            <!-- Colored Numbers -->
+                                            <!-- 1 -->
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsRevealed}" Value="True"/>
+                                                    <Condition Binding="{Binding AdjacentMines}" Value="1"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Foreground" Value="Blue"/>
+                                            </MultiDataTrigger>
+
+                                            <!-- 2 -->
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsRevealed}" Value="True"/>
+                                                    <Condition Binding="{Binding AdjacentMines}" Value="2"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Foreground" Value="Green"/>
+                                            </MultiDataTrigger>
+
+                                            <!-- 3 -->
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsRevealed}" Value="True"/>
+                                                    <Condition Binding="{Binding AdjacentMines}" Value="3"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Foreground" Value="Red"/>
+                                            </MultiDataTrigger>
+
+                                            <!-- 4 -->
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsRevealed}" Value="True"/>
+                                                    <Condition Binding="{Binding AdjacentMines}" Value="4"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Foreground" Value="DarkBlue"/>
+                                            </MultiDataTrigger>
+
+                                            <!-- 5 -->
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsRevealed}" Value="True"/>
+                                                    <Condition Binding="{Binding AdjacentMines}" Value="5"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Foreground" Value="Brown"/>
+                                            </MultiDataTrigger>
+
+                                            <!-- 6 -->
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsRevealed}" Value="True"/>
+                                                    <Condition Binding="{Binding AdjacentMines}" Value="6"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Foreground" Value="Cyan"/>
+                                            </MultiDataTrigger>
+
+                                            <!-- 7 -->
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsRevealed}" Value="True"/>
+                                                    <Condition Binding="{Binding AdjacentMines}" Value="7"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Foreground" Value="Black"/>
+                                            </MultiDataTrigger>
+
+                                            <!-- 8 -->
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsRevealed}" Value="True"/>
+                                                    <Condition Binding="{Binding AdjacentMines}" Value="8"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Foreground" Value="Gray"/>
+                                            </MultiDataTrigger>
+
+                                            <!-- Mine -->
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsMine}" Value="True"/>
+                                                    <Condition Binding="{Binding IsRevealed}" Value="True"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Background" Value="#FFB3B3"/>
+                                                <Setter Property="Foreground" Value="DarkRed"/>
+                                            </MultiDataTrigger>
+
+                                            <!-- Game finished -->
+                                            <DataTrigger Binding="{Binding DataContext.IsGameFinished, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                         Value="True">
+                                                <Setter Property="Opacity" Value="0.8" />
+                                            </DataTrigger>
+
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </DockPanel>
+
+        <!-- ================= TOAST OVERLAY ================= -->
+        <Border Background="#DD333333"
+                CornerRadius="8"
+                Padding="10"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                Margin="0,20,0,0"
+                Opacity="0"
+                IsHitTestVisible="False"
+                x:Name="ToastMessage">
+
+            <TextBlock Text="{Binding Message}"
+                       Foreground="White"
                        FontSize="14"
-                       FontWeight="SemiBold" />
+                       FontWeight="SemiBold"/>
+        </Border>
 
-            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                <TextBlock Text="{Binding TotalMines, StringFormat=Mines: {0}}"
-               FontSize="13"
-               FontWeight="SemiBold"
-               Margin="0,0,16,0" />
-
-                <TextBlock Text="{Binding FlagCount, StringFormat=Flags: {0}}"
-               FontSize="13"
-               FontWeight="SemiBold"
-               Margin="0,0,16,0" />
-
-                <TextBlock Text="{Binding RemainingMines, StringFormat=Remaining: {0}}"
-               FontSize="13"
-               FontWeight="SemiBold" />
-            </StackPanel>
-        </StackPanel>
-
-        <!-- GAME BOARD -->
-        <ScrollViewer HorizontalScrollBarVisibility="Auto"
-                      VerticalScrollBarVisibility="Auto">
-
-            <ItemsControl ItemsSource="{Binding Cells}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <UniformGrid Rows="{Binding Rows}"
-                                     Columns="{Binding Columns}" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Button Content="{Binding DisplayText}"
-                                Margin="2"
-                                FontSize="18"
-                                FontFamily="Segoe UI Emoji"
-                                FontWeight="Bold"
-                                MinWidth="36"
-                                MinHeight="36"
-                                Command="{Binding DataContext.RevealCellCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                CommandParameter="{Binding}"
-                                MouseRightButtonUp="Cell_RightClick">
-
-                            <Button.Style>
-                                <Style TargetType="Button">
-
-                                    <!-- Default (hidden cell) -->
-                                    <Setter Property="Background" Value="LightGray" />
-                                    <Setter Property="BorderBrush" Value="Gray" />
-                                    <Setter Property="BorderThickness" Value="1" />
-                                    <Setter Property="Foreground" Value="Black" />
-                                    <Setter Property="Padding" Value="0" />
-
-                                    <Style.Triggers>
-
-                                        <!-- Hover -->
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Background" Value="#DCDCDC" />
-                                        </Trigger>
-
-                                        <!-- Disabled -->
-                                        <Trigger Property="IsEnabled" Value="False">
-                                            <Setter Property="Opacity" Value="0.6"/>
-                                        </Trigger>
-
-                                        <!-- Revealed -->
-                                        <DataTrigger Binding="{Binding IsRevealed}" Value="True">
-                                            <Setter Property="Background" Value="#F3F3F3" />
-                                            <Setter Property="BorderBrush" Value="#C8C8C8" />
-                                        </DataTrigger>
-
-                                        <!-- Flag -->
-                                        <DataTrigger Binding="{Binding IsFlagged}" Value="True">
-                                            <Setter Property="Foreground" Value="DarkRed" />
-                                        </DataTrigger>
-
-                                        <!-- Mine revealed (Colored numbers - classic Minesweeper style) -->
-                                        <MultiDataTrigger>
-                                            <MultiDataTrigger.Conditions>
-                                                <Condition Binding="{Binding IsRevealed}" Value="True"/>
-                                                <Condition Binding="{Binding AdjacentMines}" Value="1"/>
-                                            </MultiDataTrigger.Conditions>
-                                            <Setter Property="Foreground" Value="Blue"/>
-                                        </MultiDataTrigger>
-
-                                        <MultiDataTrigger>
-                                            <MultiDataTrigger.Conditions>
-                                                <Condition Binding="{Binding IsRevealed}" Value="True"/>
-                                                <Condition Binding="{Binding AdjacentMines}" Value="2"/>
-                                            </MultiDataTrigger.Conditions>
-                                            <Setter Property="Foreground" Value="Green"/>
-                                        </MultiDataTrigger>
-
-                                        <MultiDataTrigger>
-                                            <MultiDataTrigger.Conditions>
-                                                <Condition Binding="{Binding IsRevealed}" Value="True"/>
-                                                <Condition Binding="{Binding AdjacentMines}" Value="3"/>
-                                            </MultiDataTrigger.Conditions>
-                                            <Setter Property="Foreground" Value="Red"/>
-                                        </MultiDataTrigger>
-
-                                        <MultiDataTrigger>
-                                            <MultiDataTrigger.Conditions>
-                                                <Condition Binding="{Binding IsRevealed}" Value="True"/>
-                                                <Condition Binding="{Binding AdjacentMines}" Value="4"/>
-                                            </MultiDataTrigger.Conditions>
-                                            <Setter Property="Foreground" Value="DarkBlue"/>
-                                        </MultiDataTrigger>
-
-                                        <MultiDataTrigger>
-                                            <MultiDataTrigger.Conditions>
-                                                <Condition Binding="{Binding IsRevealed}" Value="True"/>
-                                                <Condition Binding="{Binding AdjacentMines}" Value="5"/>
-                                            </MultiDataTrigger.Conditions>
-                                            <Setter Property="Foreground" Value="Brown"/>
-                                        </MultiDataTrigger>
-
-                                        <MultiDataTrigger>
-                                            <MultiDataTrigger.Conditions>
-                                                <Condition Binding="{Binding IsRevealed}" Value="True"/>
-                                                <Condition Binding="{Binding AdjacentMines}" Value="6"/>
-                                            </MultiDataTrigger.Conditions>
-                                            <Setter Property="Foreground" Value="Cyan"/>
-                                        </MultiDataTrigger>
-
-                                        <MultiDataTrigger>
-                                            <MultiDataTrigger.Conditions>
-                                                <Condition Binding="{Binding IsRevealed}" Value="True"/>
-                                                <Condition Binding="{Binding AdjacentMines}" Value="7"/>
-                                            </MultiDataTrigger.Conditions>
-                                            <Setter Property="Foreground" Value="Black"/>
-                                        </MultiDataTrigger>
-
-                                        <MultiDataTrigger>
-                                            <MultiDataTrigger.Conditions>
-                                                <Condition Binding="{Binding IsRevealed}" Value="True"/>
-                                                <Condition Binding="{Binding AdjacentMines}" Value="8"/>
-                                            </MultiDataTrigger.Conditions>
-                                            <Setter Property="Foreground" Value="Gray"/>
-                                        </MultiDataTrigger>
-
-                                        <!-- Disable visual when game finished -->
-                                        <DataTrigger Binding="{Binding DataContext.IsGameFinished, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                     Value="True">
-                                            <Setter Property="Opacity" Value="0.8" />
-                                        </DataTrigger>
-
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
-    </DockPanel>
+    </Grid>
 </Window>
