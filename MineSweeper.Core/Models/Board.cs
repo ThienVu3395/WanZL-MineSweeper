@@ -27,11 +27,7 @@
             {
                 for (int col = 0; col < columns; col++)
                 {
-                    Cells[row, col] = new Cell
-                    {
-                        Row = row,
-                        Column = col
-                    };
+                    Cells[row, col] = new Cell(row, col);
                 }
             }
         }

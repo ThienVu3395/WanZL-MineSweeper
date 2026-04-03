@@ -7,6 +7,12 @@
     /// </summary>
     public class Cell
     {
+        public Cell(int row, int column)
+        {
+            Row = row;
+            Column = column;
+        }
+
         /// <summary>l
         /// Gets or sets the zero-based row index of the cell.
         /// </summary>

@@ -9,11 +9,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MineSweeper.Core\MineSweeper.Core.csproj" />
+    <Compile Remove="Assets\**" />
+    <EmbeddedResource Remove="Assets\**" />
+    <None Remove="Assets\**" />
+    <Page Remove="Assets\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Assets\" />
+    <ProjectReference Include="..\MineSweeper.Core\MineSweeper.Core.csproj" />
   </ItemGroup>
 
 </Project>
