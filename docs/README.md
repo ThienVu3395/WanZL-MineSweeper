@@ -22,11 +22,6 @@ maintainable, and user-friendly desktop application.
 - `docs/`  
   Project documentation, architecture notes, development progress, etc.
 
-## Current Status
-
-Initial project structure and core models have been created.
-Gameplay logic and UI implementation will be added incrementally in small commits.
-
 ## Technology Stack
 
 - .NET

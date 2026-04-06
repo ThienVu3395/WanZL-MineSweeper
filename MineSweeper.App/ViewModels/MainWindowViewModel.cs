@@ -9,8 +9,10 @@ using MineSweeper.Core.Services;
 namespace MineSweeper.App.ViewModels;
 
 /// <summary>
-/// Represents the main view model for the MineSweeper window.
+/// - (EN) Represents the main view model for the MineSweeper window.
 /// Responsible for exposing game data and handling user interactions.
+/// - (VI) Đại diện cho view model chính của cửa sổ MineSweeper.
+/// Chịu trách nhiệm cung cấp dữ liệu game cho UI và xử lý các tương tác của người dùng.
 /// </summary>
 public class MainWindowViewModel : INotifyPropertyChanged
 {
@@ -23,7 +25,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private DifficultyLevel _selectedDifficulty;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MainWindowViewModel"/> class.
+    /// - (EN) Initializes a new instance of the <see cref="MainWindowViewModel"/> class.
+    /// - (VI) Khởi tạo một instance mới của <see cref="MainWindowViewModel"/>.
     /// </summary>
     public MainWindowViewModel()
     {
@@ -60,41 +63,46 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     #region Commands
     /// <summary>
-    /// Command used to reveal a cell when user clicks on it.
+    /// - (EN) Gets the command used to reveal a cell when the user clicks on it.
+    /// - (VI) Lấy command dùng để mở một ô khi người dùng click vào ô đó.
     /// </summary>
     public ICommand RevealCellCommand => _revealCellCommand;
 
     /// <summary>
-    /// Command used to toggle flag on a cell (right-click).
+    /// - (EN) Gets the command used to toggle a flag on a cell when the user right-clicks.
+    /// - (VI) Lấy command dùng để bật hoặc tắt cờ trên một ô khi người dùng nhấn chuột phải.
     /// </summary>
     public ICommand ToggleFlagCommand => _toggleFlagCommand;
 
     /// <summary>
-    /// Command used to start a new game with the selected difficulty.
+    /// - (EN) Gets the command used to start a new game with the selected difficulty.
+    /// - (VI) Lấy command dùng để bắt đầu một ván mới theo độ khó đang được chọn.
     /// </summary>
     public ICommand NewGameCommand => _newGameCommand;
 
     /// <summary>
-    /// - (EN) Command used to perform chording on a revealed cell.
-    /// - (VI) Command dùng để thực hiện thao tác chording trên một ô đã mở.
+    /// - (EN) Gets the command used to perform chording on a revealed cell.
+    /// - (VI) Lấy command dùng để thực hiện thao tác chording trên một ô đã mở.
     /// </summary>
     public ICommand ChordCellCommand => _chordCellCommand;
     #endregion
 
+    #region Bindable Properties
     /// <summary>
-    /// Gets the collection of cells used for UI binding.
+    /// - (EN) Gets the collection of cells used for UI binding.
+    /// - (VI) Lấy tập hợp các ô được dùng để bind dữ liệu lên giao diện.
     /// </summary>
     public ObservableCollection<CellViewModel> Cells { get; }
 
-    public event PropertyChangedEventHandler? PropertyChanged;
-
     /// <summary>
-    /// Gets the available difficulty levels for the UI.
+    /// - (EN) Gets the available difficulty levels displayed on the UI.
+    /// - (VI) Lấy danh sách các mức độ khó được hiển thị trên giao diện.
     /// </summary>
     public ObservableCollection<DifficultyLevel> AvailableDifficulties { get; }
 
     /// <summary>
-    /// Gets or sets the currently selected difficulty level.
+    /// - (EN) Gets or sets the currently selected difficulty level.
+    /// - (VI) Lấy hoặc gán mức độ khó hiện đang được chọn.
     /// </summary>
     public DifficultyLevel SelectedDifficulty
     {
@@ -110,39 +118,46 @@ public class MainWindowViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Gets the number of rows of the current board.
+    /// - (EN) Gets the number of rows of the current board.
+    /// - (VI) Lấy số hàng của board hiện tại.
     /// </summary>
     public int Rows => _game.Board?.Rows ?? 0;
 
     /// <summary>
-    /// Gets the number of columns of the current board.
+    /// - (EN) Gets the number of columns of the current board.
+    /// - (VI) Lấy số cột của board hiện tại.
     /// </summary>
     public int Columns => _game.Board?.Columns ?? 0;
 
     /// <summary>
-    /// Gets whether the game is finished.
+    /// - (EN) Gets whether the game has finished.
+    /// - (VI) Lấy giá trị cho biết trò chơi đã kết thúc hay chưa.
     /// </summary>
     public bool IsGameFinished => _game.State == GameState.Won || _game.State == GameState.Lost;
 
     /// <summary>
-    /// Gets the total number of mines on the current board.
+    /// - (EN) Gets the total number of mines on the current board.
+    /// - (VI) Lấy tổng số mìn trên board hiện tại.
     /// </summary>
     public int TotalMines => _game.Board?.MineCount ?? 0;
 
     /// <summary>
-    /// Gets the number of currently flagged cells.
+    /// - (EN) Gets the number of currently flagged cells.
+    /// - (VI) Lấy số ô hiện đang được cắm cờ.
     /// </summary>
     public int FlagCount => Cells.Count(cell => cell.IsFlagged);
 
     /// <summary>
-    /// Gets the estimated number of mines remaining based on placed flags.
+    /// - (EN) Gets the estimated number of mines remaining based on placed flags.
+    /// - (VI) Lấy số mìn còn lại được ước tính dựa trên số cờ đã đặt.
     /// </summary>
     public int RemainingMines => TotalMines - FlagCount;
 
     private string? _message;
 
     /// <summary>
-    /// Gets or sets temporary UI message (e.g., warnings).
+    /// - (EN) Gets or sets the temporary UI message, such as warnings.
+    /// - (VI) Lấy hoặc gán thông báo tạm thời trên giao diện, ví dụ như cảnh báo.
     /// </summary>
     public string? Message
     {
@@ -154,14 +169,9 @@ public class MainWindowViewModel : INotifyPropertyChanged
         }
     }
 
-    private void ShowFlagLimitMessage()
-    {
-        Message = null;
-        Message = "⚠️ All flags are used!";
-    }
-
     /// <summary>
-    /// Gets the current game status text for UI display.
+    /// - (EN) Gets the current game status text for UI display.
+    /// - (VI) Lấy chuỗi trạng thái hiện tại của game để hiển thị trên giao diện.
     /// </summary>
     public string GameStatus
     {
@@ -177,13 +187,24 @@ public class MainWindowViewModel : INotifyPropertyChanged
             };
         }
     }
+    #endregion
 
+    #region Events
     /// <summary>
-    /// Starts a new game and rebuilds the UI cell collection.
+    /// - (EN) Occurs when a property value changes.
+    /// - (VI) Xảy ra khi giá trị của một thuộc tính thay đổi.
     /// </summary>
-    /// <param name="rows">Number of rows.</param>
-    /// <param name="columns">Number of columns.</param>
-    /// <param name="mineCount">Number of mines.</param>
+    public event PropertyChangedEventHandler? PropertyChanged;
+    #endregion
+
+    #region Public Methods
+    /// <summary>
+    /// - (EN) Starts a new game and rebuilds the UI cell collection.
+    /// - (VI) Bắt đầu một ván mới và dựng lại danh sách ô cho giao diện.
+    /// </summary>
+    /// <param name="rows">Number of rows / Số hàng</param>
+    /// <param name="columns">Number of columns / Số cột</param>
+    /// <param name="mineCount">Number of mines / Số lượng mìn</param>
     public void StartNewGame(int rows, int columns, int mineCount)
     {
         // Gọi logic từ Core
@@ -198,25 +219,125 @@ public class MainWindowViewModel : INotifyPropertyChanged
             Cells.Add(new CellViewModel(cell));
         }
 
-        Message = null;
+        ClearMessage();
+        RefreshGameProperties(includeBoardDimensions: true, includeTotalMines: true);
+        RefreshCommandStates();
+    }
+    #endregion
 
-        // Notify UI update
-        OnPropertyChanged(nameof(Rows));
-        OnPropertyChanged(nameof(Columns));
-        OnPropertyChanged(nameof(GameStatus));
-        OnPropertyChanged(nameof(IsGameFinished));
-        OnPropertyChanged(nameof(TotalMines));
-        OnPropertyChanged(nameof(FlagCount));
-        OnPropertyChanged(nameof(RemainingMines));
+    #region Command Handlers
+    /// <summary>
+    /// - (EN) Handles the reveal cell action triggered from the UI.
+    /// - (VI) Xử lý thao tác mở ô được gọi từ giao diện.
+    /// </summary>
+    /// <param name="parameter">The clicked cell view model / CellViewModel được click</param>
+    private void OnRevealCell(object? parameter)
+    {
+        if (parameter is not CellViewModel cellVm)
+            return;
 
-        // Cập nhật trạng thái enable/disable của command
-        _revealCellCommand.RaiseCanExecuteChanged();
-        _toggleFlagCommand.RaiseCanExecuteChanged();
-        _chordCellCommand.RaiseCanExecuteChanged();
+        ClearMessage();
+
+        _game.RevealCell(cellVm.Row, cellVm.Column);
+
+        RefreshBoardState();
+        HandleEndGameNotification();
     }
 
     /// <summary>
-    /// Starts a new game based on the selected difficulty level.
+    /// - (EN) Handles the right-click flag toggle action.
+    /// - (VI) Xử lý thao tác bật/tắt cờ khi người dùng right-click.
+    /// </summary>
+    /// <param name="parameter">The clicked cell view model / CellViewModel được thao tác</param>
+    private void OnToggleFlag(object? parameter)
+    {
+        if (parameter is not CellViewModel cellVm)
+            return;
+
+        // Không cho flag nếu đã đạt max
+        if (!cellVm.IsFlagged && FlagCount >= TotalMines)
+        {
+            ShowFlagLimitMessage();
+            return;
+        }
+
+        ClearMessage();
+
+        _game.ToggleFlag(cellVm.Row, cellVm.Column);
+
+        RefreshBoardState();
+    }
+
+    /// <summary>
+    /// - (EN) Handles the chord action triggered from the UI.
+    /// - (VI) Xử lý thao tác chord được gọi từ giao diện.
+    /// </summary>
+    /// <param name="parameter">
+    /// - (EN) The target cell view model.
+    /// - (VI) CellViewModel của ô được thao tác.
+    /// </param>
+    private void OnChordCell(object? parameter)
+    {
+        if (parameter is not CellViewModel cellVm)
+            return;
+
+        ClearMessage();
+
+        _game.ChordCell(cellVm.Row, cellVm.Column);
+
+        RefreshBoardState();
+        HandleEndGameNotification();
+    }
+    #endregion
+
+    #region Command Conditions
+    /// <summary>
+    /// - (EN) Determines whether a cell can be revealed. Prevents interaction when the game is finished.
+    /// - (VI) Xác định một ô có thể được mở hay không. Ngăn thao tác khi trò chơi đã kết thúc.
+    /// </summary>
+    /// <param name="parameter">- (EN) Command parameter / (VI) Tham số của command</param>
+    /// <returns>- (EN) True if revealing is allowed / (VI) True nếu được phép mở ô</returns>
+    private bool CanRevealCell(object? parameter)
+    {
+        return _game.State == GameState.InProgress;
+    }
+
+    /// <summary>
+    /// - (EN) Determines whether a cell can be flagged. Prevents interaction when the game is finished.
+    /// - (VI) Xác định một ô có thể được cắm cờ hay không. Ngăn thao tác khi trò chơi đã kết thúc.
+    /// </summary>
+    /// <param name="parameter">- (EN) Command parameter / (VI) Tham số của command</param>
+    /// <returns>- (EN) True if flagging is allowed / (VI) True nếu được phép cắm cờ</returns>
+    private bool CanToggleFlag(object? parameter)
+    {
+        return _game.State == GameState.InProgress;
+    }
+
+    /// <summary>
+    /// - (EN) Determines whether chording is allowed for the selected cell.
+    /// - (VI) Xác định ô được chọn có thể thực hiện chording hay không.
+    /// </summary>
+    /// <param name="parameter">
+    /// - (EN) The target cell view model.
+    /// - (VI) CellViewModel của ô cần kiểm tra.
+    /// </param>
+    /// <returns>- (EN) True if chording is allowed / (VI) True nếu được phép chording</returns>
+    private bool CanChordCell(object? parameter)
+    {
+        if (_game.State != GameState.InProgress)
+            return false;
+
+        if (parameter is not CellViewModel cellVm)
+            return false;
+
+        return cellVm.IsRevealed;
+    }
+    #endregion
+
+    #region Game Setup Helpers
+    /// <summary>
+    /// - (EN) Starts a new game based on the currently selected difficulty level.
+    /// - (VI) Bắt đầu một ván mới dựa trên mức độ khó hiện đang được chọn.
     /// </summary>
     private void StartNewGameByDifficulty()
     {
@@ -240,150 +361,46 @@ public class MainWindowViewModel : INotifyPropertyChanged
                 break;
         }
     }
+    #endregion
 
+    #region Notification Helpers
     /// <summary>
-    /// Handles the reveal cell action triggered from the UI.
+    /// - (EN) Shows a warning message when all available flags have already been used.
+    /// - (VI) Hiển thị thông báo cảnh báo khi toàn bộ số cờ cho phép đã được sử dụng hết.
     /// </summary>
-    /// <param name="parameter">The clicked cell view model.</param>
-    private void OnRevealCell(object? parameter)
+    private void ShowFlagLimitMessage()
     {
-        if (parameter is not CellViewModel cellVm)
-            return;
-
         Message = null;
-
-        _game.RevealCell(cellVm.Row, cellVm.Column);
-
-        RefreshBoard();
-        OnPropertyChanged(nameof(GameStatus));
-        OnPropertyChanged(nameof(IsGameFinished));
-        OnPropertyChanged(nameof(FlagCount));
-        OnPropertyChanged(nameof(RemainingMines));
-
-        // Cập nhật trạng thái enable/disable của command
-        _revealCellCommand.RaiseCanExecuteChanged();
-        _toggleFlagCommand.RaiseCanExecuteChanged();
-        _chordCellCommand.RaiseCanExecuteChanged();
-
-        // Nếu game kết thúc thì hiển thị message
-        if (_game.State == GameState.Won)
-        {
-            System.Windows.MessageBox.Show("Congratulations! You cleared all cells!", "Victory 🎉");
-        }
-        else if (_game.State == GameState.Lost)
-        {
-            System.Windows.MessageBox.Show("Boom! You hit a mine.", "Game Over 💥");
-        }
+        Message = "⚠️ All flags are used!";
     }
 
     /// <summary>
-    /// Handles the right-click flag toggle action.
+    /// - (EN) Raises a property changed notification for UI binding.
+    /// - (VI) Phát thông báo thay đổi thuộc tính để cập nhật binding trên giao diện.
     /// </summary>
-    private void OnToggleFlag(object? parameter)
-    {
-        if (parameter is not CellViewModel cellVm)
-            return;
-
-        // Không cho flag nếu đã đạt max
-        if (!cellVm.IsFlagged && FlagCount >= TotalMines)
-        {
-            ShowFlagLimitMessage();
-            return;
-        }
-
-        // clear message
-        Message = null;
-
-        _game.ToggleFlag(cellVm.Row, cellVm.Column);
-
-        RefreshBoard();
-        OnPropertyChanged(nameof(FlagCount));
-        OnPropertyChanged(nameof(RemainingMines));
-        OnPropertyChanged(nameof(GameStatus));
-        OnPropertyChanged(nameof(IsGameFinished));
-
-        // Cập nhật trạng thái command sau khi toggle flag
-        _revealCellCommand.RaiseCanExecuteChanged();
-        _toggleFlagCommand.RaiseCanExecuteChanged();
-        _chordCellCommand.RaiseCanExecuteChanged();
-    }
-
-    /// <summary>
-    /// - (EN) Handles the chord action triggered from the UI.
-    /// - (VI) Xử lý thao tác chord được gọi từ giao diện.
-    /// </summary>
-    /// <param name="parameter">
-    /// - (EN) The target cell view model.
-    /// - (VI) CellViewModel của ô được thao tác.
+    /// <param name="propertyName">
+    /// - (EN) The name of the changed property.
+    /// - (VI) Tên của thuộc tính đã thay đổi.
     /// </param>
-    private void OnChordCell(object? parameter)
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
-        if (parameter is not CellViewModel cellVm)
-            return;
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+    #endregion
 
+    #region Private Helpers
+    /// <summary>
+    /// - (EN) Clears the temporary UI message.
+    /// - (VI) Xóa thông báo tạm thời trên giao diện.
+    /// </summary>
+    private void ClearMessage()
+    {
         Message = null;
-
-        _game.ChordCell(cellVm.Row, cellVm.Column);
-
-        RefreshBoard();
-        OnPropertyChanged(nameof(GameStatus));
-        OnPropertyChanged(nameof(IsGameFinished));
-        OnPropertyChanged(nameof(FlagCount));
-        OnPropertyChanged(nameof(RemainingMines));
-
-        _revealCellCommand.RaiseCanExecuteChanged();
-        _toggleFlagCommand.RaiseCanExecuteChanged();
-        _chordCellCommand.RaiseCanExecuteChanged();
-
-        if (_game.State == GameState.Won)
-        {
-            System.Windows.MessageBox.Show("Congratulations! You cleared all cells!", "Victory 🎉");
-        }
-        else if (_game.State == GameState.Lost)
-        {
-            System.Windows.MessageBox.Show("Boom! You hit a mine.", "Game Over 💥");
-        }
     }
 
     /// <summary>
-    /// Determines whether a cell can be revealed.
-    /// Prevents interaction when the game is finished.
-    /// </summary>
-    private bool CanRevealCell(object? parameter)
-    {
-        return _game.State == GameState.InProgress;
-    }
-
-    /// <summary>
-    /// Determines whether a cell can be flagged.
-    /// Prevents interaction when the game is finished.
-    /// </summary>
-    private bool CanToggleFlag(object? parameter)
-    {
-        return _game.State == GameState.InProgress;
-    }
-
-    /// <summary>
-    /// - (EN) Determines whether chording is allowed for the selected cell.
-    /// - (VI) Xác định ô được chọn có thể thực hiện chording hay không.
-    /// </summary>
-    /// <param name="parameter">
-    /// - (EN) The target cell view model.
-    /// - (VI) CellViewModel của ô cần kiểm tra.
-    /// </param>
-    private bool CanChordCell(object? parameter)
-    {
-        if (_game.State != GameState.InProgress)
-            return false;
-
-        if (parameter is not CellViewModel cellVm)
-            return false;
-
-        return cellVm.IsRevealed;
-    }
-
-    /// <summary>
-    /// Refreshes all cell view models to reflect updated game state.
+    /// - (EN) Refreshes all cell view models to reflect updated game state.
+    /// - (VI) Làm mới toàn bộ CellViewModel để phản ánh trạng thái game mới nhất.
     /// </summary>
     private void RefreshBoard()
     {
@@ -394,10 +411,72 @@ public class MainWindowViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Raises property changed notification for UI binding.
+    /// - (EN) Refreshes the board and all related UI state after a gameplay action.
+    /// - (VI) Làm mới board và toàn bộ trạng thái UI liên quan sau một thao tác gameplay.
     /// </summary>
-    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    private void RefreshBoardState()
     {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        RefreshBoard();
+        RefreshGameProperties();
+        RefreshCommandStates();
     }
+
+    /// <summary>
+    /// - (EN) Raises property change notifications for game-related UI properties.
+    /// - (VI) Phát thông báo thay đổi cho các thuộc tính UI liên quan đến trạng thái game.
+    /// </summary>
+    /// <param name="includeBoardDimensions">
+    /// - (EN) Whether to raise board dimension properties.
+    /// - (VI) Có raise thêm các thuộc tính kích thước board hay không.
+    /// </param>
+    /// <param name="includeTotalMines">
+    /// - (EN) Whether to raise total mine count property.
+    /// - (VI) Có raise thêm thuộc tính tổng số mìn hay không.
+    /// </param>
+    private void RefreshGameProperties(bool includeBoardDimensions = false, bool includeTotalMines = false)
+    {
+        if (includeBoardDimensions)
+        {
+            OnPropertyChanged(nameof(Rows));
+            OnPropertyChanged(nameof(Columns));
+        }
+
+        if (includeTotalMines)
+        {
+            OnPropertyChanged(nameof(TotalMines));
+        }
+
+        OnPropertyChanged(nameof(GameStatus));
+        OnPropertyChanged(nameof(IsGameFinished));
+        OnPropertyChanged(nameof(FlagCount));
+        OnPropertyChanged(nameof(RemainingMines));
+    }
+
+    /// <summary>
+    /// - (EN) Forces all gameplay commands to re-evaluate their executable state.
+    /// - (VI) Yêu cầu tất cả command gameplay đánh giá lại trạng thái có thể thực thi.
+    /// </summary>
+    private void RefreshCommandStates()
+    {
+        _revealCellCommand.RaiseCanExecuteChanged();
+        _toggleFlagCommand.RaiseCanExecuteChanged();
+        _chordCellCommand.RaiseCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// - (EN) Displays the endgame notification if the current game has been won or lost.
+    /// - (VI) Hiển thị thông báo kết thúc game nếu người chơi đã thắng hoặc thua.
+    /// </summary>
+    private void HandleEndGameNotification()
+    {
+        if (_game.State == GameState.Won)
+        {
+            System.Windows.MessageBox.Show("Congratulations! You cleared all cells!", "Victory 🎉");
+        }
+        else if (_game.State == GameState.Lost)
+        {
+            System.Windows.MessageBox.Show("Boom! You hit a mine.", "Game Over 💥");
+        }
+    }
+    #endregion
 }

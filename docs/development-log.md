@@ -433,3 +433,24 @@ Extended the ViewModel test suite to cover the new chording interaction exposed 
 ### Notes
 This commit improves regression safety for the chording feature at the MVVM layer.
 It helps ensure that the WPF interaction flow stays aligned with the underlying core gameplay logic.
+
+## Commit 27 - Simplify board refresh and UI state update flow
+
+### Summary
+Refactored `MainWindowViewModel` to reduce duplicated UI refresh and post-action update logic after gameplay interactions.
+
+### Completed
+- Extracted shared helper methods for:
+  - clearing temporary messages
+  - refreshing board state
+  - raising property change notifications
+  - refreshing command executable states
+  - handling endgame notifications
+- Simplified `OnRevealCell`, `OnToggleFlag`, and `OnChordCell` by reusing shared post-action helper methods
+- Simplified `StartNewGame` by reusing shared refresh-related helpers
+- Improved readability and consistency of interaction handling in `MainWindowViewModel`
+- Preserved existing gameplay behavior and ViewModel behavior
+
+### Notes
+This commit is a maintainability-focused refactor and does not introduce new gameplay features.
+It prepares the ViewModel for future enhancements by making action handling more consistent, reusable, and easier to extend.
