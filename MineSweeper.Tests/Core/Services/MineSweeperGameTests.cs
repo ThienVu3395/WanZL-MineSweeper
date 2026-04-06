@@ -9,6 +9,7 @@ namespace MineSweeper.Tests.Core.Services;
 /// </summary>
 public class MineSweeperGameTests
 {
+    #region StartNewGame
     /// <summary>
     /// Verifies that a new game starts with a board instance.
     /// - Kiểm tra game khi start phải tạo board
@@ -187,7 +188,9 @@ public class MineSweeperGameTests
         // Ô (0,2) chỉ gần 1 mìn → phải là 1
         Assert.Equal(1, board.Cells[0, 2].AdjacentMines);
     }
+    #endregion
 
+    #region CalculateAdjacentMines
     /// <summary>
     /// Verifies that adjacent mine calculation correctly handles
     /// edge and corner cells without causing out-of-bounds errors.
@@ -218,7 +221,9 @@ public class MineSweeperGameTests
         // Ô (1,1) nằm chéo mìn → có 1 mìn
         Assert.Equal(1, board.Cells[1, 1].AdjacentMines);
     }
+    #endregion
 
+    #region RevealCell
     /// <summary>
     /// Verifies that revealing a non-mine cell marks it as revealed.
     /// </summary>
@@ -308,6 +313,68 @@ public class MineSweeperGameTests
         Assert.Equal(GameState.Won, game.State);
     }
 
+
+    [Fact]
+    public void RevealCell_ShouldNotRevealFlaggedCells_DuringFloodFill()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+        game.StartNewGame(3, 3, 0);
+
+        var board = game.Board!;
+
+        // Flag một ô ở giữa
+        game.ToggleFlag(1, 1);
+
+        // Act - click ô khác để trigger flood fill
+        game.RevealCell(0, 0);
+
+        // Assert
+        // Ô flagged không được mở
+        Assert.False(board.Cells[1, 1].IsRevealed);
+        Assert.True(board.Cells[1, 1].IsFlagged);
+    }
+
+    [Fact]
+    public void RevealCell_ShouldNotRemoveFlag_WhenFloodFillOccurs()
+    {
+        var game = new MineSweeperGame();
+        game.StartNewGame(3, 3, 0);
+
+        var board = game.Board!;
+
+        game.ToggleFlag(1, 1);
+
+        game.RevealCell(0, 0);
+
+        Assert.True(board.Cells[1, 1].IsFlagged);
+    }
+
+    [Fact]
+    public void RevealCell_ShouldRevealAllMines_WhenPlayerLoses()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+        game.StartNewGame(3, 3, 0);
+
+        var board = game.Board!;
+
+        board.Cells[0, 0].IsMine = true;
+        board.Cells[2, 2].IsMine = true;
+
+        game.CalculateAdjacentMines(board);
+
+        // Act
+        game.RevealCell(0, 0);
+
+        // Assert
+        Assert.Equal(GameState.Lost, game.State);
+        Assert.True(board.Cells[0, 0].IsRevealed);
+        Assert.True(board.Cells[2, 2].IsRevealed);
+    }
+    #endregion
+
+    #region ToggleFlag
     /// <summary>
     /// Verifies that a cell can be flagged.
     /// </summary>
@@ -368,45 +435,15 @@ public class MineSweeperGameTests
         // Assert
         Assert.False(board.Cells[1, 1].IsFlagged);
     }
+    #endregion
 
+    #region Chord
+    /// <summary>
+    /// - (EN) Verifies that chording does nothing when the target cell has not been revealed.
+    /// - (VI) Kiểm tra chording không có tác dụng nếu ô mục tiêu chưa được mở.
+    /// </summary>
     [Fact]
-    public void RevealCell_ShouldNotRevealFlaggedCells_DuringFloodFill()
-    {
-        // Arrange
-        var game = new MineSweeperGame();
-        game.StartNewGame(3, 3, 0);
-
-        var board = game.Board!;
-
-        // Flag một ô ở giữa
-        game.ToggleFlag(1, 1);
-
-        // Act - click ô khác để trigger flood fill
-        game.RevealCell(0, 0);
-
-        // Assert
-        // Ô flagged không được mở
-        Assert.False(board.Cells[1, 1].IsRevealed);
-        Assert.True(board.Cells[1, 1].IsFlagged);
-    }
-
-    [Fact]
-    public void RevealCell_ShouldNotRemoveFlag_WhenFloodFillOccurs()
-    {
-        var game = new MineSweeperGame();
-        game.StartNewGame(3, 3, 0);
-
-        var board = game.Board!;
-
-        game.ToggleFlag(1, 1);
-
-        game.RevealCell(0, 0);
-
-        Assert.True(board.Cells[1, 1].IsFlagged);
-    }
-
-    [Fact]
-    public void RevealCell_ShouldRevealAllMines_WhenPlayerLoses()
+    public void ChordCell_ShouldDoNothing_WhenTargetCellIsNotRevealed()
     {
         // Arrange
         var game = new MineSweeperGame();
@@ -415,16 +452,143 @@ public class MineSweeperGameTests
         var board = game.Board!;
 
         board.Cells[0, 0].IsMine = true;
-        board.Cells[2, 2].IsMine = true;
-
         game.CalculateAdjacentMines(board);
 
         // Act
-        game.RevealCell(0, 0);
+        game.ChordCell(1, 1);
+
+        // Assert
+        Assert.False(board.Cells[1, 0].IsRevealed);
+        Assert.False(board.Cells[1, 1].IsRevealed);
+        Assert.Equal(GameState.InProgress, game.State);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that chording does nothing when the number of adjacent flags
+    /// does not match the revealed cell's adjacent mine count.
+    /// - (VI) Kiểm tra chording không hoạt động khi số cờ xung quanh chưa khớp với số mìn lân cận.
+    /// </summary>
+    [Fact]
+    public void ChordCell_ShouldDoNothing_WhenAdjacentFlagCountDoesNotMatch()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+        game.StartNewGame(3, 3, 0);
+
+        var board = game.Board!;
+
+        board.Cells[0, 0].IsMine = true;
+        board.Cells[0, 1].IsMine = true;
+        game.CalculateAdjacentMines(board);
+
+        game.RevealCell(1, 1); // AdjacentMines = 2
+        game.ToggleFlag(0, 0); // only 1 flag
+
+        // Act
+        game.ChordCell(1, 1);
+
+        // Assert
+        Assert.False(board.Cells[1, 0].IsRevealed);
+        Assert.False(board.Cells[1, 2].IsRevealed);
+        Assert.False(board.Cells[2, 0].IsRevealed);
+        Assert.Equal(GameState.InProgress, game.State);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that chording reveals all hidden and unflagged neighboring cells
+    /// when the adjacent flag count matches the revealed number cell.
+    /// - (VI) Kiểm tra chording sẽ mở tất cả ô lân cận còn ẩn và không bị flag
+    /// khi số cờ xung quanh khớp với ô số đã mở.
+    /// </summary>
+    [Fact]
+    public void ChordCell_ShouldRevealHiddenUnflaggedNeighbors_WhenFlagCountMatches()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+        game.StartNewGame(3, 3, 0);
+
+        var board = game.Board!;
+
+        board.Cells[0, 0].IsMine = true;
+        game.CalculateAdjacentMines(board);
+
+        game.RevealCell(1, 1);   // AdjacentMines = 1
+        game.ToggleFlag(0, 0);   // correct flag
+
+        // Act
+        game.ChordCell(1, 1);
+
+        // Assert
+        Assert.True(board.Cells[0, 1].IsRevealed);
+        Assert.True(board.Cells[0, 2].IsRevealed);
+        Assert.True(board.Cells[1, 0].IsRevealed);
+        Assert.True(board.Cells[1, 2].IsRevealed);
+        Assert.True(board.Cells[2, 0].IsRevealed);
+        Assert.True(board.Cells[2, 1].IsRevealed);
+        Assert.True(board.Cells[2, 2].IsRevealed);
+
+        Assert.True(board.Cells[0, 0].IsFlagged);
+        Assert.False(board.Cells[0, 0].IsRevealed);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that chording can trigger a loss when the placed flags are incorrect
+    /// and an unflagged mine is revealed as part of the chord action.
+    /// - (VI) Kiểm tra chording có thể làm thua game nếu người chơi cắm cờ sai
+    /// và một ô mìn chưa được flag bị mở ra.
+    /// </summary>
+    [Fact]
+    public void ChordCell_ShouldSetStateToLost_WhenFlagsAreIncorrectAndMineGetsRevealed()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+        game.StartNewGame(3, 3, 0);
+
+        var board = game.Board!;
+
+        board.Cells[0, 0].IsMine = true;
+        board.Cells[0, 1].IsMine = true;
+        game.CalculateAdjacentMines(board);
+
+        game.RevealCell(1, 1);   // AdjacentMines = 2
+        game.ToggleFlag(0, 0);   // correct
+        game.ToggleFlag(2, 2);   // wrong
+
+        // Act
+        game.ChordCell(1, 1);
 
         // Assert
         Assert.Equal(GameState.Lost, game.State);
-        Assert.True(board.Cells[0, 0].IsRevealed);
-        Assert.True(board.Cells[2, 2].IsRevealed);
+        Assert.True(board.Cells[0, 1].IsRevealed);
     }
+
+    /// <summary>
+    /// - (EN) Verifies that chording can complete the game and set the state to won
+    /// when all remaining safe cells are revealed.
+    /// - (VI) Kiểm tra chording có thể giúp thắng game khi mở hết các ô an toàn còn lại.
+    /// </summary>
+    [Fact]
+    public void ChordCell_ShouldSetStateToWon_WhenAllSafeCellsAreRevealed()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+        game.StartNewGame(2, 2, 0);
+
+        var board = game.Board!;
+
+        board.Cells[0, 0].IsMine = true;
+        game.CalculateAdjacentMines(board);
+
+        game.RevealCell(0, 1);
+        game.ToggleFlag(0, 0);
+
+        // Act
+        game.ChordCell(0, 1);
+
+        // Assert
+        Assert.Equal(GameState.Won, game.State);
+        Assert.True(board.Cells[1, 0].IsRevealed);
+        Assert.True(board.Cells[1, 1].IsRevealed);
+    }
+    #endregion
 }

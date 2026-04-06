@@ -377,3 +377,26 @@ Refactored neighbor traversal logic in the game service to reduce duplication an
 This is a non-functional refactor (no behavior change).
 It prepares the codebase for upcoming features such as chording,
 which relies heavily on neighbor cell traversal.
+
+## Commit 24 - Implement chording gameplay with unit test coverage
+
+### Summary
+Added the chording mechanic to the core MineSweeper gameplay and covered it with dedicated unit tests.
+
+### Completed
+- Added `ChordCell(row, column)` to `MineSweeperGame`
+- Enabled chording only for revealed cells during an active game
+- Counted flagged neighboring cells and compared them against the revealed cell's adjacent mine count
+- Revealed all hidden and unflagged neighboring cells when the chording condition was satisfied
+- Reused existing reveal logic to preserve flood fill, lose-state, and win-state consistency
+- Stopped chord processing immediately if an unflagged mine was revealed
+- Added unit tests for key chording scenarios:
+  - target cell is not revealed
+  - adjacent flag count does not match
+  - valid chord reveals hidden unflagged neighbors
+  - incorrect flags can trigger a loss
+  - valid chord can complete the game and trigger a win
+
+### Notes
+This commit introduces an important advanced MineSweeper interaction found in classic implementations.
+It improves gameplay efficiency for experienced players while keeping the logic consistent with the existing reveal and win/loss rules.

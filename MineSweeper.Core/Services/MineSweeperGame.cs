@@ -130,6 +130,72 @@ public class MineSweeperGame
     }
 
     /// <summary>
+    /// - (EN) Performs chording action on a revealed numbered cell.
+    /// If the number of flagged neighboring cells equals the adjacent mine count,
+    /// all remaining hidden and unflagged neighboring cells will be revealed.
+    /// This action may result in a win or loss depending on correctness of flags.
+    /// 
+    /// - (VI) Thực hiện thao tác "chord" trên một ô đã được mở.
+    /// Nếu số lượng cờ xung quanh bằng với số mìn lân cận,
+    /// tất cả các ô lân cận chưa mở và không bị flag sẽ được mở.
+    /// Hành động này có thể dẫn đến thắng hoặc thua tùy vào việc đặt cờ đúng hay sai.
+    /// </summary>
+    /// <param name="row"> (EN) Row index / (VI) Chỉ số hàng </param>
+    /// <param name="column"> (EN) Column index / (VI) Chỉ số cột </param>
+    public void ChordCell(int row, int column)
+    {
+        // - (EN) Only allow action during active game
+        // - (VI) Chỉ cho phép khi game đang chạy
+        if (Board == null || State != GameState.InProgress)
+            return;
+
+        var cell = Board.Cells[row, column];
+
+        // - (EN) Chording only works on revealed cells
+        // - (VI) Chỉ áp dụng cho ô đã được mở
+        if (!cell.IsRevealed)
+            return;
+
+        // - (EN) Do not chord on mine cells
+        // - (VI) Không thực hiện trên ô mìn
+        if (cell.IsMine)
+            return;
+
+        var neighbors = GetNeighborCells(Board, row, column).ToList();
+
+        // - (EN) Count flagged neighbors
+        // - (VI) Đếm số lượng ô đã được flag xung quanh
+        int flaggedCount = neighbors.Count(c => c.IsFlagged);
+
+        // - (EN) Only proceed if flag count matches expected adjacent mines
+        // - (VI) Chỉ thực hiện nếu số flag khớp với số mìn lân cận
+        if (flaggedCount != cell.AdjacentMines)
+            return;
+
+        // - (EN) Reveal all hidden & unflagged neighbors
+        // - (VI) Mở tất cả ô lân cận chưa mở và không bị flag
+        foreach (var neighbor in neighbors)
+        {
+            if (neighbor.IsRevealed || neighbor.IsFlagged)
+                continue;
+
+            // - (EN) Reuse existing reveal logic to ensure consistency
+            // - (VI) Tái sử dụng logic reveal để đảm bảo đồng nhất
+            RevealCell(neighbor.Row, neighbor.Column);
+
+            // - (EN) Stop early if game already lost
+            // - (VI) Dừng ngay nếu đã thua game
+            if (State == GameState.Lost)
+                return;
+        }
+
+        // - (EN) Check win condition after chord reveal
+        // - (VI) Kiểm tra điều kiện thắng sau khi chord
+        CheckWinCondition();
+    }
+
+    #region Private Helpers
+    /// <summary>
     /// - (EN) Recursively reveals cells using flood fill logic.
     /// - (VI) Đệ quy mở các ô theo cơ chế flood fill. Nếu ô không có mìn xung quanh (AdjacentMines = 0) 
     /// thì tiếp tục mở lan các ô xung quanh (flood fill)
@@ -262,4 +328,5 @@ public class MineSweeperGame
             }
         }
     }
+    #endregion
 }
