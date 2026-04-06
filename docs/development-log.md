@@ -547,3 +547,24 @@ Added a gameplay timer to track elapsed duration and display it directly in the 
 ### Notes
 This commit improves product value by making the game feel more complete and closer to a classic MineSweeper experience.
 It also prepares the project for future features such as best-time tracking by difficulty.
+
+## Commit 33 - Store and display best times by difficulty
+
+### Summary
+Added best-time tracking by difficulty to make the game feel more rewarding and competitive.
+
+### Completed
+- Added best-time tracking for supported difficulty levels
+- Updated the ViewModel to record a best time when the player wins
+- Replaced an existing best time only when a faster completion time was achieved
+- Displayed the best time in the main game header alongside the live timer
+- Refreshed best-time display when the selected difficulty changed
+- Added ViewModel tests for:
+  - fallback display when no best time exists
+  - storing the first best time after a win
+  - replacing best time when a better result is achieved
+  - preserving best time when a worse result is achieved
+  - refreshing best time display when difficulty changes
+
+### Notes
+This commit builds on the timer feature and improves product value by giving players a reason to replay and improve their performance across difficulty levels.

@@ -69,23 +69,33 @@ public class MainWindowViewModelTests
     }
 
     /// <summary>
-    /// - (EN) Verifies that changing the selected difficulty raises PropertyChanged for SelectedDifficulty.
-    /// - (VI) Kiểm tra khi thay đổi độ khó được chọn thì PropertyChanged sẽ được raise cho SelectedDifficulty.
+    /// - (EN) Verifies that changing the selected difficulty raises PropertyChanged
+    /// for SelectedDifficulty and related best-time display properties.
+    /// - (VI) Kiểm tra khi thay đổi độ khó được chọn thì PropertyChanged sẽ được raise
+    /// cho SelectedDifficulty và các thuộc tính hiển thị best time liên quan.
     /// </summary>
     [Fact]
     public void SelectedDifficulty_ShouldRaisePropertyChanged_ForSelectedDifficulty()
     {
         // Arrange
         var vm = new MainWindowViewModel();
-        string? changedProperty = null;
+        var changedProperties = new List<string>();
 
-        vm.PropertyChanged += (_, e) => changedProperty = e.PropertyName;
+        vm.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is not null)
+            {
+                changedProperties.Add(e.PropertyName);
+            }
+        };
 
         // Act
         vm.SelectedDifficulty = DifficultyLevel.Intermediate;
 
         // Assert
-        Assert.Equal(nameof(MainWindowViewModel.SelectedDifficulty), changedProperty);
+        Assert.Contains(nameof(MainWindowViewModel.SelectedDifficulty), changedProperties);
+        Assert.Contains(nameof(MainWindowViewModel.BestTime), changedProperties);
+        Assert.Contains(nameof(MainWindowViewModel.BestTimeDisplay), changedProperties);
     }
     #endregion
 
@@ -458,6 +468,138 @@ public class MainWindowViewModelTests
         // Assert
         bool timerRunningAfterLoss = GetPrivateFieldValue<bool>(vm, "_isTimerRunning");
         Assert.False(timerRunningAfterLoss);
+    }
+
+    #endregion
+
+    #region BestTime
+
+    /// <summary>
+    /// - (EN) Verifies that best time display shows fallback text when no record exists.
+    /// - (VI) Kiểm tra chuỗi best time hiển thị giá trị mặc định khi chưa có kỷ lục.
+    /// </summary>
+    [Fact]
+    public void BestTimeDisplay_ShouldReturnFallback_WhenNoBestTimeExists()
+    {
+        // Arrange
+        var vm = new MainWindowViewModel();
+
+        // Assert
+        Assert.Null(vm.BestTime);
+        Assert.Equal("--:--", vm.BestTimeDisplay);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that winning a game stores the first best time for the selected difficulty.
+    /// - (VI) Kiểm tra khi thắng game thì thời gian thắng đầu tiên sẽ được lưu làm best time cho độ khó đang chọn.
+    /// </summary>
+    [Fact]
+    public void WinningGame_ShouldStoreBestTime_ForSelectedDifficulty()
+    {
+        // Arrange
+        var vm = new MainWindowViewModel();
+        vm.SelectedDifficulty = DifficultyLevel.Beginner;
+
+        ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
+        SetPrivateFieldValue(vm, "_elapsedTime", TimeSpan.FromSeconds(42));
+
+        vm.RevealCellCommand.Execute(GetCell(vm, 0, 1));
+        vm.RevealCellCommand.Execute(GetCell(vm, 1, 0));
+
+        // Act
+        vm.RevealCellCommand.Execute(GetCell(vm, 1, 1));
+
+        // Assert
+        Assert.NotNull(vm.BestTime);
+        Assert.Equal("00:42", vm.BestTimeDisplay);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that a better completion time replaces the previous best time.
+    /// - (VI) Kiểm tra một thời gian hoàn thành tốt hơn sẽ thay thế best time trước đó.
+    /// </summary>
+    [Fact]
+    public void WinningGame_ShouldReplaceBestTime_WhenNewTimeIsBetter()
+    {
+        // Arrange
+        var vm = new MainWindowViewModel();
+        vm.SelectedDifficulty = DifficultyLevel.Beginner;
+
+        SetPrivateFieldValue(vm, "_bestTimes", new Dictionary<DifficultyLevel, TimeSpan>
+        {
+            [DifficultyLevel.Beginner] = TimeSpan.FromSeconds(60)
+        });
+
+        ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
+        SetPrivateFieldValue(vm, "_elapsedTime", TimeSpan.FromSeconds(45));
+
+        vm.RevealCellCommand.Execute(GetCell(vm, 0, 1));
+        vm.RevealCellCommand.Execute(GetCell(vm, 1, 0));
+
+        // Act
+        vm.RevealCellCommand.Execute(GetCell(vm, 1, 1));
+
+        // Assert
+        Assert.NotNull(vm.BestTime);
+        Assert.Equal("00:45", vm.BestTimeDisplay);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that a worse completion time does not overwrite the stored best time.
+    /// - (VI) Kiểm tra một thời gian hoàn thành kém hơn sẽ không ghi đè best time đã lưu.
+    /// </summary>
+    [Fact]
+    public void WinningGame_ShouldNotReplaceBestTime_WhenNewTimeIsWorse()
+    {
+        // Arrange
+        var vm = new MainWindowViewModel();
+        vm.SelectedDifficulty = DifficultyLevel.Beginner;
+
+        SetPrivateFieldValue(vm, "_bestTimes", new Dictionary<DifficultyLevel, TimeSpan>
+        {
+            [DifficultyLevel.Beginner] = TimeSpan.FromSeconds(40)
+        });
+
+        ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
+        SetPrivateFieldValue(vm, "_elapsedTime", TimeSpan.FromSeconds(55));
+
+        vm.RevealCellCommand.Execute(GetCell(vm, 0, 1));
+        vm.RevealCellCommand.Execute(GetCell(vm, 1, 0));
+
+        // Act
+        vm.RevealCellCommand.Execute(GetCell(vm, 1, 1));
+
+        // Assert
+        Assert.Equal(TimeSpan.FromSeconds(40), vm.BestTime);
+        Assert.Equal("00:40", vm.BestTimeDisplay);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that best time display changes when the selected difficulty changes.
+    /// - (VI) Kiểm tra best time hiển thị sẽ thay đổi theo độ khó được chọn.
+    /// </summary>
+    [Fact]
+    public void SelectedDifficulty_ShouldRefreshBestTimeDisplay()
+    {
+        // Arrange
+        var vm = new MainWindowViewModel();
+
+        SetPrivateFieldValue(vm, "_bestTimes", new Dictionary<DifficultyLevel, TimeSpan>
+        {
+            [DifficultyLevel.Beginner] = TimeSpan.FromSeconds(30),
+            [DifficultyLevel.Intermediate] = TimeSpan.FromSeconds(90)
+        });
+
+        // Act
+        vm.SelectedDifficulty = DifficultyLevel.Beginner;
+        var beginnerDisplay = vm.BestTimeDisplay;
+
+        vm.SelectedDifficulty = DifficultyLevel.Intermediate;
+        var intermediateDisplay = vm.BestTimeDisplay;
+
+        // Assert
+        Assert.Equal("00:30", beginnerDisplay);
+        Assert.Equal("01:30", intermediateDisplay);
     }
 
     #endregion

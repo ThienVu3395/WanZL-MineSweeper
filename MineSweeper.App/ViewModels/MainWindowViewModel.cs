@@ -30,7 +30,10 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private TimeSpan _elapsedTime;
     private bool _isTimerRunning;
 
+    private string? _message;
     private DifficultyLevel _selectedDifficulty;
+
+    private readonly Dictionary<DifficultyLevel, TimeSpan> _bestTimes;
 
     /// <summary>
     /// - (EN) Initializes a new instance of the <see cref="MainWindowViewModel"/> class.
@@ -72,6 +75,9 @@ public class MainWindowViewModel : INotifyPropertyChanged
         };
 
         _gameTimer.Tick += OnGameTimerTick;
+
+        // Hiển thị danh sách best times theo độ khó của game
+        _bestTimes = new Dictionary<DifficultyLevel, TimeSpan>();
 
         // Khởi tạo game đầu tiên
         StartNewGameByDifficulty();
@@ -130,6 +136,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
             _selectedDifficulty = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(BestTime));
+            OnPropertyChanged(nameof(BestTimeDisplay));
         }
     }
 
@@ -168,8 +176,6 @@ public class MainWindowViewModel : INotifyPropertyChanged
     /// - (VI) Lấy số mìn còn lại được ước tính dựa trên số cờ đã đặt.
     /// </summary>
     public int RemainingMines => TotalMines - FlagCount;
-
-    private string? _message;
 
     /// <summary>
     /// - (EN) Gets or sets the temporary UI message, such as warnings.
@@ -215,6 +221,26 @@ public class MainWindowViewModel : INotifyPropertyChanged
     /// - (VI) Lấy chuỗi thời gian đã chơi đã được định dạng để hiển thị trên giao diện.
     /// </summary>
     public string ElapsedTimeDisplay => _elapsedTime.ToString(@"mm\:ss");
+
+    /// <summary>
+    /// - (EN) Gets the best recorded completion time for the currently selected difficulty.
+    /// - (VI) Lấy thời gian hoàn thành tốt nhất đã ghi nhận cho độ khó hiện đang được chọn.
+    /// </summary>
+    public TimeSpan? BestTime
+    {
+        get
+        {
+            return _bestTimes.TryGetValue(SelectedDifficulty, out var value)
+                ? value
+                : null;
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Gets the formatted best completion time for UI display.
+    /// - (VI) Lấy chuỗi thời gian tốt nhất đã được định dạng để hiển thị trên giao diện.
+    /// </summary>
+    public string BestTimeDisplay => BestTime?.ToString(@"mm\:ss") ?? "--:--";
     #endregion
 
     #region Events
@@ -477,6 +503,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(RemainingMines));
         OnPropertyChanged(nameof(ElapsedTime));
         OnPropertyChanged(nameof(ElapsedTimeDisplay));
+        OnPropertyChanged(nameof(BestTime));
+        OnPropertyChanged(nameof(BestTimeDisplay));
     }
 
     /// <summary>
@@ -499,6 +527,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
         if (_game.State == GameState.Won || _game.State == GameState.Lost)
         {
             StopTimer();
+            UpdateBestTimeIfNeeded();
             GameEnded?.Invoke(this, new GameEndedEventArgs(_game.State));
         }
     }
@@ -572,6 +601,26 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
         OnPropertyChanged(nameof(ElapsedTime));
         OnPropertyChanged(nameof(ElapsedTimeDisplay));
+    }
+
+    /// <summary>
+    /// - (EN) Updates the best completion time for the current difficulty when the player wins.
+    /// - (VI) Cập nhật thời gian tốt nhất cho độ khó hiện tại khi người chơi thắng.
+    /// </summary>
+    private void UpdateBestTimeIfNeeded()
+    {
+        if (_game.State != GameState.Won)
+            return;
+
+        if (SelectedDifficulty == DifficultyLevel.Custom)
+            return;
+
+        if (!_bestTimes.TryGetValue(SelectedDifficulty, out var currentBest) || _elapsedTime < currentBest)
+        {
+            _bestTimes[SelectedDifficulty] = _elapsedTime;
+            OnPropertyChanged(nameof(BestTime));
+            OnPropertyChanged(nameof(BestTimeDisplay));
+        }
     }
     #endregion
 }
