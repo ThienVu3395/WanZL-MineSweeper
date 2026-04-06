@@ -400,3 +400,20 @@ Added the chording mechanic to the core MineSweeper gameplay and covered it with
 ### Notes
 This commit introduces an important advanced MineSweeper interaction found in classic implementations.
 It improves gameplay efficiency for experienced players while keeping the logic consistent with the existing reveal and win/loss rules.
+
+## Commit 25 - Add UI interaction for chording on revealed cells
+
+### Summary
+Connected the chording gameplay mechanic to the WPF user interface so players can trigger it directly during gameplay.
+
+### Completed
+- Added `ChordCellCommand` to `MainWindowViewModel`
+- Implemented UI handling for chording through double-click interaction on board cells
+- Forwarded double-click events from the view to the ViewModel in a way consistent with the existing right-click flag flow
+- Refreshed board state, counters, and game status after chord actions
+- Kept endgame feedback consistent with existing reveal behavior
+- Added a small gameplay hint to make the new interaction easier to discover
+
+### Notes
+This commit completes the first end-to-end version of the chording feature.
+Players can now use the mechanic directly from the desktop UI instead of only through core logic and tests.

@@ -18,6 +18,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private readonly RelayCommand _revealCellCommand;
     private readonly RelayCommand _toggleFlagCommand;
     private readonly RelayCommand _newGameCommand;
+    private readonly RelayCommand _chordCellCommand;
 
     private DifficultyLevel _selectedDifficulty;
 
@@ -50,14 +51,42 @@ public class MainWindowViewModel : INotifyPropertyChanged
         // Command dùng để bắt đầu game mới
         _newGameCommand = new RelayCommand(_ => StartNewGameByDifficulty());
 
+        // Command dùng để xử lý chording khi user double-click vào ô đã mở
+        _chordCellCommand = new RelayCommand(OnChordCell, CanChordCell);
+
         // Khởi tạo game đầu tiên
         StartNewGameByDifficulty();
     }
+
+    #region Commands
+    /// <summary>
+    /// Command used to reveal a cell when user clicks on it.
+    /// </summary>
+    public ICommand RevealCellCommand => _revealCellCommand;
+
+    /// <summary>
+    /// Command used to toggle flag on a cell (right-click).
+    /// </summary>
+    public ICommand ToggleFlagCommand => _toggleFlagCommand;
+
+    /// <summary>
+    /// Command used to start a new game with the selected difficulty.
+    /// </summary>
+    public ICommand NewGameCommand => _newGameCommand;
+
+    /// <summary>
+    /// - (EN) Command used to perform chording on a revealed cell.
+    /// - (VI) Command dùng để thực hiện thao tác chording trên một ô đã mở.
+    /// </summary>
+    public ICommand ChordCellCommand => _chordCellCommand;
+    #endregion
 
     /// <summary>
     /// Gets the collection of cells used for UI binding.
     /// </summary>
     public ObservableCollection<CellViewModel> Cells { get; }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
 
     /// <summary>
     /// Gets the available difficulty levels for the UI.
@@ -150,21 +179,6 @@ public class MainWindowViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Command used to reveal a cell when user clicks on it.
-    /// </summary>
-    public ICommand RevealCellCommand => _revealCellCommand;
-
-    /// <summary>
-    /// Command used to toggle flag on a cell (right-click).
-    /// </summary>
-    public ICommand ToggleFlagCommand => _toggleFlagCommand;
-
-    /// <summary>
-    /// Command used to start a new game with the selected difficulty.
-    /// </summary>
-    public ICommand NewGameCommand => _newGameCommand;
-
-    /// <summary>
     /// Starts a new game and rebuilds the UI cell collection.
     /// </summary>
     /// <param name="rows">Number of rows.</param>
@@ -198,6 +212,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
         // Cập nhật trạng thái enable/disable của command
         _revealCellCommand.RaiseCanExecuteChanged();
         _toggleFlagCommand.RaiseCanExecuteChanged();
+        _chordCellCommand.RaiseCanExecuteChanged();
     }
 
     /// <summary>
@@ -248,6 +263,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
         // Cập nhật trạng thái enable/disable của command
         _revealCellCommand.RaiseCanExecuteChanged();
         _toggleFlagCommand.RaiseCanExecuteChanged();
+        _chordCellCommand.RaiseCanExecuteChanged();
 
         // Nếu game kết thúc thì hiển thị message
         if (_game.State == GameState.Won)
@@ -289,6 +305,44 @@ public class MainWindowViewModel : INotifyPropertyChanged
         // Cập nhật trạng thái command sau khi toggle flag
         _revealCellCommand.RaiseCanExecuteChanged();
         _toggleFlagCommand.RaiseCanExecuteChanged();
+        _chordCellCommand.RaiseCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// - (EN) Handles the chord action triggered from the UI.
+    /// - (VI) Xử lý thao tác chord được gọi từ giao diện.
+    /// </summary>
+    /// <param name="parameter">
+    /// - (EN) The target cell view model.
+    /// - (VI) CellViewModel của ô được thao tác.
+    /// </param>
+    private void OnChordCell(object? parameter)
+    {
+        if (parameter is not CellViewModel cellVm)
+            return;
+
+        Message = null;
+
+        _game.ChordCell(cellVm.Row, cellVm.Column);
+
+        RefreshBoard();
+        OnPropertyChanged(nameof(GameStatus));
+        OnPropertyChanged(nameof(IsGameFinished));
+        OnPropertyChanged(nameof(FlagCount));
+        OnPropertyChanged(nameof(RemainingMines));
+
+        _revealCellCommand.RaiseCanExecuteChanged();
+        _toggleFlagCommand.RaiseCanExecuteChanged();
+        _chordCellCommand.RaiseCanExecuteChanged();
+
+        if (_game.State == GameState.Won)
+        {
+            System.Windows.MessageBox.Show("Congratulations! You cleared all cells!", "Victory 🎉");
+        }
+        else if (_game.State == GameState.Lost)
+        {
+            System.Windows.MessageBox.Show("Boom! You hit a mine.", "Game Over 💥");
+        }
     }
 
     /// <summary>
@@ -310,6 +364,25 @@ public class MainWindowViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// - (EN) Determines whether chording is allowed for the selected cell.
+    /// - (VI) Xác định ô được chọn có thể thực hiện chording hay không.
+    /// </summary>
+    /// <param name="parameter">
+    /// - (EN) The target cell view model.
+    /// - (VI) CellViewModel của ô cần kiểm tra.
+    /// </param>
+    private bool CanChordCell(object? parameter)
+    {
+        if (_game.State != GameState.InProgress)
+            return false;
+
+        if (parameter is not CellViewModel cellVm)
+            return false;
+
+        return cellVm.IsRevealed;
+    }
+
+    /// <summary>
     /// Refreshes all cell view models to reflect updated game state.
     /// </summary>
     private void RefreshBoard()
@@ -319,8 +392,6 @@ public class MainWindowViewModel : INotifyPropertyChanged
             cell.Refresh();
         }
     }
-
-    public event PropertyChangedEventHandler? PropertyChanged;
 
     /// <summary>
     /// Raises property changed notification for UI binding.

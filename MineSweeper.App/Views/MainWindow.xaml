@@ -30,6 +30,12 @@
                            FontWeight="Bold"
                            Margin="0,0,0,10" />
 
+                <TextBlock Text="* Tip: Double-click a revealed number cell to chord."
+                           FontSize="13"
+                           FontWeight="Bold"
+                           Foreground="Gray"
+                           Margin="0,0,0,10" />
+
                 <!-- Difficulty + New Game -->
                 <StackPanel Orientation="Horizontal" Margin="0,0,12,10">
                     <TextBlock Text="Difficulty:"
@@ -109,7 +115,8 @@
                                     MinHeight="36"
                                     Command="{Binding DataContext.RevealCellCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                     CommandParameter="{Binding}"
-                                    MouseRightButtonUp="Cell_RightClick">
+                                    MouseRightButtonUp="Cell_RightClick"
+                                    MouseDoubleClick="Cell_MouseDoubleClick">
 
                                 <Button.Style>
                                     <Style TargetType="Button">

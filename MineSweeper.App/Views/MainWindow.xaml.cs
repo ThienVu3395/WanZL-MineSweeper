@@ -44,6 +44,26 @@ namespace MineSweeper.App.Views
             e.Handled = true;
         }
 
+        /// <summary>
+        /// - (EN) Handles double-click on a revealed cell and forwards the chord action to the ViewModel.
+        /// - (VI) Xử lý thao tác double-click trên ô đã mở và chuyển lệnh chord về ViewModel.
+        /// </summary>
+        private void Cell_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (DataContext is not MainWindowViewModel vm)
+                return;
+
+            if (sender is FrameworkElement element && element.DataContext is CellViewModel cellVm)
+            {
+                if (vm.ChordCellCommand.CanExecute(cellVm))
+                {
+                    vm.ChordCellCommand.Execute(cellVm);
+                }
+            }
+
+            e.Handled = true;
+        }
+
         private void Vm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(MainWindowViewModel.Message))
