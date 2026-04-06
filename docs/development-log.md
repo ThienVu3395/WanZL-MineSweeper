@@ -489,3 +489,23 @@ Refactored endgame notification handling so that popup display is no longer cont
 ### Notes
 This commit improves MVVM separation by keeping UI-specific dialog behavior inside the view layer instead of the view model.
 It also makes the view model easier to maintain and test.
+
+## Commit 30 - Ensure first click is always safe
+
+### Summary
+Improved the core gameplay experience by guaranteeing that the first revealed cell is always safe.
+
+### Completed
+- Updated game initialization flow so mine placement is deferred until the first reveal action
+- Ensured that the first revealed cell can never contain a mine
+- Recalculated adjacent mine counts after first-click mine placement
+- Preserved the configured total mine count after first-click setup
+- Added unit tests to verify:
+  - the first reveal never causes an immediate loss
+  - the first revealed cell is always safe
+  - the configured mine count is preserved
+  - later reveals can still trigger a normal loss condition
+
+### Notes
+This commit improves user experience significantly by removing unfair first-click losses.
+It keeps the overall gameplay rules intact while making the product feel more polished and player-friendly.

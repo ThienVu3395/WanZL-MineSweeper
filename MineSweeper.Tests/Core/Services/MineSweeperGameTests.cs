@@ -4,15 +4,19 @@ using MineSweeper.Core.Services;
 namespace MineSweeper.Tests.Core.Services;
 
 /// <summary>
-/// Contains unit tests for verifying the behavior of the MineSweeperGame service.
-/// Focuses on game initialization and state transitions for a new session.
+/// - (EN) Contains unit tests for verifying the behavior of the <see cref="MineSweeperGame"/> service.
+/// Focuses on game initialization, mine placement, reveal logic, flag handling,
+/// chording behavior, first-click safety, and game state transitions.
+/// - (VI) Chứa các unit test dùng để kiểm tra hành vi của service <see cref="MineSweeperGame"/>.
+/// Tập trung vào khởi tạo game, đặt mìn, logic mở ô, xử lý cờ,
+/// hành vi chording, an toàn ở lần click đầu tiên, và các chuyển đổi trạng thái game.
 /// </summary>
 public class MineSweeperGameTests
 {
     #region StartNewGame
     /// <summary>
-    /// Verifies that a new game starts with a board instance.
-    /// - Kiểm tra game khi start phải tạo board
+    /// - (EN) Verifies that starting a new game creates a board instance.
+    /// - (VI) Kiểm tra khi bắt đầu game mới thì một board sẽ được tạo ra.
     /// </summary>
     [Fact]
     public void StartNewGame_ShouldCreateBoard()
@@ -28,8 +32,8 @@ public class MineSweeperGameTests
     }
 
     /// <summary>
-    /// Verifies that a new game starts with the correct board configuration.
-    /// -  Đảm bảo config truyền vào được áp dụng đúng
+    /// - (EN) Verifies that a new game starts with the correct board configuration.
+    /// - (VI) Kiểm tra cấu hình board được khởi tạo đúng theo tham số truyền vào.
     /// </summary>
     [Fact]
     public void StartNewGame_ShouldInitializeBoardWithCorrectSettings()
@@ -48,8 +52,8 @@ public class MineSweeperGameTests
     }
 
     /// <summary>
-    /// Verifies that starting a new game changes the state to InProgress.
-    /// - Khi start game → state phải chuyển sang InProgress
+    /// - (EN) Verifies that starting a new game changes the state to <see cref="GameState.InProgress"/>.
+    /// - (VI) Kiểm tra khi bắt đầu game mới thì trạng thái sẽ chuyển sang <see cref="GameState.InProgress"/>.
     /// </summary>
     [Fact]
     public void StartNewGame_ShouldSetStateToInProgress()
@@ -65,8 +69,8 @@ public class MineSweeperGameTests
     }
 
     /// <summary>
-    /// Verifies that starting a new game replaces the previous board instance.
-    /// - Start game lần 2 phải replace board cũ (không reuse)
+    /// - (EN) Verifies that starting a new game replaces the previous board instance.
+    /// - (VI) Kiểm tra khi bắt đầu game mới lần tiếp theo thì board cũ sẽ được thay thế, không bị tái sử dụng.
     /// </summary>
     [Fact]
     public void StartNewGame_ShouldReplacePreviousBoard()
@@ -89,18 +93,22 @@ public class MineSweeperGameTests
     }
 
     /// <summary>
-    /// Verifies that the exact configured number of mines is placed on the board.
-    /// - Kiểm tra số lượng mìn được đặt đúng
+    /// - (EN) Verifies that the exact configured number of mines is placed
+    /// after deferred mine placement is triggered by the first reveal.
+    /// - (VI) Kiểm tra đúng số lượng mìn được đặt
+    /// sau khi cơ chế đặt mìn trì hoãn được kích hoạt ở lần mở ô đầu tiên.
     /// </summary>
     [Fact]
-    public void StartNewGame_ShouldPlaceExpectedNumberOfMines()
+    public void RevealCell_ShouldPlaceExpectedNumberOfMines_OnFirstReveal()
     {
         // Arrange
         var game = new MineSweeperGame();
         int expectedMineCount = 10;
 
-        // Act
         game.StartNewGame(9, 9, expectedMineCount);
+
+        // Act
+        game.RevealCell(0, 0);
 
         // Assert
         Assert.NotNull(game.Board);
@@ -119,18 +127,21 @@ public class MineSweeperGameTests
     }
 
     /// <summary>
-    /// Verifies that mine placement does not create duplicate mine entries
-    /// and all mined cells occupy unique board positions.
-    /// - Kiểm tra không có 2 mìn trùng vị trí
+    /// - (EN) Verifies that deferred mine placement does not create duplicate mine entries
+    /// and all mined cells occupy unique board positions after the first reveal.
+    /// - (VI) Kiểm tra cơ chế đặt mìn trì hoãn không tạo mìn trùng vị trí
+    /// và tất cả ô chứa mìn đều có tọa độ duy nhất sau lần mở ô đầu tiên.
     /// </summary>
     [Fact]
-    public void StartNewGame_ShouldPlaceMinesInUniqueCells()
+    public void RevealCell_ShouldPlaceMinesInUniqueCells_OnFirstReveal()
     {
         // Arrange
         var game = new MineSweeperGame();
 
-        // Act
         game.StartNewGame(9, 9, 10);
+
+        // Act
+        game.RevealCell(0, 0);
 
         // Assert
         Assert.NotNull(game.Board);
@@ -146,7 +157,6 @@ public class MineSweeperGameTests
 
             string positionKey = $"{cell.Row}-{cell.Column}";
 
-            // HashSet.Add sẽ trả false nếu trùng
             bool isUnique = minedPositions.Add(positionKey);
 
             Assert.True(isUnique);
@@ -156,8 +166,10 @@ public class MineSweeperGameTests
     }
 
     /// <summary>
-    /// Verifies that adjacent mine counts are calculated correctly
+    /// - (EN) Verifies that adjacent mine counts are calculated correctly
     /// for each non-mine cell after manual mine placement.
+    /// - (VI) Kiểm tra số mìn lân cận được tính đúng
+    /// cho từng ô không phải mìn sau khi đặt mìn thủ công.
     /// </summary>
     [Fact]
     public void StartNewGame_ShouldCalculateAdjacentMinesCorrectly()
@@ -192,8 +204,10 @@ public class MineSweeperGameTests
 
     #region CalculateAdjacentMines
     /// <summary>
-    /// Verifies that adjacent mine calculation correctly handles
+    /// - (EN) Verifies that adjacent mine calculation correctly handles
     /// edge and corner cells without causing out-of-bounds errors.
+    /// - (VI) Kiểm tra việc tính số mìn lân cận xử lý đúng
+    /// các ô ở cạnh và góc mà không gây lỗi vượt phạm vi mảng.
     /// </summary>
     [Fact]
     public void CalculateAdjacentMines_ShouldHandleBoardEdgesCorrectly()
@@ -225,7 +239,8 @@ public class MineSweeperGameTests
 
     #region RevealCell
     /// <summary>
-    /// Verifies that revealing a non-mine cell marks it as revealed.
+    /// - (EN) Verifies that revealing a non-mine cell marks it as revealed.
+    /// - (VI) Kiểm tra khi mở một ô không phải mìn thì ô đó sẽ được đánh dấu là đã mở.
     /// </summary>
     [Fact]
     public void RevealCell_ShouldRevealNonMineCell()
@@ -244,7 +259,8 @@ public class MineSweeperGameTests
     }
 
     /// <summary>
-    /// Verifies that revealing a mine cell sets the game state to Lost.
+    /// - (EN) Verifies that revealing a mine cell sets the game state to <see cref="GameState.Lost"/>.
+    /// - (VI) Kiểm tra khi mở một ô chứa mìn thì trạng thái game sẽ chuyển sang <see cref="GameState.Lost"/>.
     /// </summary>
     [Fact]
     public void RevealCell_ShouldSetStateToLost_WhenMineIsRevealed()
@@ -264,8 +280,10 @@ public class MineSweeperGameTests
     }
 
     /// <summary>
-    /// Verifies that revealing a cell with zero adjacent mines
-    /// triggers recursive reveal (flood fill).
+    /// - (EN) Verifies that revealing a cell with zero adjacent mines
+    /// triggers recursive reveal behavior (flood fill).
+    /// - (VI) Kiểm tra khi mở một ô có số mìn lân cận bằng 0
+    /// thì cơ chế mở lan (flood fill) sẽ được kích hoạt.
     /// </summary>
     [Fact]
     public void RevealCell_ShouldRevealAdjacentCells_WhenNoAdjacentMines()
@@ -288,7 +306,8 @@ public class MineSweeperGameTests
     }
 
     /// <summary>
-    /// Verifies that the game is marked as won when all non-mine cells are revealed.
+    /// - (EN) Verifies that the game is marked as won when all non-mine cells are revealed.
+    /// - (VI) Kiểm tra game được đánh dấu là thắng khi tất cả ô an toàn đã được mở.
     /// </summary>
     [Fact]
     public void RevealCell_ShouldSetStateToWon_WhenAllSafeCellsRevealed()
@@ -313,7 +332,10 @@ public class MineSweeperGameTests
         Assert.Equal(GameState.Won, game.State);
     }
 
-
+    /// <summary>
+    /// - (EN) Verifies that flagged cells are not revealed during flood fill.
+    /// - (VI) Kiểm tra các ô đã được cắm cờ sẽ không bị mở trong quá trình flood fill.
+    /// </summary>
     [Fact]
     public void RevealCell_ShouldNotRevealFlaggedCells_DuringFloodFill()
     {
@@ -335,6 +357,10 @@ public class MineSweeperGameTests
         Assert.True(board.Cells[1, 1].IsFlagged);
     }
 
+    /// <summary>
+    /// - (EN) Verifies that flood fill does not remove an existing flag from a cell.
+    /// - (VI) Kiểm tra flood fill không làm mất cờ đã được đặt trên một ô.
+    /// </summary>
     [Fact]
     public void RevealCell_ShouldNotRemoveFlag_WhenFloodFillOccurs()
     {
@@ -350,6 +376,10 @@ public class MineSweeperGameTests
         Assert.True(board.Cells[1, 1].IsFlagged);
     }
 
+    /// <summary>
+    /// - (EN) Verifies that all mine cells are revealed when the player loses the game.
+    /// - (VI) Kiểm tra tất cả ô chứa mìn sẽ được mở ra khi người chơi thua game.
+    /// </summary>
     [Fact]
     public void RevealCell_ShouldRevealAllMines_WhenPlayerLoses()
     {
@@ -376,7 +406,8 @@ public class MineSweeperGameTests
 
     #region ToggleFlag
     /// <summary>
-    /// Verifies that a cell can be flagged.
+    /// - (EN) Verifies that a cell can be flagged.
+    /// - (VI) Kiểm tra một ô có thể được cắm cờ.
     /// </summary>
     [Fact]
     public void ToggleFlag_ShouldFlagCell()
@@ -395,7 +426,8 @@ public class MineSweeperGameTests
     }
 
     /// <summary>
-    /// Verifies that a flagged cell can be unflagged.
+    /// - (EN) Verifies that a flagged cell can be unflagged.
+    /// - (VI) Kiểm tra một ô đã được cắm cờ có thể được bỏ cờ.
     /// </summary>
     [Fact]
     public void ToggleFlag_ShouldUnflagCell()
@@ -416,7 +448,8 @@ public class MineSweeperGameTests
     }
 
     /// <summary>
-    /// Verifies that a revealed cell cannot be flagged.
+    /// - (EN) Verifies that a revealed cell cannot be flagged.
+    /// - (VI) Kiểm tra một ô đã mở thì không thể được cắm cờ.
     /// </summary>
     [Fact]
     public void ToggleFlag_ShouldNotFlag_WhenCellIsRevealed()
@@ -589,6 +622,164 @@ public class MineSweeperGameTests
         Assert.Equal(GameState.Won, game.State);
         Assert.True(board.Cells[1, 0].IsRevealed);
         Assert.True(board.Cells[1, 1].IsRevealed);
+    }
+    #endregion
+
+    #region FirstClickSafety
+    /// <summary>
+    /// - (EN) Verifies that the first reveal never causes an immediate loss.
+    /// - (VI) Kiểm tra lần mở ô đầu tiên sẽ không bao giờ làm thua ngay lập tức.
+    /// </summary>
+    [Fact]
+    public void RevealCell_ShouldNotLoseGame_OnFirstReveal()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+        game.StartNewGame(9, 9, 10);
+
+        // Act
+        game.RevealCell(0, 0);
+
+        // Assert
+        Assert.NotEqual(GameState.Lost, game.State);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that the first revealed cell is guaranteed not to contain a mine.
+    /// - (VI) Kiểm tra ô được mở đầu tiên chắc chắn không chứa mìn.
+    /// </summary>
+    [Fact]
+    public void RevealCell_ShouldEnsureFirstRevealedCellIsNotMine()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+        game.StartNewGame(9, 9, 10);
+
+        // Act
+        game.RevealCell(2, 3);
+
+        // Assert
+        Assert.NotNull(game.Board);
+        Assert.False(game.Board!.Cells[2, 3].IsMine);
+        Assert.True(game.Board.Cells[2, 3].IsRevealed);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that the configured mine count is preserved
+    /// after mines are placed during the first reveal.
+    /// - (VI) Kiểm tra tổng số mìn được cấu hình vẫn được giữ nguyên
+    /// sau khi mìn được đặt ở lần mở ô đầu tiên.
+    /// </summary>
+    [Fact]
+    public void RevealCell_ShouldPreserveConfiguredMineCount_AfterFirstRevealSetup()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+        int expectedMineCount = 10;
+
+        game.StartNewGame(9, 9, expectedMineCount);
+
+        // Act
+        game.RevealCell(4, 4);
+
+        // Assert
+        Assert.NotNull(game.Board);
+
+        int actualMineCount = 0;
+
+        foreach (var cell in game.Board!.Cells)
+        {
+            if (cell.IsMine)
+            {
+                actualMineCount++;
+            }
+        }
+
+        Assert.Equal(expectedMineCount, actualMineCount);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that the first safe reveal does not change normal losing behavior for later moves.
+    /// - (VI) Kiểm tra lần mở ô đầu tiên an toàn không làm thay đổi cơ chế thua bình thường ở các lượt sau.
+    /// </summary>
+    [Fact]
+    public void RevealCell_ShouldAllowNormalLoss_AfterFirstSafeReveal()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+        game.StartNewGame(3, 3, 7);
+
+        // First reveal must be safe
+        game.RevealCell(0, 0);
+
+        var board = game.Board!;
+        var firstCell = board.Cells[0, 0];
+
+        Assert.False(firstCell.IsMine);
+
+        // Find a non-revealed mine cell after first-click placement
+        Cell? mineCell = null;
+
+        foreach (var cell in board.Cells)
+        {
+            if (cell.IsMine && !cell.IsRevealed)
+            {
+                mineCell = cell;
+                break;
+            }
+        }
+
+        Assert.NotNull(mineCell);
+
+        // Act
+        game.RevealCell(mineCell!.Row, mineCell.Column);
+
+        // Assert
+        Assert.Equal(GameState.Lost, game.State);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that adjacent mine counts are generated correctly
+    /// after deferred mine placement on the first reveal.
+    /// - (VI) Kiểm tra số mìn lân cận được tính đúng
+    /// sau khi đặt mìn trì hoãn ở lần mở ô đầu tiên.
+    /// </summary>
+    [Fact]
+    public void RevealCell_ShouldCalculateAdjacentMines_AfterDeferredMinePlacement()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+        game.StartNewGame(5, 5, 5);
+
+        // Act
+        game.RevealCell(2, 2);
+
+        // Assert
+        var board = game.Board!;
+        foreach (var cell in board.Cells)
+        {
+            if (cell.IsMine)
+                continue;
+
+            int actualAdjacentMines = 0;
+
+            for (int row = cell.Row - 1; row <= cell.Row + 1; row++)
+            {
+                for (int column = cell.Column - 1; column <= cell.Column + 1; column++)
+                {
+                    if (row == cell.Row && column == cell.Column)
+                        continue;
+
+                    if (row < 0 || row >= board.Rows || column < 0 || column >= board.Columns)
+                        continue;
+
+                    if (board.Cells[row, column].IsMine)
+                        actualAdjacentMines++;
+                }
+            }
+
+            Assert.Equal(actualAdjacentMines, cell.AdjacentMines);
+        }
     }
     #endregion
 }

@@ -47,17 +47,25 @@ public class MainWindowViewModelTests
         // Arrange
         var vm = new MainWindowViewModel();
 
-        // 1x1 with 1 mine guarantees immediate loss on reveal.
-        vm.StartNewGame(1, 1, 1);
-        var onlyCell = vm.Cells.Single();
+        vm.StartNewGame(1, 2, 1);
+
+        var firstCell = vm.Cells.Single(c => c.Row == 0 && c.Column == 0);
+        var secondCell = vm.Cells.Single(c => c.Row == 0 && c.Column == 1);
+
+        // First reveal is guaranteed safe
+        vm.RevealCellCommand.Execute(firstCell);
+
+        // Find the actual mine cell after deferred placement
+        var game = GetInternalGame(vm);
+        var mineCell = game.Board!.Cells[0, 0].IsMine ? firstCell : secondCell;
 
         // Act
-        vm.RevealCellCommand.Execute(onlyCell);
+        vm.RevealCellCommand.Execute(mineCell);
 
         // Assert
         Assert.True(vm.IsGameFinished);
-        Assert.False(vm.RevealCellCommand.CanExecute(onlyCell));
-        Assert.False(vm.ToggleFlagCommand.CanExecute(onlyCell));
+        Assert.False(vm.RevealCellCommand.CanExecute(mineCell));
+        Assert.False(vm.ToggleFlagCommand.CanExecute(mineCell));
     }
 
     /// <summary>
@@ -344,10 +352,11 @@ public class MainWindowViewModelTests
     #endregion
 
     #region GameEndedEvent
-
     /// <summary>
-    /// - (EN) Verifies that the view model raises GameEnded when the player loses.
-    /// - (VI) Kiểm tra ViewModel sẽ phát GameEnded khi người chơi thua.
+    /// - (EN) Verifies that the view model raises GameEnded when the player loses
+    /// after a safe first reveal.
+    /// - (VI) Kiểm tra ViewModel sẽ phát GameEnded khi người chơi thua
+    /// sau một lần mở ô đầu tiên an toàn.
     /// </summary>
     [Fact]
     public void RevealCellCommand_ShouldRaiseGameEndedEvent_WhenPlayerLoses()
@@ -358,11 +367,20 @@ public class MainWindowViewModelTests
 
         vm.GameEnded += (_, e) => finalState = e.State;
 
-        vm.StartNewGame(1, 1, 1);
-        var onlyCell = vm.Cells.Single();
+        ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
 
-        // Act
-        vm.RevealCellCommand.Execute(onlyCell);
+        var safeCell = GetCell(vm, 0, 1);
+        var mineCell = GetCell(vm, 0, 0);
+
+        // Act - first reveal is safe and should not end the game yet
+        vm.RevealCellCommand.Execute(safeCell);
+
+        // Sanity check
+        Assert.False(vm.IsGameFinished);
+        Assert.Equal(GameState.InProgress, GetInternalGame(vm).State);
+
+        // Reveal the mine on the next move
+        vm.RevealCellCommand.Execute(mineCell);
 
         // Assert
         Assert.Equal(GameState.Lost, finalState);
@@ -435,7 +453,11 @@ public class MainWindowViewModelTests
     /// <param name="minePositions">
     /// - (EN) Explicit mine coordinates / (VI) Danh sách tọa độ mìn được chỉ định rõ
     /// </param>
-    private static void ConfigureDeterministicBoard(MainWindowViewModel vm, int rows, int columns, params (int Row, int Column)[] minePositions)
+    private static void ConfigureDeterministicBoard(
+        MainWindowViewModel vm,
+        int rows,
+        int columns,
+        params (int Row, int Column)[] minePositions)
     {
         vm.StartNewGame(rows, columns, minePositions.Length);
 
@@ -456,6 +478,16 @@ public class MainWindowViewModelTests
         }
 
         game.CalculateAdjacentMines(board);
+
+        // Important for first-click-safe mode:
+        // disable deferred mine placement because the board is already configured manually.
+        // Quan trọng với chế độ first-click-safe:
+        // tắt cơ chế đặt mìn trì hoãn vì board đã được cấu hình thủ công.
+        var firstRevealPendingField = typeof(MineSweeperGame)
+            .GetField("_isFirstRevealPending", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        Assert.NotNull(firstRevealPendingField);
+        firstRevealPendingField!.SetValue(game, false);
 
         foreach (var cellVm in vm.Cells)
         {
