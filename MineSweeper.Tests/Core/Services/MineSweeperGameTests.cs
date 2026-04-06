@@ -202,6 +202,125 @@ public class MineSweeperGameTests
     }
     #endregion
 
+    #region BoardConfigurationValidation
+
+    /// <summary>
+    /// - (EN) Verifies that starting a new game throws an exception
+    /// when the number of rows is less than or equal to zero.
+    /// - (VI) Kiểm tra bắt đầu game mới sẽ ném ra exception
+    /// khi số hàng nhỏ hơn hoặc bằng 0.
+    /// </summary>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void StartNewGame_ShouldThrow_WhenRowsIsLessThanOrEqualToZero(int invalidRows)
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+
+        // Act & Assert
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            game.StartNewGame(invalidRows, 9, 10));
+
+        Assert.Equal("rows", exception.ParamName);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that starting a new game throws an exception
+    /// when the number of columns is less than or equal to zero.
+    /// - (VI) Kiểm tra bắt đầu game mới sẽ ném ra exception
+    /// khi số cột nhỏ hơn hoặc bằng 0.
+    /// </summary>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void StartNewGame_ShouldThrow_WhenColumnsIsLessThanOrEqualToZero(int invalidColumns)
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+
+        // Act & Assert
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            game.StartNewGame(9, invalidColumns, 10));
+
+        Assert.Equal("columns", exception.ParamName);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that starting a new game throws an exception
+    /// when mine count is negative.
+    /// - (VI) Kiểm tra bắt đầu game mới sẽ ném ra exception
+    /// khi số lượng mìn là số âm.
+    /// </summary>
+    [Fact]
+    public void StartNewGame_ShouldThrow_WhenMineCountIsNegative()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+
+        // Act & Assert
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            game.StartNewGame(9, 9, -1));
+
+        Assert.Equal("mineCount", exception.ParamName);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that starting a new game throws an exception
+    /// when mine count is greater than or equal to total cells,
+    /// which would make a safe first reveal impossible.
+    /// - (VI) Kiểm tra bắt đầu game mới sẽ ném ra exception
+    /// khi số lượng mìn lớn hơn hoặc bằng tổng số ô,
+    /// vì điều đó khiến việc đảm bảo click đầu tiên an toàn là không thể.
+    /// </summary>
+    [Theory]
+    [InlineData(1, 1, 1)]
+    [InlineData(2, 2, 4)]
+    [InlineData(3, 3, 9)]
+    public void StartNewGame_ShouldThrow_WhenMineCountIsGreaterThanOrEqualToTotalCells(
+        int rows,
+        int columns,
+        int mineCount)
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+
+        // Act & Assert
+        var exception = Assert.Throws<ArgumentException>(() =>
+            game.StartNewGame(rows, columns, mineCount));
+
+        Assert.Equal("mineCount", exception.ParamName);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that starting a new game does not throw
+    /// when the board configuration is valid.
+    /// - (VI) Kiểm tra bắt đầu game mới sẽ không ném ra exception
+    /// khi cấu hình board hợp lệ.
+    /// </summary>
+    [Theory]
+    [InlineData(1, 2, 1)]
+    [InlineData(2, 2, 3)]
+    [InlineData(9, 9, 10)]
+    [InlineData(16, 16, 40)]
+    public void StartNewGame_ShouldNotThrow_WhenBoardConfigurationIsValid(
+        int rows,
+        int columns,
+        int mineCount)
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+
+        // Act
+        var exception = Record.Exception(() =>
+            game.StartNewGame(rows, columns, mineCount));
+
+        // Assert
+        Assert.Null(exception);
+    }
+
+    #endregion
+
     #region CalculateAdjacentMines
     /// <summary>
     /// - (EN) Verifies that adjacent mine calculation correctly handles

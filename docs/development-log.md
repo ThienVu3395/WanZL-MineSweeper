@@ -509,3 +509,19 @@ Improved the core gameplay experience by guaranteeing that the first revealed ce
 ### Notes
 This commit improves user experience significantly by removing unfair first-click losses.
 It keeps the overall gameplay rules intact while making the product feel more polished and player-friendly.
+
+## Commit 31 - Validate board configuration before starting a new game
+
+### Summary
+Improved game initialization safety by validating board configuration before creating a new MineSweeper session.
+
+### Completed
+- Added validation for invalid board dimensions
+- Added validation for negative mine counts
+- Added validation to prevent mine counts that would make a safe first reveal impossible
+- Ensured invalid configurations fail fast with clear exceptions instead of causing undefined behavior or infinite loops
+- Added unit tests for invalid and valid board configuration scenarios
+
+### Notes
+This commit strengthens reliability after the first-click-safe feature introduced stricter constraints on valid board setup.
+It prevents impossible or unsafe configurations from reaching the gameplay loop.

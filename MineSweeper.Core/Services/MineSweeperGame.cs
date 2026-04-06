@@ -43,6 +43,8 @@ public class MineSweeperGame
     /// <param name="mineCount">- (EN) The number of mines configured for the new board. / (VI) Số lượng mìn được cấu hình cho board mới.</param>
     public void StartNewGame(int rows, int columns, int mineCount)
     {
+        ValidateBoardConfiguration(rows, columns, mineCount);
+
         // Khởi tạo board mới với cấu hình truyền vào
         Board = new Board(rows, columns, mineCount);
 
@@ -324,6 +326,52 @@ public class MineSweeperGame
             {
                 cell.IsRevealed = true;
             }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Validates the board configuration before starting a new game.
+    /// Ensures that dimensions are positive, mine count is not negative,
+    /// and at least one safe cell remains available for the guaranteed first reveal.
+    /// - (VI) Kiểm tra cấu hình board trước khi bắt đầu một ván mới.
+    /// Đảm bảo kích thước board hợp lệ, số lượng mìn không âm,
+    /// và luôn còn ít nhất một ô an toàn cho lần mở đầu tiên được đảm bảo.
+    /// </summary>
+    /// <param name="rows">- (EN) Number of board rows. / (VI) Số hàng của board.</param>
+    /// <param name="columns">- (EN) Number of board columns. / (VI) Số cột của board.</param>
+    /// <param name="mineCount">- (EN) Number of configured mines. / (VI) Số lượng mìn được cấu hình.</param>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// - (EN) Thrown when rows, columns, or mine count are out of valid range.
+    /// - (VI) Được ném ra khi số hàng, số cột, hoặc số lượng mìn nằm ngoài phạm vi hợp lệ.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// - (EN) Thrown when mine count makes a safe first reveal impossible.
+    /// - (VI) Được ném ra khi số lượng mìn khiến việc đảm bảo click đầu tiên an toàn là không thể.
+    /// </exception>
+    private static void ValidateBoardConfiguration(int rows, int columns, int mineCount)
+    {
+        if (rows <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(rows), "Rows must be greater than zero.");
+        }
+
+        if (columns <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(columns), "Columns must be greater than zero.");
+        }
+
+        if (mineCount < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(mineCount), "Mine count cannot be negative.");
+        }
+
+        int totalCells = rows * columns;
+
+        if (mineCount >= totalCells)
+        {
+            throw new ArgumentException(
+                "Mine count must be less than the total number of cells to guarantee a safe first reveal.",
+                nameof(mineCount));
         }
     }
 
