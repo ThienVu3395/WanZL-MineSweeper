@@ -361,3 +361,19 @@ Improved lose-state behavior by revealing all mine cells when the player hits a 
 
 ### Notes
 This change improves gameplay feedback and aligns the lose-state behavior more closely with standard MineSweeper implementations.
+
+## Commit 23 - Centralize board neighbor traversal in game service
+
+### Summary
+Refactored neighbor traversal logic in the game service to reduce duplication and prepare for future gameplay features.
+
+### Completed
+- Extracted shared neighbor traversal logic into a reusable helper method (`GetNeighborCells`)
+- Reused the helper in adjacent mine calculation
+- Reused the helper in recursive reveal logic
+- Improved code readability and reduced duplicated loops
+
+### Notes
+This is a non-functional refactor (no behavior change).
+It prepares the codebase for upcoming features such as chording,
+which relies heavily on neighbor cell traversal.

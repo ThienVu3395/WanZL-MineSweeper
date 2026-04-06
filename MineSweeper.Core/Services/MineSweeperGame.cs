@@ -47,48 +47,25 @@ public class MineSweeperGame
     }
 
     /// <summary>
-    /// Calculates the number of adjacent mines for each non-mine cell on the board.
-    /// This method iterates through all cells and counts the number of mines
+    /// - (EN) Calculates the number of adjacent mines for each non-mine cell on the board 
     /// in the surrounding 8 neighboring cells around the current cell (top, bottom, left, right, and 4 diagonals)
+    /// - (VI) Tính số lượng mìn xung quanh cho mỗi ô không phải là mìn.
     /// </summary>
-    /// <param name="board">
-    /// The board instance whose cells will be updated with adjacent mine counts.
-    /// </param>
+    /// <param name="board"> The game board instance / Bảng trò chơi </param>
     public void CalculateAdjacentMines(Board board)
     {
-        // Duyệt toàn bộ board
         for (int row = 0; row < board.Rows; row++)
         {
             for (int col = 0; col < board.Columns; col++)
             {
                 var cell = board.Cells[row, col];
 
-                // Nếu là mìn thì bỏ qua (không cần tính)
                 if (cell.IsMine)
                     continue;
 
-                int mineCount = 0;
-
-                // Duyệt 8 ô xung quanh (trên, dưới, trái, phải và 4 ô chéo)
-                for (int r = row - 1; r <= row + 1; r++)
-                {
-                    for (int c = col - 1; c <= col + 1; c++)
-                    {
-                        // Bỏ qua chính nó
-                        if (r == row && c == col)
-                            continue;
-
-                        // Tránh vượt ngoài biên của board
-                        if (r < 0 || r >= board.Rows || c < 0 || c >= board.Columns)
-                            continue;
-
-                        if (board.Cells[r, c].IsMine)
-                            mineCount++;
-                    }
-                }
-
-                // Gán số mìn xung quanh cho cell
-                cell.AdjacentMines = mineCount;
+                // - (EN) Use shared neighbor logic
+                // - (VI) Sử dụng logic duyệt ô lân cận đã được gom chung
+                cell.AdjacentMines = GetNeighborCells(board, row, col).Count(c => c.IsMine);
             }
         }
     }
@@ -153,41 +130,36 @@ public class MineSweeperGame
     }
 
     /// <summary>
-    /// Recursively reveals cells starting from the given position.
-    /// Expands to neighboring cells if no adjacent mines are present.
-    /// - Nếu ô không có mìn xung quanh (AdjacentMines = 0) thì tiếp tục mở lan các ô xung quanh (flood fill)
+    /// - (EN) Recursively reveals cells using flood fill logic.
+    /// - (VI) Đệ quy mở các ô theo cơ chế flood fill. Nếu ô không có mìn xung quanh (AdjacentMines = 0) 
+    /// thì tiếp tục mở lan các ô xung quanh (flood fill)
+    /// <param name="row"> (EN) Row index of the cell / (VI) Chỉ số hàng</param>
+    /// <param name="column"> (EN) Column index of the cell / (VI) Chỉ số cột</param>
     /// </summary>
     private void RevealRecursive(int row, int column)
     {
         var cell = Board!.Cells[row, column];
 
-        // Nếu đã mở rồi thì dừng
+        // - (EN) Prevent re-processing or revealing flagged cells
+        // - (VI) Tránh xử lý lại hoặc mở các ô đã được flag
         if (cell.IsRevealed)
             return;
 
         if (cell.IsFlagged)
             return;
 
-        // Đánh dấu đã mở
         cell.IsRevealed = true;
 
-        // Nếu có số mìn xung quanh → không lan tiếp
+        // - (EN) Stop recursion if this cell has adjacent mines
+        // - (VI) Dừng đệ quy nếu ô này có mìn xung quanh
         if (cell.AdjacentMines > 0)
             return;
 
-        // Duyệt 8 ô xung quanh
-        for (int r = row - 1; r <= row + 1; r++)
+        // - (EN) Reveal all neighboring cells
+        // - (VI) Mở tất cả các ô lân cận
+        foreach (var neighbor in GetNeighborCells(Board, row, column))
         {
-            for (int c = column - 1; c <= column + 1; c++)
-            {
-                if (r == row && c == column)
-                    continue;
-
-                if (r < 0 || r >= Board.Rows || c < 0 || c >= Board.Columns)
-                    continue;
-
-                RevealRecursive(r, c);
-            }
+            RevealRecursive(neighbor.Row, neighbor.Column);
         }
     }
 
@@ -255,6 +227,38 @@ public class MineSweeperGame
             if (cell.IsMine)
             {
                 cell.IsRevealed = true;
+            }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Gets all valid neighboring cells around a given position.
+    /// - (VI) Lấy tất cả các ô lân cận hợp lệ xung quanh một vị trí.
+    /// </summary>
+    /// <param name="board">The game board instance / Bảng trò chơi</param>
+    /// <param name="row">Row index of the target cell / Chỉ số hàng</param>
+    /// <param name="column">Column index of the target cell / Chỉ số cột</param>
+    /// <returns>
+    /// - (EN) A collection of neighboring cells excluding the current cell.
+    /// - (VI) Danh sách các ô lân cận, không bao gồm chính ô hiện tại.
+    /// </returns>
+    private static IEnumerable<Cell> GetNeighborCells(Board board, int row, int column)
+    {
+        for (int r = row - 1; r <= row + 1; r++)
+        {
+            for (int c = column - 1; c <= column + 1; c++)
+            {
+                // (EN) Skip the current cell
+                // (VI) Bỏ qua chính ô hiện tại
+                if (r == row && c == column)
+                    continue;
+
+                // (EN) Skip out-of-bounds cells
+                // (VI) Bỏ qua các ô nằm ngoài phạm vi board
+                if (r < 0 || r >= board.Rows || c < 0 || c >= board.Columns)
+                    continue;
+
+                yield return board.Cells[r, c];
             }
         }
     }
