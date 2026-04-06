@@ -1,10 +1,11 @@
-﻿using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using System.Windows.Input;
+﻿using MineSweeper.App.Extensions;
 using MineSweeper.App.Helpers;
 using MineSweeper.Core.Models;
 using MineSweeper.Core.Services;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using System.Windows.Input;
 
 namespace MineSweeper.App.ViewModels;
 
@@ -341,25 +342,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
     /// </summary>
     private void StartNewGameByDifficulty()
     {
-        // Map độ khó sang cấu hình board
-        switch (SelectedDifficulty)
-        {
-            case DifficultyLevel.Beginner:
-                StartNewGame(9, 9, 10);
-                break;
-
-            case DifficultyLevel.Intermediate:
-                StartNewGame(16, 16, 40);
-                break;
-
-            case DifficultyLevel.Expert:
-                StartNewGame(16, 30, 99);
-                break;
-
-            default:
-                StartNewGame(9, 9, 10);
-                break;
-        }
+        var preset = SelectedDifficulty.ToPreset();
+        StartNewGame(preset.Rows, preset.Columns, preset.MineCount);
     }
     #endregion
 

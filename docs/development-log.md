@@ -454,3 +454,22 @@ Refactored `MainWindowViewModel` to reduce duplicated UI refresh and post-action
 ### Notes
 This commit is a maintainability-focused refactor and does not introduce new gameplay features.
 It prepares the ViewModel for future enhancements by making action handling more consistent, reusable, and easier to extend.
+
+## Commit 28 - Extend difficulty extensions with board preset mapping
+
+### Summary
+Refactored difficulty configuration by extending `DifficultyExtensions` to provide both display text and reusable board preset mapping.
+
+### Completed
+- Extended `DifficultyExtensions` with `ToPreset()` to convert `DifficultyLevel` into board configuration data
+- Added nested `DifficultyPreset` model inside `DifficultyExtensions` to represent rows, columns, and mine count
+- Updated `MainWindowViewModel` to start new games using reusable preset mapping instead of inline hardcoded switch values
+- Preserved existing behavior for Beginner, Intermediate, and Expert difficulties
+- Added unit tests for:
+  - difficulty display text mapping
+  - difficulty preset mapping
+  - fallback behavior for unsupported difficulty values
+
+### Notes
+This commit improves maintainability by centralizing difficulty-related display and configuration logic in one place.
+It also prepares the project for future enhancements such as custom difficulty support and reusable preset-based setup.
