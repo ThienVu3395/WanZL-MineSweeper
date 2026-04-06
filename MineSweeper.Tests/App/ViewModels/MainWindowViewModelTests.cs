@@ -343,6 +343,55 @@ public class MainWindowViewModelTests
     }
     #endregion
 
+    #region GameEndedEvent
+
+    /// <summary>
+    /// - (EN) Verifies that the view model raises GameEnded when the player loses.
+    /// - (VI) Kiểm tra ViewModel sẽ phát GameEnded khi người chơi thua.
+    /// </summary>
+    [Fact]
+    public void RevealCellCommand_ShouldRaiseGameEndedEvent_WhenPlayerLoses()
+    {
+        // Arrange
+        var vm = new MainWindowViewModel();
+        GameState? finalState = null;
+
+        vm.GameEnded += (_, e) => finalState = e.State;
+
+        vm.StartNewGame(1, 1, 1);
+        var onlyCell = vm.Cells.Single();
+
+        // Act
+        vm.RevealCellCommand.Execute(onlyCell);
+
+        // Assert
+        Assert.Equal(GameState.Lost, finalState);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that the view model raises GameEnded when the player wins.
+    /// - (VI) Kiểm tra ViewModel sẽ phát GameEnded khi người chơi thắng.
+    /// </summary>
+    [Fact]
+    public void RevealCellCommand_ShouldRaiseGameEndedEvent_WhenPlayerWins()
+    {
+        // Arrange
+        var vm = new MainWindowViewModel();
+        GameState? finalState = null;
+
+        vm.GameEnded += (_, e) => finalState = e.State;
+
+        ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
+
+        vm.RevealCellCommand.Execute(GetCell(vm, 0, 1));
+        vm.RevealCellCommand.Execute(GetCell(vm, 1, 0));
+        vm.RevealCellCommand.Execute(GetCell(vm, 1, 1));
+
+        // Assert
+        Assert.Equal(GameState.Won, finalState);
+    }
+    #endregion
+
     #region Private Helpers
     /// <summary>
     /// - (EN) Gets the internal game service instance from the view model for deterministic test setup.

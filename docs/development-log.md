@@ -473,3 +473,19 @@ Refactored difficulty configuration by extending `DifficultyExtensions` to provi
 ### Notes
 This commit improves maintainability by centralizing difficulty-related display and configuration logic in one place.
 It also prepares the project for future enhancements such as custom difficulty support and reusable preset-based setup.
+
+## Commit 29 - Move endgame notifications out of main window view model
+
+### Summary
+Refactored endgame notification handling so that popup display is no longer controlled directly by `MainWindowViewModel`.
+
+### Completed
+- Added a dedicated view model event to notify when the game ends
+- Removed direct `MessageBox` usage from `MainWindowViewModel`
+- Updated the WPF view to listen for endgame notifications and display the appropriate popup
+- Preserved existing win and lose feedback behavior for the player
+- Added ViewModel test coverage for the new endgame notification event
+
+### Notes
+This commit improves MVVM separation by keeping UI-specific dialog behavior inside the view layer instead of the view model.
+It also makes the view model easier to maintain and test.

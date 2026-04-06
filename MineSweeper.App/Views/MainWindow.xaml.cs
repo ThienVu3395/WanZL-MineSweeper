@@ -1,16 +1,30 @@
-﻿using System.ComponentModel;
+﻿using MineSweeper.App.ViewModels;
+using MineSweeper.Core.Models;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
-using MineSweeper.App.ViewModels;
 
 namespace MineSweeper.App.Views
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// - (EN) Interaction logic for MainWindow.xaml.
+    /// Acts as the View layer in MVVM, responsible for handling UI events
+    /// that cannot be directly bound to commands (e.g., right-click, double-click),
+    /// and forwarding them to the ViewModel.
+    /// - (VI) Logic tương tác cho MainWindow.xaml.
+    /// Đóng vai trò là View trong mô hình MVVM, chịu trách nhiệm xử lý các sự kiện UI
+    /// không thể bind trực tiếp bằng command (ví dụ: right-click, double-click),
+    /// và chuyển tiếp chúng về ViewModel.
     /// </summary>
     public partial class MainWindow : Window
     {
+        /// <summary>
+        /// - (EN) Initializes a new instance of the <see cref="MainWindow"/> class.
+        /// Sets up the ViewModel and subscribes to its events.
+        /// - (VI) Khởi tạo một instance mới của <see cref="MainWindow"/>.
+        /// Thiết lập ViewModel và đăng ký các event cần thiết.
+        /// </summary>
         public MainWindow()
         {
             InitializeComponent();
@@ -21,13 +35,18 @@ namespace MineSweeper.App.Views
             DataContext = vm;
 
             vm.PropertyChanged += Vm_PropertyChanged;
+
+            vm.GameEnded += Vm_GameEnded;
         }
 
         /// <summary>
-        /// Handles right-click on a cell and forwards it to the ViewModel.
-        /// - Đây là code-behind phải xử lý riêng theo kiểu dùng event → forward về ViewModel
-        /// - Vì không bind right-click command dễ như left-click
+        /// - (EN) Handles right-click on a cell and forwards the flag toggle action to the ViewModel.
+        /// This is implemented in code-behind because right-click binding is not straightforward in XAML.
+        /// - (VI) Xử lý thao tác click chuột phải trên một ô và chuyển tiếp hành động toggle flag về ViewModel.
+        /// Được xử lý trong code-behind vì việc bind right-click trong XAML không đơn giản như left-click.
         /// </summary>
+        /// <param name="sender">- (EN) UI element that triggered the event / (VI) Phần tử UI phát sinh sự kiện</param>
+        /// <param name="e">- (EN) Mouse event arguments / (VI) Tham số sự kiện chuột</param>
         private void Cell_RightClick(object sender, MouseButtonEventArgs e)
         {
             if (DataContext is not MainWindowViewModel vm)
@@ -48,6 +67,8 @@ namespace MineSweeper.App.Views
         /// - (EN) Handles double-click on a revealed cell and forwards the chord action to the ViewModel.
         /// - (VI) Xử lý thao tác double-click trên ô đã mở và chuyển lệnh chord về ViewModel.
         /// </summary>
+        /// <param name="sender">- (EN) UI element that triggered the event / (VI) Phần tử UI phát sinh sự kiện</param>
+        /// <param name="e">- (EN) Mouse event arguments / (VI) Tham số sự kiện chuột</param>
         private void Cell_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (DataContext is not MainWindowViewModel vm)
@@ -64,6 +85,14 @@ namespace MineSweeper.App.Views
             e.Handled = true;
         }
 
+        /// <summary>
+        /// - (EN) Handles PropertyChanged events from the ViewModel.
+        /// Triggers UI behaviors such as showing toast notifications when Message changes.
+        /// - (VI) Xử lý sự kiện PropertyChanged từ ViewModel.
+        /// Kích hoạt các hành vi UI như hiển thị toast khi Message thay đổi.
+        /// </summary>
+        /// <param name="sender">- (EN) Event sender / (VI) Đối tượng phát sự kiện</param>
+        /// <param name="e">- (EN) Property changed event arguments / (VI) Tham số sự kiện thay đổi thuộc tính</param>
         private void Vm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(MainWindowViewModel.Message))
@@ -72,6 +101,30 @@ namespace MineSweeper.App.Views
             }
         }
 
+        /// <summary>
+        /// - (EN) Handles endgame notifications raised by the ViewModel and displays corresponding dialogs.
+        /// - (VI) Xử lý thông báo kết thúc game từ ViewModel và hiển thị dialog tương ứng.
+        /// </summary>
+        /// <param name="sender">- (EN) Event sender / (VI) Đối tượng phát sự kiện</param>
+        /// <param name="e">- (EN) Game ended event data / (VI) Dữ liệu sự kiện kết thúc game</param>
+        private void Vm_GameEnded(object? sender, GameEndedEventArgs e)
+        {
+            if (e.State == GameState.Won)
+            {
+                MessageBox.Show("Congratulations! You cleared all cells!", "Victory 🎉");
+            }
+            else if (e.State == GameState.Lost)
+            {
+                MessageBox.Show("Boom! You hit a mine.", "Game Over 💥");
+            }
+        }
+
+        /// <summary>
+        /// - (EN) Displays a toast notification using fade-in and fade-out animations.
+        /// Automatically hides the toast if there is no message.
+        /// - (VI) Hiển thị toast notification với animation fade-in và fade-out.
+        /// Tự động ẩn toast nếu không có nội dung.
+        /// </summary>
         private void ShowToast()
         {
             // Nếu không có nội dung thì ẩn toast ngay

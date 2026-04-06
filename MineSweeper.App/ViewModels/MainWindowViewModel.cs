@@ -196,6 +196,12 @@ public class MainWindowViewModel : INotifyPropertyChanged
     /// - (VI) Xảy ra khi giá trị của một thuộc tính thay đổi.
     /// </summary>
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    /// <summary>
+    /// - (EN) Occurs when the game reaches an end state such as win or loss.
+    /// - (VI) Xảy ra khi game đạt đến trạng thái kết thúc như thắng hoặc thua.
+    /// </summary>
+    public event EventHandler<GameEndedEventArgs>? GameEnded;
     #endregion
 
     #region Public Methods
@@ -448,18 +454,14 @@ public class MainWindowViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// - (EN) Displays the endgame notification if the current game has been won or lost.
-    /// - (VI) Hiển thị thông báo kết thúc game nếu người chơi đã thắng hoặc thua.
+    /// - (EN) Raises a game-ended notification when the current game has been won or lost.
+    /// - (VI) Phát thông báo kết thúc game khi người chơi đã thắng hoặc thua.
     /// </summary>
     private void HandleEndGameNotification()
     {
-        if (_game.State == GameState.Won)
+        if (_game.State == GameState.Won || _game.State == GameState.Lost)
         {
-            System.Windows.MessageBox.Show("Congratulations! You cleared all cells!", "Victory 🎉");
-        }
-        else if (_game.State == GameState.Lost)
-        {
-            System.Windows.MessageBox.Show("Boom! You hit a mine.", "Game Over 💥");
+            GameEnded?.Invoke(this, new GameEndedEventArgs(_game.State));
         }
     }
     #endregion
