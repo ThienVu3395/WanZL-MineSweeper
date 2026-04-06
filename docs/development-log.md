@@ -525,3 +525,25 @@ Improved game initialization safety by validating board configuration before cre
 ### Notes
 This commit strengthens reliability after the first-click-safe feature introduced stricter constraints on valid board setup.
 It prevents impossible or unsafe configurations from reaching the gameplay loop.
+
+## Commit 32 - Add game timer and elapsed duration display
+
+### Summary
+Added a gameplay timer to track elapsed duration and display it directly in the WPF interface.
+
+### Completed
+- Added timer state and elapsed time properties to `MainWindowViewModel`
+- Started the timer on the first valid reveal action
+- Stopped the timer automatically when the game ended
+- Reset the timer when starting a new game
+- Displayed elapsed time in the main game header alongside existing counters
+- Added ViewModel unit tests for:
+  - timer initialization
+  - timer start on first reveal
+  - timer reset on new game
+  - elapsed time formatting
+  - timer stop on game over
+
+### Notes
+This commit improves product value by making the game feel more complete and closer to a classic MineSweeper experience.
+It also prepares the project for future features such as best-time tracking by difficulty.

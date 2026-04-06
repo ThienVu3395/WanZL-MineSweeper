@@ -6,6 +6,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace MineSweeper.App.ViewModels;
 
@@ -18,10 +19,16 @@ namespace MineSweeper.App.ViewModels;
 public class MainWindowViewModel : INotifyPropertyChanged
 {
     private readonly MineSweeperGame _game;
+
     private readonly RelayCommand _revealCellCommand;
     private readonly RelayCommand _toggleFlagCommand;
     private readonly RelayCommand _newGameCommand;
     private readonly RelayCommand _chordCellCommand;
+
+    private readonly DispatcherTimer _gameTimer;
+    private DateTime? _gameStartTimeUtc;
+    private TimeSpan _elapsedTime;
+    private bool _isTimerRunning;
 
     private DifficultyLevel _selectedDifficulty;
 
@@ -57,6 +64,14 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
         // Command dùng để xử lý chording khi user double-click vào ô đã mở
         _chordCellCommand = new RelayCommand(OnChordCell, CanChordCell);
+
+        // Timer dùng để cập nhật thời gian chơi theo từng giây
+        _gameTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(1)
+        };
+
+        _gameTimer.Tick += OnGameTimerTick;
 
         // Khởi tạo game đầu tiên
         StartNewGameByDifficulty();
@@ -188,6 +203,18 @@ public class MainWindowViewModel : INotifyPropertyChanged
             };
         }
     }
+
+    /// <summary>
+    /// - (EN) Gets the elapsed gameplay duration.
+    /// - (VI) Lấy tổng thời gian đã chơi trong ván hiện tại.
+    /// </summary>
+    public TimeSpan ElapsedTime => _elapsedTime;
+
+    /// <summary>
+    /// - (EN) Gets the formatted elapsed gameplay duration for UI display.
+    /// - (VI) Lấy chuỗi thời gian đã chơi đã được định dạng để hiển thị trên giao diện.
+    /// </summary>
+    public string ElapsedTimeDisplay => _elapsedTime.ToString(@"mm\:ss");
     #endregion
 
     #region Events
@@ -226,6 +253,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
             Cells.Add(new CellViewModel(cell));
         }
 
+        ResetTimer();
         ClearMessage();
         RefreshGameProperties(includeBoardDimensions: true, includeTotalMines: true);
         RefreshCommandStates();
@@ -243,7 +271,14 @@ public class MainWindowViewModel : INotifyPropertyChanged
         if (parameter is not CellViewModel cellVm)
             return;
 
+        bool shouldStartTimer = !_isTimerRunning && !cellVm.IsRevealed && !cellVm.IsFlagged;
+
         ClearMessage();
+
+        if (shouldStartTimer)
+        {
+            StartTimer();
+        }
 
         _game.RevealCell(cellVm.Row, cellVm.Column);
 
@@ -440,6 +475,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(IsGameFinished));
         OnPropertyChanged(nameof(FlagCount));
         OnPropertyChanged(nameof(RemainingMines));
+        OnPropertyChanged(nameof(ElapsedTime));
+        OnPropertyChanged(nameof(ElapsedTimeDisplay));
     }
 
     /// <summary>
@@ -461,8 +498,80 @@ public class MainWindowViewModel : INotifyPropertyChanged
     {
         if (_game.State == GameState.Won || _game.State == GameState.Lost)
         {
+            StopTimer();
             GameEnded?.Invoke(this, new GameEndedEventArgs(_game.State));
         }
+    }
+
+    /// <summary>
+    /// - (EN) Starts the gameplay timer if it is not already running.
+    /// - (VI) Khởi động timer của ván chơi nếu timer chưa chạy.
+    /// </summary>
+    private void StartTimer()
+    {
+        if (_isTimerRunning)
+            return;
+
+        _gameStartTimeUtc = DateTime.UtcNow - _elapsedTime;
+        _gameTimer.Start();
+        _isTimerRunning = true;
+
+        UpdateElapsedTime();
+    }
+
+    /// <summary>
+    /// - (EN) Stops the gameplay timer if it is currently running.
+    /// - (VI) Dừng timer của ván chơi nếu timer đang chạy.
+    /// </summary>
+    private void StopTimer()
+    {
+        if (!_isTimerRunning)
+            return;
+
+        UpdateElapsedTime();
+        _gameTimer.Stop();
+        _isTimerRunning = false;
+    }
+
+    /// <summary>
+    /// - (EN) Resets the gameplay timer back to zero.
+    /// - (VI) Đặt lại timer của ván chơi về 0.
+    /// </summary>
+    private void ResetTimer()
+    {
+        _gameTimer.Stop();
+        _isTimerRunning = false;
+        _gameStartTimeUtc = null;
+        _elapsedTime = TimeSpan.Zero;
+
+        OnPropertyChanged(nameof(ElapsedTime));
+        OnPropertyChanged(nameof(ElapsedTimeDisplay));
+    }
+
+    /// <summary>
+    /// - (EN) Handles the periodic timer tick and refreshes elapsed time.
+    /// - (VI) Xử lý nhịp tick của timer và cập nhật thời gian đã trôi qua.
+    /// </summary>
+    /// <param name="sender">- (EN) Event sender / (VI) Đối tượng phát sự kiện</param>
+    /// <param name="e">- (EN) Event data / (VI) Dữ liệu sự kiện</param>
+    private void OnGameTimerTick(object? sender, EventArgs e)
+    {
+        UpdateElapsedTime();
+    }
+
+    /// <summary>
+    /// - (EN) Updates the elapsed gameplay duration based on the stored start time.
+    /// - (VI) Cập nhật thời lượng ván chơi dựa trên thời điểm bắt đầu đã lưu.
+    /// </summary>
+    private void UpdateElapsedTime()
+    {
+        if (_gameStartTimeUtc is null)
+            return;
+
+        _elapsedTime = DateTime.UtcNow - _gameStartTimeUtc.Value;
+
+        OnPropertyChanged(nameof(ElapsedTime));
+        OnPropertyChanged(nameof(ElapsedTimeDisplay));
     }
     #endregion
 }

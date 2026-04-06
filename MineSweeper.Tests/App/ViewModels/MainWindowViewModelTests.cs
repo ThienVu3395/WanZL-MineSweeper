@@ -351,6 +351,117 @@ public class MainWindowViewModelTests
     }
     #endregion
 
+    #region Timer
+
+    /// <summary>
+    /// - (EN) Verifies that the timer display is initialized to zero.
+    /// - (VI) Kiểm tra bộ hiển thị timer được khởi tạo ở giá trị 0.
+    /// </summary>
+    [Fact]
+    public void Constructor_ShouldInitializeElapsedTimeDisplay_ToZero()
+    {
+        // Arrange & Act
+        var vm = new MainWindowViewModel();
+
+        // Assert
+        Assert.Equal(TimeSpan.Zero, vm.ElapsedTime);
+        Assert.Equal("00:00", vm.ElapsedTimeDisplay);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that the first reveal starts the gameplay timer.
+    /// - (VI) Kiểm tra lần mở ô đầu tiên sẽ khởi động timer của ván chơi.
+    /// </summary>
+    [Fact]
+    public void RevealCellCommand_ShouldStartTimer_OnFirstReveal()
+    {
+        // Arrange
+        var vm = new MainWindowViewModel();
+        var cell = vm.Cells.First();
+
+        // Act
+        vm.RevealCellCommand.Execute(cell);
+
+        // Assert
+        bool isTimerRunning = GetPrivateFieldValue<bool>(vm, "_isTimerRunning");
+        Assert.True(isTimerRunning);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that starting a new game resets the elapsed time back to zero.
+    /// - (VI) Kiểm tra khi bắt đầu game mới thì thời gian đã chơi sẽ được reset về 0.
+    /// </summary>
+    [Fact]
+    public void StartNewGame_ShouldResetElapsedTime()
+    {
+        // Arrange
+        var vm = new MainWindowViewModel();
+
+        SetPrivateFieldValue(vm, "_elapsedTime", TimeSpan.FromSeconds(95));
+        SetPrivateFieldValue(vm, "_isTimerRunning", true);
+        SetPrivateFieldValue(vm, "_gameStartTimeUtc", DateTime.UtcNow.AddSeconds(-95));
+
+        // Act
+        vm.StartNewGame(9, 9, 10);
+
+        // Assert
+        Assert.Equal(TimeSpan.Zero, vm.ElapsedTime);
+        Assert.Equal("00:00", vm.ElapsedTimeDisplay);
+
+        bool isTimerRunning = GetPrivateFieldValue<bool>(vm, "_isTimerRunning");
+        Assert.False(isTimerRunning);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that the elapsed time display formats the stored elapsed time correctly.
+    /// - (VI) Kiểm tra chuỗi hiển thị thời gian định dạng đúng từ giá trị elapsed time đã lưu.
+    /// </summary>
+    [Fact]
+    public void ElapsedTimeDisplay_ShouldFormatElapsedTimeCorrectly()
+    {
+        // Arrange
+        var vm = new MainWindowViewModel();
+
+        SetPrivateFieldValue(vm, "_elapsedTime", TimeSpan.FromSeconds(65));
+
+        // Act
+        var display = vm.ElapsedTimeDisplay;
+
+        // Assert
+        Assert.Equal("01:05", display);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that the timer stops when the game ends in a loss.
+    /// - (VI) Kiểm tra timer sẽ dừng khi ván chơi kết thúc ở trạng thái thua.
+    /// </summary>
+    [Fact]
+    public void RevealCellCommand_ShouldStopTimer_WhenPlayerLoses()
+    {
+        // Arrange
+        var vm = new MainWindowViewModel();
+
+        ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
+
+        var safeCell = GetCell(vm, 0, 1);
+        var mineCell = GetCell(vm, 0, 0);
+
+        // First reveal starts timer
+        vm.RevealCellCommand.Execute(safeCell);
+
+        bool timerRunningAfterFirstReveal = GetPrivateFieldValue<bool>(vm, "_isTimerRunning");
+        Assert.True(timerRunningAfterFirstReveal);
+
+        // Act - reveal mine to lose
+        vm.RevealCellCommand.Execute(mineCell);
+
+        // Assert
+        bool timerRunningAfterLoss = GetPrivateFieldValue<bool>(vm, "_isTimerRunning");
+        Assert.False(timerRunningAfterLoss);
+    }
+
+    #endregion
+
     #region GameEndedEvent
     /// <summary>
     /// - (EN) Verifies that the view model raises GameEnded when the player loses
@@ -428,6 +539,39 @@ public class MainWindowViewModelTests
         Assert.NotNull(game);
 
         return game!;
+    }
+
+    /// <summary>
+    /// - (EN) Gets the value of a private field from the target view model.
+    /// - (VI) Lấy giá trị của một private field từ view model mục tiêu.
+    /// </summary>
+    /// <typeparam name="T">- (EN) Field type / (VI) Kiểu dữ liệu của field</typeparam>
+    /// <param name="vm">- (EN) Target view model / (VI) ViewModel cần đọc field</param>
+    /// <param name="fieldName">- (EN) Private field name / (VI) Tên private field</param>
+    /// <returns>- (EN) Field value / (VI) Giá trị field</returns>
+    private static T GetPrivateFieldValue<T>(MainWindowViewModel vm, string fieldName)
+    {
+        var field = typeof(MainWindowViewModel).GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
+
+        Assert.NotNull(field);
+
+        return (T)field!.GetValue(vm)!;
+    }
+
+    /// <summary>
+    /// - (EN) Sets the value of a private field on the target view model.
+    /// - (VI) Gán giá trị cho một private field của view model mục tiêu.
+    /// </summary>
+    /// <param name="vm">- (EN) Target view model / (VI) ViewModel cần gán field</param>
+    /// <param name="fieldName">- (EN) Private field name / (VI) Tên private field</param>
+    /// <param name="value">- (EN) Value to assign / (VI) Giá trị cần gán</param>
+    private static void SetPrivateFieldValue(MainWindowViewModel vm, string fieldName, object? value)
+    {
+        var field = typeof(MainWindowViewModel).GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
+
+        Assert.NotNull(field);
+
+        field!.SetValue(vm, value);
     }
 
     /// <summary>

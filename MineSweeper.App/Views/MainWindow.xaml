@@ -86,6 +86,11 @@
 
                     <TextBlock Text="{Binding RemainingMines, StringFormat=Remaining: {0}}"
                                FontSize="13"
+                               FontWeight="SemiBold"
+                               Margin="0,0,16,0" />
+
+                    <TextBlock Text="{Binding ElapsedTimeDisplay, StringFormat=Time: {0}}"
+                               FontSize="13"
                                FontWeight="SemiBold" />
                 </StackPanel>
 
