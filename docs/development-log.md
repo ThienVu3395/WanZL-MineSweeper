@@ -417,3 +417,19 @@ Connected the chording gameplay mechanic to the WPF user interface so players ca
 ### Notes
 This commit completes the first end-to-end version of the chording feature.
 Players can now use the mechanic directly from the desktop UI instead of only through core logic and tests.
+
+## Commit 26 - Add MainWindowViewModel coverage for chording command
+
+### Summary
+Extended the ViewModel test suite to cover the new chording interaction exposed to the WPF UI.
+
+### Completed
+- Added unit tests for `ChordCellCommand` in `MainWindowViewModel`
+- Verified that chording is only executable for valid revealed cells during active gameplay
+- Verified that chord execution reveals neighboring cells when the rule conditions are satisfied
+- Verified that ViewModel state and board-related properties are updated after chord actions
+- Verified that the chord command is disabled when the game is already finished
+
+### Notes
+This commit improves regression safety for the chording feature at the MVVM layer.
+It helps ensure that the WPF interaction flow stays aligned with the underlying core gameplay logic.
