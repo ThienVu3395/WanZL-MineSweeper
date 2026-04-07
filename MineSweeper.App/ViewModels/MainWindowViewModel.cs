@@ -207,6 +207,16 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public bool IsGameFinished => _game.State == GameState.Won || _game.State == GameState.Lost;
 
     /// <summary>
+    /// - (EN) Gets whether the current game session has meaningful player progress
+    /// that could be lost by restarting or switching difficulty.
+    /// - (VI) Lấy giá trị cho biết ván chơi hiện tại có tiến trình đáng kể của người chơi
+    /// có thể bị mất khi restart hoặc đổi độ khó hay không.
+    /// </summary>
+    public bool HasActiveGameProgress =>
+        _game.State == GameState.InProgress &&
+        (Cells.Any(cell => cell.IsRevealed || cell.IsFlagged) || _elapsedTime > TimeSpan.Zero);
+
+    /// <summary>
     /// - (EN) Gets the total number of mines on the current board.
     /// - (VI) Lấy tổng số mìn trên board hiện tại.
     /// </summary>
@@ -431,6 +441,22 @@ public class MainWindowViewModel : INotifyPropertyChanged
     /// </summary>
     public void QuickRestart()
     {
+        StartNewGameByDifficulty();
+    }
+
+    /// <summary>
+    /// - (EN) Starts a new game using the specified difficulty level.
+    /// This method updates the selected difficulty before applying the new board configuration.
+    /// - (VI) Bắt đầu một ván mới bằng mức độ khó được chỉ định.
+    /// Method này sẽ cập nhật độ khó đang chọn trước khi áp dụng cấu hình board mới.
+    /// </summary>
+    /// <param name="difficulty">
+    /// - (EN) The difficulty level to apply for the new game.
+    /// - (VI) Mức độ khó sẽ được áp dụng cho ván chơi mới.
+    /// </param>
+    public void StartNewGameForDifficulty(DifficultyLevel difficulty)
+    {
+        SelectedDifficulty = difficulty;
         StartNewGameByDifficulty();
     }
     #endregion
@@ -812,6 +838,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
         OnPropertyChanged(nameof(GameStatus));
         OnPropertyChanged(nameof(IsGameFinished));
+        OnPropertyChanged(nameof(HasActiveGameProgress));
         OnPropertyChanged(nameof(FlagCount));
         OnPropertyChanged(nameof(RemainingMines));
         OnPropertyChanged(nameof(ElapsedTime));

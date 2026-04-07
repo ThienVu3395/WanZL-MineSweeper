@@ -128,6 +128,20 @@ public class MainWindowViewModelTests
         // Assert
         Assert.True(vm.IsCustomDifficultySelected);
     }
+
+    /// <summary>
+    /// - (EN) Verifies that a freshly initialized game does not count as active progress yet.
+    /// - (VI) Kiểm tra một ván chơi vừa được khởi tạo chưa được tính là đã có tiến trình đang chơi.
+    /// </summary>
+    [Fact]
+    public void Constructor_ShouldInitializeHasActiveGameProgress_AsFalse()
+    {
+        // Arrange & Act
+        var vm = new MainWindowViewModel();
+
+        // Assert
+        Assert.False(vm.HasActiveGameProgress);
+    }
     #endregion
 
     #region NewGameCommand
@@ -281,6 +295,53 @@ public class MainWindowViewModelTests
 
         // Assert
         Assert.Equal(24, vm.CustomMines);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that starting a new game for a specified difficulty
+    /// updates the selected difficulty and applies the matching preset.
+    /// - (VI) Kiểm tra khi bắt đầu game mới cho một độ khó được chỉ định
+    /// thì độ khó đang chọn sẽ được cập nhật và preset tương ứng sẽ được áp dụng.
+    /// </summary>
+    [Fact]
+    public void StartNewGameForDifficulty_ShouldApplySpecifiedPresetDifficulty()
+    {
+        // Arrange
+        var vm = new MainWindowViewModel();
+
+        // Act
+        vm.StartNewGameForDifficulty(DifficultyLevel.Intermediate);
+
+        // Assert
+        Assert.Equal(DifficultyLevel.Intermediate, vm.SelectedDifficulty);
+        Assert.Equal(16, vm.Rows);
+        Assert.Equal(16, vm.Columns);
+        Assert.Equal(40, vm.TotalMines);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that starting a new game for Custom difficulty
+    /// uses the current custom board configuration.
+    /// - (VI) Kiểm tra khi bắt đầu game mới cho độ khó Custom
+    /// thì cấu hình board custom hiện tại sẽ được sử dụng.
+    /// </summary>
+    [Fact]
+    public void StartNewGameForDifficulty_ShouldApplyCurrentCustomConfiguration_WhenDifficultyIsCustom()
+    {
+        // Arrange
+        var vm = new MainWindowViewModel();
+        vm.CustomRows = 12;
+        vm.CustomColumns = 14;
+        vm.CustomMines = 20;
+
+        // Act
+        vm.StartNewGameForDifficulty(DifficultyLevel.Custom);
+
+        // Assert
+        Assert.Equal(DifficultyLevel.Custom, vm.SelectedDifficulty);
+        Assert.Equal(12, vm.Rows);
+        Assert.Equal(14, vm.Columns);
+        Assert.Equal(20, vm.TotalMines);
     }
     #endregion
 
@@ -515,6 +576,24 @@ public class MainWindowViewModelTests
         // Assert
         Assert.Null(vm.Message);
     }
+
+    /// <summary>
+    /// - (EN) Verifies that placing a flag marks the game as having active progress.
+    /// - (VI) Kiểm tra khi đặt cờ thì ván chơi sẽ được đánh dấu là đã có tiến trình.
+    /// </summary>
+    [Fact]
+    public void ToggleFlagCommand_ShouldSetHasActiveGameProgress_WhenFlagIsPlaced()
+    {
+        // Arrange
+        var vm = new MainWindowViewModel();
+        var firstCell = vm.Cells.First();
+
+        // Act
+        vm.ToggleFlagCommand.Execute(firstCell);
+
+        // Assert
+        Assert.True(vm.HasActiveGameProgress);
+    }
     #endregion
 
     #region RevealCellCommand
@@ -564,6 +643,24 @@ public class MainWindowViewModelTests
         Assert.Contains(nameof(MainWindowViewModel.IsGameFinished), changedProperties);
         Assert.Contains(nameof(MainWindowViewModel.FlagCount), changedProperties);
         Assert.Contains(nameof(MainWindowViewModel.RemainingMines), changedProperties);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that revealing the first cell marks the game as having active progress.
+    /// - (VI) Kiểm tra khi mở ô đầu tiên thì ván chơi sẽ được đánh dấu là đã có tiến trình.
+    /// </summary>
+    [Fact]
+    public void RevealCellCommand_ShouldSetHasActiveGameProgress_WhenFirstCellIsRevealed()
+    {
+        // Arrange
+        var vm = new MainWindowViewModel();
+        var firstCell = vm.Cells.First();
+
+        // Act
+        vm.RevealCellCommand.Execute(firstCell);
+
+        // Assert
+        Assert.True(vm.HasActiveGameProgress);
     }
     #endregion
 

@@ -720,3 +720,30 @@ Added dedicated quick restart support so the application can explicitly restart 
 ### Notes
 This commit introduces a distinct restart action in the interaction flow while keeping the current header UI simple.
 It also prepares the application for upcoming keyboard shortcut support and restart confirmation behavior.
+
+## Commit 41 - Add keyboard shortcuts and restart confirmation for active games
+
+### Summary
+Added keyboard shortcuts for restart and difficulty actions, and introduced confirmation before discarding an active game.
+
+### Completed
+- Added keyboard shortcuts in `MainWindow`:
+  - `F2` for quick restart
+  - `Ctrl+1` for Beginner
+  - `Ctrl+2` for Intermediate
+  - `Ctrl+3` for Expert
+  - `Ctrl+4` for Custom
+- Added `HasActiveGameProgress` to `MainWindowViewModel`
+- Added `StartNewGameForDifficulty(...)` to support shortcut-driven difficulty changes
+- Routed `New Game` button through a confirmation-aware restart flow
+- Added a custom in-window restart confirmation dialog overlay
+- Allowed restart confirmation to be accepted with `Enter` and canceled with `Escape`
+- Added unit tests for:
+  - active progress detection after reveal
+  - active progress detection after flagging
+  - starting a game for a specified preset difficulty
+  - starting a game for the current custom configuration
+
+### Notes
+This combined UX commit makes the application faster to control from the keyboard while reducing the risk of losing progress accidentally.
+It also builds naturally on the quick restart support added in the previous commit.
