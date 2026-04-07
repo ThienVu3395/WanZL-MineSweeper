@@ -603,3 +603,35 @@ Added a dedicated user notification when the player achieves a new best time.
 This commit improves player feedback and makes best-time progression feel more rewarding.
 It keeps UI notification display in the view layer while the view model remains responsible for game state and event signaling.
 A broader persistence refactor for player statistics and preferences can be introduced in a later commit.
+
+## Commit 36 - Improve Best Time UX & Time Formatting
+
+### Summary
+- Centralized time formatting logic using a reusable helper.
+- Improved user experience when achieving a new best time.
+- Fixed toast notification lifecycle to ensure visibility.
+
+### Details
+
+#### 1. Time Formatting Refactor
+- Introduced `TimeFormatHelper` to standardize time display.
+- Removed duplicated formatting logic (`mm:ss`) across:
+  - `ElapsedTimeDisplay`
+  - `BestTimeDisplay`
+  - Toast notifications in View
+- Eliminated magic string `"--:--"`.
+
+#### 2. Best Time Notification UX
+- Improved toast message content:
+  - First record → 🎉 First record!
+  - New record → 🔥 New best time!
+- Ensured toast stays visible during animation.
+- Moved message clearing logic to animation completion.
+
+### Result
+- Cleaner and more maintainable formatting logic.
+- Better user feedback and readability.
+- More professional UI behavior.
+
+### Notes
+- This change prepares the codebase for future UI enhancements and localization.

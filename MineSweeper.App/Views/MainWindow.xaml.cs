@@ -1,4 +1,5 @@
-﻿using MineSweeper.App.ViewModels;
+﻿using MineSweeper.App.Helpers;
+using MineSweeper.App.ViewModels;
 using MineSweeper.Core.Models;
 using System.ComponentModel;
 using System.Windows;
@@ -140,8 +141,9 @@ namespace MineSweeper.App.Views
             if (DataContext is not MainWindowViewModel vm)
                 return;
 
-            string recordTypeText = e.IsFirstRecord ? "First record" : "New best time";
-            vm.ShowTemporaryMessage($"🏆 {recordTypeText}: {e.BestTime:mm\\:ss} ({e.Difficulty})");
+            string recordTypeText = e.IsFirstRecord ? "🎉 First record!" : "🔥 New best time!";
+
+            vm.ShowTemporaryMessage($"🏆 {recordTypeText}: {TimeFormatHelper.Format(e.BestTime)} ({e.Difficulty.ToString().ToUpper()})");
 
             ShowToast();
         }
@@ -192,10 +194,13 @@ namespace MineSweeper.App.Views
 
             ToastMessage.BeginAnimation(OpacityProperty, animation);
 
-            if (DataContext is MainWindowViewModel viewModel)
+            animation.Completed += (_, _) =>
             {
-                viewModel.ClearTemporaryMessage();
-            }
+                if (DataContext is MainWindowViewModel vm)
+                {
+                    vm.ClearTemporaryMessage();
+                }
+            };
         }
     }
 }

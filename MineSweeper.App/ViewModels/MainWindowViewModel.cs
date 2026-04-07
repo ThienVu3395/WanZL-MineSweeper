@@ -245,7 +245,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     /// - (EN) Gets the formatted elapsed gameplay duration for UI display.
     /// - (VI) Lấy chuỗi thời gian đã chơi đã được định dạng để hiển thị trên giao diện.
     /// </summary>
-    public string ElapsedTimeDisplay => _elapsedTime.ToString(@"mm\:ss");
+    public string ElapsedTimeDisplay => TimeFormatHelper.Format(_elapsedTime);
 
     /// <summary>
     /// - (EN) Gets the best recorded completion time for the currently selected difficulty.
@@ -265,7 +265,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     /// - (EN) Gets the formatted best completion time for UI display.
     /// - (VI) Lấy chuỗi thời gian tốt nhất đã được định dạng để hiển thị trên giao diện.
     /// </summary>
-    public string BestTimeDisplay => BestTime?.ToString(@"mm\:ss") ?? "--:--";
+    public string BestTimeDisplay => TimeFormatHelper.Format(BestTime);
 
     /// <summary>
     /// - (EN) Gets the full file path used to store persisted best times.
