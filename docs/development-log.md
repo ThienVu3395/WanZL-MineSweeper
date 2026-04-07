@@ -635,3 +635,24 @@ A broader persistence refactor for player statistics and preferences can be intr
 
 ### Notes
 - This change prepares the codebase for future UI enhancements and localization.
+
+## Commit 37 - Add custom difficulty configuration
+
+### Summary
+Added support for a user-configurable custom board size and mine count.
+
+### Completed
+- Added `Custom` as a selectable difficulty option in the main UI
+- Added configurable custom rows, columns, and mine count in `MainWindowViewModel`
+- Added UI inputs for custom board configuration in `MainWindow.xaml`
+- Added validation and normalization so custom mine count always leaves at least one safe cell
+- Updated difficulty display helpers to represent Custom explicitly
+- Added unit tests for:
+  - Custom difficulty availability
+  - Custom board initialization
+  - Custom mine-count clamping
+  - Custom difficulty display and preset behavior
+
+### Notes
+This commit improves product flexibility and gives players more control over board size and challenge level.
+Custom difficulty intentionally does not use persisted best-time tracking.

@@ -97,6 +97,37 @@ public class MainWindowViewModelTests
         Assert.Contains(nameof(MainWindowViewModel.BestTime), changedProperties);
         Assert.Contains(nameof(MainWindowViewModel.BestTimeDisplay), changedProperties);
     }
+
+    /// <summary>
+    /// - (EN) Verifies that Custom difficulty is available in the difficulty list.
+    /// - (VI) Kiểm tra độ khó Custom có xuất hiện trong danh sách độ khó.
+    /// </summary>
+    [Fact]
+    public void Constructor_ShouldIncludeCustomDifficulty_InAvailableDifficulties()
+    {
+        // Arrange & Act
+        var vm = new MainWindowViewModel();
+
+        // Assert
+        Assert.Contains(DifficultyLevel.Custom, vm.AvailableDifficulties);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that selecting Custom difficulty updates the custom-selection flag.
+    /// - (VI) Kiểm tra khi chọn độ khó Custom thì cờ nhận biết custom mode sẽ được cập nhật đúng.
+    /// </summary>
+    [Fact]
+    public void SelectedDifficulty_ShouldSetIsCustomDifficultySelected_WhenCustomIsSelected()
+    {
+        // Arrange
+        var vm = new MainWindowViewModel();
+
+        // Act
+        vm.SelectedDifficulty = DifficultyLevel.Custom;
+
+        // Assert
+        Assert.True(vm.IsCustomDifficultySelected);
+    }
     #endregion
 
     #region NewGameCommand
@@ -178,6 +209,78 @@ public class MainWindowViewModelTests
         Assert.Contains(nameof(MainWindowViewModel.TotalMines), changedProperties);
         Assert.Contains(nameof(MainWindowViewModel.FlagCount), changedProperties);
         Assert.Contains(nameof(MainWindowViewModel.RemainingMines), changedProperties);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that executing the new game command applies the custom board configuration
+    /// when Custom difficulty is selected.
+    /// - (VI) Kiểm tra khi thực thi command tạo game mới thì cấu hình board custom sẽ được áp dụng
+    /// nếu độ khó Custom đang được chọn.
+    /// </summary>
+    [Fact]
+    public void NewGameCommand_ShouldApplyCustomDifficultyConfiguration()
+    {
+        // Arrange
+        var vm = new MainWindowViewModel();
+
+        vm.SelectedDifficulty = DifficultyLevel.Custom;
+        vm.CustomRows = 12;
+        vm.CustomColumns = 14;
+        vm.CustomMines = 20;
+
+        // Act
+        vm.NewGameCommand.Execute(null);
+
+        // Assert
+        Assert.Equal(12, vm.Rows);
+        Assert.Equal(14, vm.Columns);
+        Assert.Equal(20, vm.TotalMines);
+        Assert.Equal(12 * 14, vm.Cells.Count);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that custom mine count is clamped to a valid value
+    /// so the board still keeps at least one safe cell.
+    /// - (VI) Kiểm tra số lượng mìn custom sẽ được giới hạn về giá trị hợp lệ
+    /// để board vẫn còn ít nhất một ô an toàn.
+    /// </summary>
+    [Fact]
+    public void CustomMines_ShouldBeClamped_WhenValueExceedsBoardCapacity()
+    {
+        // Arrange
+        var vm = new MainWindowViewModel();
+
+        vm.SelectedDifficulty = DifficultyLevel.Custom;
+        vm.CustomRows = 5;
+        vm.CustomColumns = 5;
+
+        // Act
+        vm.CustomMines = 999;
+
+        // Assert
+        Assert.Equal(24, vm.CustomMines);
+    }
+
+    /// - (VI) Kiểm tra khi thay đổi kích thước board custom thì số lượng mìn custom hiện tại
+    /// sẽ tự động được điều chỉnh nếu cần.
+    /// </summary>
+    [Fact]
+    public void CustomRowsAndColumns_ShouldAdjustCustomMines_WhenBoardBecomesSmaller()
+    {
+        // Arrange
+        var vm = new MainWindowViewModel();
+
+        vm.SelectedDifficulty = DifficultyLevel.Custom;
+        vm.CustomRows = 10;
+        vm.CustomColumns = 10;
+        vm.CustomMines = 90;
+
+        // Act
+        vm.CustomRows = 5;
+        vm.CustomColumns = 5;
+
+        // Assert
+        Assert.Equal(24, vm.CustomMines);
     }
     #endregion
 

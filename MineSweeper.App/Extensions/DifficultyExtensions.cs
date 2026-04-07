@@ -27,6 +27,7 @@ namespace MineSweeper.App.Extensions
                 DifficultyLevel.Beginner => "Beginner (9x9 | 10 mines)",
                 DifficultyLevel.Intermediate => "Intermediate (16x16 | 40 mines)",
                 DifficultyLevel.Expert => "Expert (16x30 | 99 mines)",
+                DifficultyLevel.Custom => "Custom",
                 _ => difficulty.ToString()
             };
         }
@@ -43,6 +44,10 @@ namespace MineSweeper.App.Extensions
         /// - (EN) The matching preset containing board rows, columns, and mine count.
         /// - (VI) Preset tương ứng, bao gồm số hàng, số cột, và số lượng mìn của board.
         /// </returns>
+        /// <exception cref="InvalidOperationException">
+        /// - (EN) Thrown when the selected difficulty does not map to a fixed preset.
+        /// - (VI) Được ném ra khi độ khó được chọn không ánh xạ tới một preset cố định.
+        /// </exception>
         public static DifficultyPreset ToPreset(this DifficultyLevel difficulty)
         {
             return difficulty switch
@@ -50,7 +55,8 @@ namespace MineSweeper.App.Extensions
                 DifficultyLevel.Beginner => new DifficultyPreset(9, 9, 10),
                 DifficultyLevel.Intermediate => new DifficultyPreset(16, 16, 40),
                 DifficultyLevel.Expert => new DifficultyPreset(16, 30, 99),
-                _ => new DifficultyPreset(9, 9, 10)
+                DifficultyLevel.Custom => throw new InvalidOperationException("Custom difficulty does not map to a predefined preset."),
+                _ => throw new InvalidOperationException($"Unsupported difficulty level: {difficulty}.")
             };
         }
 

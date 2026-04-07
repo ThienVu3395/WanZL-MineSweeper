@@ -63,6 +63,23 @@ public class DifficultyExtensionsTests
     }
 
     /// <summary>
+    /// - (EN) Verifies that Custom difficulty returns the correct display string.
+    /// - (VI) Kiểm tra độ khó Custom trả về đúng chuỗi hiển thị.
+    /// </summary>
+    [Fact]
+    public void ToDisplayString_ShouldReturnCorrectValue_ForCustom()
+    {
+        // Arrange
+        var difficulty = DifficultyLevel.Custom;
+
+        // Act
+        var result = difficulty.ToDisplayString();
+
+        // Assert
+        Assert.Equal("Custom", result);
+    }
+
+    /// <summary>
     /// - (EN) Verifies that unsupported difficulty values fall back to the enum string.
     /// - (VI) Kiểm tra các giá trị độ khó không được hỗ trợ sẽ fallback về chuỗi enum gốc.
     /// </summary>
@@ -141,22 +158,17 @@ public class DifficultyExtensionsTests
     }
 
     /// <summary>
-    /// - (EN) Verifies that unsupported difficulty values fall back to the default beginner preset.
-    /// - (VI) Kiểm tra các giá trị độ khó không được hỗ trợ sẽ fallback về preset Beginner mặc định.
+    /// - (EN) Verifies that Custom difficulty does not map to a predefined preset.
+    /// - (VI) Kiểm tra độ khó Custom không được map sang preset cố định.
     /// </summary>
     [Fact]
-    public void ToPreset_ShouldFallbackToBeginnerPreset_ForUnsupportedDifficulty()
+    public void ToPreset_ShouldThrowInvalidOperationException_ForCustom()
     {
         // Arrange
         var difficulty = DifficultyLevel.Custom;
 
-        // Act
-        var preset = difficulty.ToPreset();
-
-        // Assert
-        Assert.Equal(9, preset.Rows);
-        Assert.Equal(9, preset.Columns);
-        Assert.Equal(10, preset.MineCount);
+        // Act & Assert
+        Assert.Throws<InvalidOperationException>(() => difficulty.ToPreset());
     }
 
     /// <summary>

@@ -39,6 +39,16 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private readonly Dictionary<DifficultyLevel, TimeSpan> _bestTimes;
     private readonly string _bestTimesFilePath;
 
+    private const int MinCustomRows = 5;
+    private const int MaxCustomRows = 30;
+    private const int MinCustomColumns = 5;
+    private const int MaxCustomColumns = 30;
+    private const int MinCustomMines = 1;
+
+    private int _customRows = 9;
+    private int _customColumns = 9;
+    private int _customMines = 10;
+
     /// <summary>
     /// - (EN) Initializes a new instance of the <see cref="MainWindowViewModel"/> class.
     /// Loads persisted best times from the default local storage path.
@@ -73,7 +83,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
         {
             DifficultyLevel.Beginner,
             DifficultyLevel.Intermediate,
-            DifficultyLevel.Expert
+            DifficultyLevel.Expert,
+            DifficultyLevel.Custom
         };
 
         // Mặc định chọn Beginner
@@ -160,7 +171,9 @@ public class MainWindowViewModel : INotifyPropertyChanged
                 return;
 
             _selectedDifficulty = value;
+
             OnPropertyChanged();
+            OnPropertyChanged(nameof(IsCustomDifficultySelected));
             OnPropertyChanged(nameof(BestTime));
             OnPropertyChanged(nameof(BestTimeDisplay));
         }
@@ -272,6 +285,85 @@ public class MainWindowViewModel : INotifyPropertyChanged
     /// - (VI) Lấy đường dẫn đầy đủ của file dùng để lưu best time bền vững.
     /// </summary>
     public string BestTimesFilePath => _bestTimesFilePath;
+
+    /// <summary>
+    /// - (EN) Gets or sets the custom board row count used when Custom difficulty is selected.
+    /// - (VI) Lấy hoặc gán số hàng của board custom khi độ khó Custom được chọn.
+    /// </summary>
+    public int CustomRows
+    {
+        get => _customRows;
+        set
+        {
+            int normalizedValue = Math.Clamp(value, MinCustomRows, MaxCustomRows);
+
+            if (_customRows == normalizedValue)
+                return;
+
+            _customRows = normalizedValue;
+            EnsureCustomMineCountIsValid();
+
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(CustomBoardSummary));
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Gets or sets the custom board column count used when Custom difficulty is selected.
+    /// - (VI) Lấy hoặc gán số cột của board custom khi độ khó Custom được chọn.
+    /// </summary>
+    public int CustomColumns
+    {
+        get => _customColumns;
+        set
+        {
+            int normalizedValue = Math.Clamp(value, MinCustomColumns, MaxCustomColumns);
+
+            if (_customColumns == normalizedValue)
+                return;
+
+            _customColumns = normalizedValue;
+            EnsureCustomMineCountIsValid();
+
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(CustomBoardSummary));
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Gets or sets the custom mine count used when Custom difficulty is selected.
+    /// - (VI) Lấy hoặc gán số lượng mìn custom khi độ khó Custom được chọn.
+    /// </summary>
+    public int CustomMines
+    {
+        get => _customMines;
+        set
+        {
+            int maxAllowedMines = GetMaximumAllowedCustomMines();
+            int normalizedValue = Math.Clamp(value, MinCustomMines, maxAllowedMines);
+
+            if (_customMines == normalizedValue)
+                return;
+
+            _customMines = normalizedValue;
+
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(CustomBoardSummary));
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Gets whether the currently selected difficulty is Custom.
+    /// - (VI) Lấy giá trị cho biết độ khó hiện tại có phải là Custom hay không.
+    /// </summary>
+    public bool IsCustomDifficultySelected => SelectedDifficulty == DifficultyLevel.Custom;
+
+    /// <summary>
+    /// - (EN) Gets a user-friendly summary of the current custom board configuration.
+    /// - (VI) Lấy chuỗi mô tả thân thiện về cấu hình board custom hiện tại.
+    /// </summary>
+    public string CustomBoardSummary => $"{CustomRows}x{CustomColumns} | {CustomMines} mines";
+
     #endregion
 
     #region Events
@@ -446,6 +538,13 @@ public class MainWindowViewModel : INotifyPropertyChanged
     /// </summary>
     private void StartNewGameByDifficulty()
     {
+        if (SelectedDifficulty == DifficultyLevel.Custom)
+        {
+            EnsureCustomMineCountIsValid();
+            StartNewGame(CustomRows, CustomColumns, CustomMines);
+            return;
+        }
+
         var preset = SelectedDifficulty.ToPreset();
         StartNewGame(preset.Rows, preset.Columns, preset.MineCount);
     }
@@ -814,6 +913,45 @@ public class MainWindowViewModel : INotifyPropertyChanged
                 SelectedDifficulty,
                 _elapsedTime,
                 isFirstRecord: !hasExistingRecord));
+    }
+
+    /// <summary>
+    /// - (EN) Ensures that the current custom mine count remains valid
+    /// for the selected custom board size.
+    /// - (VI) Đảm bảo số lượng mìn custom hiện tại luôn hợp lệ
+    /// với kích thước board custom đang được chọn.
+    /// </summary>
+    private void EnsureCustomMineCountIsValid()
+    {
+        int maxAllowedMines = GetMaximumAllowedCustomMines();
+
+        if (_customMines > maxAllowedMines)
+        {
+            _customMines = maxAllowedMines;
+            OnPropertyChanged(nameof(CustomMines));
+        }
+
+        if (_customMines < MinCustomMines)
+        {
+            _customMines = MinCustomMines;
+            OnPropertyChanged(nameof(CustomMines));
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Gets the maximum mine count allowed for the current custom board size
+    /// while preserving at least one safe cell.
+    /// - (VI) Lấy số lượng mìn tối đa được phép cho kích thước board custom hiện tại
+    /// trong khi vẫn đảm bảo còn ít nhất một ô an toàn.
+    /// </summary>
+    /// <returns>
+    /// - (EN) The maximum valid mine count for the current custom board.
+    /// - (VI) Số lượng mìn hợp lệ tối đa cho board custom hiện tại.
+    /// </returns>
+    private int GetMaximumAllowedCustomMines()
+    {
+        int totalCells = CustomRows * CustomColumns;
+        return Math.Max(MinCustomMines, totalCells - 1);
     }
     #endregion
 }
