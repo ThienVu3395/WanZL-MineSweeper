@@ -796,3 +796,20 @@ Enhanced the visual feedback and interaction states of board cells to improve cl
 This commit focuses on visual polish and interaction feedback only.
 No changes were made to game logic or state handling.
 The board now feels more responsive and visually consistent across different states.
+
+## Commit 44 - Extract player statistics persistence from main window view model
+
+### Summary
+Refactored best-time persistence out of `MainWindowViewModel` into a dedicated concrete JSON store.
+
+### Completed
+- Added `PlayerStatisticsStorage` model to represent persisted player statistics data
+- Added `PlayerStatisticsStore` to load and save best times from a local JSON file
+- Removed direct best-time file loading and saving logic from `MainWindowViewModel`
+- Updated `MainWindowViewModel` to use a dedicated concrete store for player statistics persistence
+- Kept the existing best-time behavior unchanged while reducing view model responsibilities
+- Updated related tests to construct the view model with `PlayerStatisticsStore` when a custom file path is required
+
+### Notes
+This commit is a structural refactor only.
+It keeps the current best-time feature intact while preparing a cleaner foundation for upcoming persistence features such as player preferences and full game-state persistence.

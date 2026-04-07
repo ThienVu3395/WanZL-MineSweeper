@@ -1,4 +1,5 @@
 ﻿using MineSweeper.App.ViewModels;
+using MineSweeper.App.Services;
 using MineSweeper.Core.Models;
 using System.Reflection;
 using MineSweeper.Core.Services;
@@ -793,7 +794,7 @@ public class MainWindowViewModelTests
         // Assert & Actual
         try
         {
-            var vm = new MainWindowViewModel(filePath);
+            var vm = new MainWindowViewModel(new PlayerStatisticsStore(filePath));
 
             Assert.Null(vm.BestTime);
             Assert.Equal("--:--", vm.BestTimeDisplay);
@@ -822,7 +823,7 @@ public class MainWindowViewModelTests
 
         try
         {
-            var vm = new MainWindowViewModel(filePath);
+            var vm = new MainWindowViewModel(new PlayerStatisticsStore(filePath));
             vm.SelectedDifficulty = DifficultyLevel.Beginner;
 
             ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
@@ -956,7 +957,7 @@ public class MainWindowViewModelTests
 
         try
         {
-            var vm = new MainWindowViewModel(filePath);
+            var vm = new MainWindowViewModel(new PlayerStatisticsStore(filePath));
             vm.SelectedDifficulty = DifficultyLevel.Beginner;
 
             NewBestTimeEventArgs? eventArgs = null;
@@ -999,7 +1000,7 @@ public class MainWindowViewModelTests
 
         try
         {
-            var vm = new MainWindowViewModel(filePath);
+            var vm = new MainWindowViewModel(new PlayerStatisticsStore(filePath));
             vm.SelectedDifficulty = DifficultyLevel.Beginner;
 
             SetPrivateFieldValue(vm, "_bestTimes", new Dictionary<DifficultyLevel, TimeSpan>
@@ -1047,7 +1048,7 @@ public class MainWindowViewModelTests
 
         try
         {
-            var vm = new MainWindowViewModel(filePath);
+            var vm = new MainWindowViewModel(new PlayerStatisticsStore(filePath));
             vm.SelectedDifficulty = DifficultyLevel.Beginner;
 
             SetPrivateFieldValue(vm, "_bestTimes", new Dictionary<DifficultyLevel, TimeSpan>
@@ -1166,7 +1167,7 @@ public class MainWindowViewModelTests
 
         try
         {
-            var vm = new MainWindowViewModel(filePath);
+            var vm = new MainWindowViewModel(new PlayerStatisticsStore(filePath));
 
             Assert.Equal(DifficultyLevel.Beginner, vm.SelectedDifficulty);
             Assert.Equal("00:42", vm.BestTimeDisplay);
@@ -1197,7 +1198,7 @@ public class MainWindowViewModelTests
 
         try
         {
-            var vm = new MainWindowViewModel(filePath);
+            var vm = new MainWindowViewModel(new PlayerStatisticsStore(filePath));
 
             Assert.Null(vm.BestTime);
             Assert.Equal("--:--", vm.BestTimeDisplay);
@@ -1226,7 +1227,7 @@ public class MainWindowViewModelTests
 
         try
         {
-            var vm = new MainWindowViewModel(filePath);
+            var vm = new MainWindowViewModel(new PlayerStatisticsStore(filePath));
 
             Assert.Null(vm.BestTime);
             Assert.Equal("--:--", vm.BestTimeDisplay);
@@ -1254,7 +1255,7 @@ public class MainWindowViewModelTests
 
         try
         {
-            var vm = new MainWindowViewModel(filePath);
+            var vm = new MainWindowViewModel(new PlayerStatisticsStore(filePath));
             vm.SelectedDifficulty = DifficultyLevel.Beginner;
 
             ConfigureDeterministicBoard(vm, 2, 2, (0, 0));

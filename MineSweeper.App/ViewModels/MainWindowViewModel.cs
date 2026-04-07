@@ -1,6 +1,7 @@
 ﻿using MineSweeper.App.Extensions;
 using MineSweeper.App.Helpers;
 using MineSweeper.App.Models;
+using MineSweeper.App.Services;
 using MineSweeper.Core.Models;
 using MineSweeper.Core.Services;
 using System.Collections.ObjectModel;
@@ -38,7 +39,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private DifficultyLevel _selectedDifficulty;
 
     private readonly Dictionary<DifficultyLevel, TimeSpan> _bestTimes;
-    private readonly string _bestTimesFilePath;
+    private readonly PlayerStatisticsStore _playerStatisticsStore;
 
     private const int MinCustomRows = 5;
     private const int MaxCustomRows = 30;
@@ -56,21 +57,24 @@ public class MainWindowViewModel : INotifyPropertyChanged
     /// - (VI) Khởi tạo một instance mới của <see cref="MainWindowViewModel"/>.
     /// Đồng thời tải best time đã lưu từ đường dẫn lưu trữ mặc định trên máy.
     /// </summary>
-    public MainWindowViewModel() : this(GetDefaultBestTimesFilePath()) { }
+    public MainWindowViewModel()
+        : this(new PlayerStatisticsStore(PlayerStatisticsStore.GetDefaultFilePath()))
+    {
+    }
 
     /// <summary>
     /// - (EN) Initializes a new instance of the <see cref="MainWindowViewModel"/> class
-    /// using a specific best-times file path.
+    /// using a specific player statistics store.
     /// This overload is mainly intended for tests and controlled storage scenarios.
     /// - (VI) Khởi tạo một instance mới của <see cref="MainWindowViewModel"/>
-    /// với đường dẫn file best time cụ thể.
+    /// với một store thống kê người chơi cụ thể.
     /// Overload này chủ yếu phục vụ cho test và các kịch bản kiểm soát nơi lưu trữ.
     /// </summary>
-    /// <param name="bestTimesFilePath">
-    /// - (EN) The file path used to load and save persisted best times.
-    /// - (VI) Đường dẫn file dùng để tải và lưu best time bền vững.
+    /// <param name="playerStatisticsStore">
+    /// - (EN) The store used to load and save persisted player statistics.
+    /// - (VI) Store dùng để tải và lưu thống kê người chơi bền vững.
     /// </param>
-    internal MainWindowViewModel(string bestTimesFilePath)
+    internal MainWindowViewModel(PlayerStatisticsStore playerStatisticsStore)
     {
         _game = new MineSweeperGame();
 
@@ -111,10 +115,10 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
         _gameTimer.Tick += OnGameTimerTick;
 
-        _bestTimesFilePath = bestTimesFilePath;
+        _playerStatisticsStore = playerStatisticsStore;
 
         // Tải best time đã lưu từ local storage
-        _bestTimes = LoadBestTimes();
+        _bestTimes = _playerStatisticsStore.LoadBestTimes();
 
         // Khởi tạo game đầu tiên
         StartNewGameByDifficulty();
@@ -303,7 +307,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     /// - (EN) Gets the full file path used to store persisted best times.
     /// - (VI) Lấy đường dẫn đầy đủ của file dùng để lưu best time bền vững.
     /// </summary>
-    public string BestTimesFilePath => _bestTimesFilePath;
+    public string BestTimesFilePath => _playerStatisticsStore.FilePath;
 
     /// <summary>
     /// - (EN) Gets or sets the custom board row count used when Custom difficulty is selected.
@@ -636,126 +640,6 @@ public class MainWindowViewModel : INotifyPropertyChanged
     }
     #endregion
 
-    #region Persistence Helpers
-    /// <summary>
-    /// - (EN) Gets the default file path used to persist best times in local application data.
-    /// - (VI) Lấy đường dẫn file mặc định dùng để lưu best time trong thư mục dữ liệu cục bộ của ứng dụng.
-    /// </summary>
-    /// <returns>
-    /// - (EN) The full file path for the persisted best-times JSON file.
-    /// - (VI) Đường dẫn đầy đủ tới file JSON lưu best time.
-    /// </returns>
-    private static string GetDefaultBestTimesFilePath()
-    {
-        string appDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        string applicationFolder = Path.Combine(appDataFolder, "MineSweeper");
-
-        return Path.Combine(applicationFolder, "best-times.json");
-    }
-
-    /// <summary>
-    /// - (EN) Loads persisted best times from local storage.
-    /// Returns an empty dictionary when the file is missing, invalid, or unreadable.
-    /// - (VI) Tải best time đã lưu từ local storage.
-    /// Trả về dictionary rỗng nếu file không tồn tại, không hợp lệ, hoặc không thể đọc được.
-    /// </summary>
-    /// <returns>
-    /// - (EN) A dictionary of best times keyed by difficulty.
-    /// - (VI) Dictionary chứa best time được ánh xạ theo độ khó.
-    /// </returns>
-    private Dictionary<DifficultyLevel, TimeSpan> LoadBestTimes()
-    {
-        try
-        {
-            if (!File.Exists(_bestTimesFilePath))
-            {
-                return new Dictionary<DifficultyLevel, TimeSpan>();
-            }
-
-            string json = File.ReadAllText(_bestTimesFilePath);
-
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                return new Dictionary<DifficultyLevel, TimeSpan>();
-            }
-
-            var storage = JsonSerializer.Deserialize<BestTimesStorage>(json);
-
-            if (storage?.BestTimesInSeconds == null)
-            {
-                return new Dictionary<DifficultyLevel, TimeSpan>();
-            }
-
-            var result = new Dictionary<DifficultyLevel, TimeSpan>();
-
-            foreach (var pair in storage.BestTimesInSeconds)
-            {
-                if (!Enum.TryParse<DifficultyLevel>(pair.Key, ignoreCase: true, out var difficulty))
-                {
-                    continue;
-                }
-
-                if (difficulty == DifficultyLevel.Custom)
-                {
-                    continue;
-                }
-
-                if (pair.Value < 0)
-                {
-                    continue;
-                }
-
-                result[difficulty] = TimeSpan.FromSeconds(pair.Value);
-            }
-
-            return result;
-        }
-        catch
-        {
-            return new Dictionary<DifficultyLevel, TimeSpan>();
-        }
-    }
-
-    /// <summary>
-    /// - (EN) Saves the current best times to local storage.
-    /// Persistence failures are intentionally ignored so gameplay is not interrupted.
-    /// - (VI) Lưu best time hiện tại vào local storage.
-    /// Các lỗi khi lưu được cố ý bỏ qua để không làm gián đoạn trải nghiệm chơi game.
-    /// </summary>
-    private void SaveBestTimes()
-    {
-        try
-        {
-            string? directory = Path.GetDirectoryName(_bestTimesFilePath);
-
-            if (!string.IsNullOrWhiteSpace(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
-            var storage = new BestTimesStorage
-            {
-                BestTimesInSeconds = _bestTimes
-                    .Where(x => x.Key != DifficultyLevel.Custom)
-                    .ToDictionary(
-                        x => x.Key.ToString(),
-                        x => x.Value.TotalSeconds)
-            };
-
-            string json = JsonSerializer.Serialize(storage, new JsonSerializerOptions
-            {
-                WriteIndented = true
-            });
-
-            File.WriteAllText(_bestTimesFilePath, json);
-        }
-        catch
-        {
-            // Intentionally ignored.
-        }
-    }
-    #endregion
-
     #region Private Helpers
     /// <summary>
     /// - (EN) Clears the temporary UI message.
@@ -965,7 +849,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
             return;
 
         _bestTimes[SelectedDifficulty] = _elapsedTime;
-        SaveBestTimes();
+        _playerStatisticsStore.SaveBestTimes(_bestTimes);
 
         OnPropertyChanged(nameof(BestTime));
         OnPropertyChanged(nameof(BestTimeDisplay));
