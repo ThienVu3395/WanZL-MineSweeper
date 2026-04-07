@@ -37,6 +37,8 @@ namespace MineSweeper.App.Views
             vm.PropertyChanged += Vm_PropertyChanged;
 
             vm.GameEnded += Vm_GameEnded;
+
+            vm.NewBestTimeAchieved += OnNewBestTimeAchieved;
         }
 
         /// <summary>
@@ -120,6 +122,31 @@ namespace MineSweeper.App.Views
         }
 
         /// <summary>
+        /// - (EN) Handles the new-best-time notification raised by the view model
+        /// and displays a toast-style message to the player.
+        /// - (VI) Xử lý thông báo best time mới được phát ra từ view model
+        /// và hiển thị một thông báo dạng toast cho người chơi.
+        /// </summary>
+        /// <param name="sender">
+        /// - (EN) Event sender.
+        /// - (VI) Đối tượng phát sự kiện.
+        /// </param>
+        /// <param name="e">
+        /// - (EN) Event data containing the new best-time information.
+        /// - (VI) Dữ liệu sự kiện chứa thông tin best time mới.
+        /// </param>
+        private void OnNewBestTimeAchieved(object? sender, NewBestTimeEventArgs e)
+        {
+            if (DataContext is not MainWindowViewModel vm)
+                return;
+
+            string recordTypeText = e.IsFirstRecord ? "First record" : "New best time";
+            vm.ShowTemporaryMessage($"🏆 {recordTypeText}: {e.BestTime:mm\\:ss} ({e.Difficulty})");
+
+            ShowToast();
+        }
+
+        /// <summary>
         /// - (EN) Displays a toast notification using fade-in and fade-out animations.
         /// Automatically hides the toast if there is no message.
         /// - (VI) Hiển thị toast notification với animation fade-in và fade-out.
@@ -164,6 +191,11 @@ namespace MineSweeper.App.Views
                 });
 
             ToastMessage.BeginAnimation(OpacityProperty, animation);
+
+            if (DataContext is MainWindowViewModel viewModel)
+            {
+                viewModel.ClearTemporaryMessage();
+            }
         }
     }
 }

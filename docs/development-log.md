@@ -583,4 +583,23 @@ Added local persistence for best times so player records are retained after clos
 
 ### Notes
 This commit improves product completeness by keeping player progress across sessions.
+
+## Commit 35 - Show new best time notification when record is broken
+
+### Summary
+Added a dedicated user notification when the player achieves a new best time.
+
+### Completed
+- Added a dedicated `NewBestTimeAchieved` event from `MainWindowViewModel`
+- Added `NewBestTimeEventArgs` to carry difficulty, best time, and first-record information
+- Raised the event only when the player won and created a new record
+- Reused the existing toast-based UI message flow to display the new best-time notification
+- Added unit tests to verify:
+  - first record notification
+  - broken existing record notification
+  - no notification when the result is worse than the current best
+
+### Notes
+This commit improves player feedback and makes best-time progression feel more rewarding.
+It keeps UI notification display in the view layer while the view model remains responsible for game state and event signaling.
 A broader persistence refactor for player statistics and preferences can be introduced in a later commit.

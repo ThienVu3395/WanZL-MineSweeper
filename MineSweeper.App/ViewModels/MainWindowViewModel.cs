@@ -286,6 +286,12 @@ public class MainWindowViewModel : INotifyPropertyChanged
     /// - (VI) Xảy ra khi game đạt đến trạng thái kết thúc như thắng hoặc thua.
     /// </summary>
     public event EventHandler<GameEndedEventArgs>? GameEnded;
+
+    /// <summary>
+    /// - (EN) Occurs when the player achieves a new best time for the current difficulty.
+    /// - (VI) Xảy ra khi người chơi đạt được best time mới cho độ khó hiện tại.
+    /// </summary>
+    public event EventHandler<NewBestTimeEventArgs>? NewBestTimeAchieved;
     #endregion
 
     #region Public Methods
@@ -601,6 +607,28 @@ public class MainWindowViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// - (EN) Shows a temporary notification message on the UI.
+    /// - (VI) Hiển thị một thông báo tạm thời trên giao diện.
+    /// </summary>
+    /// <param name="message">
+    /// - (EN) The message content to display.
+    /// - (VI) Nội dung thông báo cần hiển thị.
+    /// </param>
+    public void ShowTemporaryMessage(string message)
+    {
+        Message = message;
+    }
+
+    /// <summary>
+    /// - (EN) Clears the current temporary notification message.
+    /// - (VI) Xóa thông báo tạm thời hiện tại.
+    /// </summary>
+    public void ClearTemporaryMessage()
+    {
+        Message = null;
+    }
+
+    /// <summary>
     /// - (EN) Refreshes all cell view models to reflect updated game state.
     /// - (VI) Làm mới toàn bộ CellViewModel để phản ánh trạng thái game mới nhất.
     /// </summary>
@@ -756,9 +784,9 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     /// <summary>
     /// - (EN) Updates and persists the best completion time for the current difficulty when the player wins.
-    /// Saves the record only when a better time is achieved.
+    /// Saves the record only when a better time is achieved and raises a notification event for the UI.
     /// - (VI) Cập nhật và lưu best time cho độ khó hiện tại khi người chơi thắng.
-    /// Chỉ lưu lại record khi đạt được thời gian tốt hơn.
+    /// Chỉ lưu lại record khi đạt được thời gian tốt hơn và phát event thông báo cho UI.
     /// </summary>
     private void UpdateBestTimeIfNeeded()
     {
@@ -768,14 +796,24 @@ public class MainWindowViewModel : INotifyPropertyChanged
         if (SelectedDifficulty == DifficultyLevel.Custom)
             return;
 
-        if (!_bestTimes.TryGetValue(SelectedDifficulty, out var currentBest) || _elapsedTime < currentBest)
-        {
-            _bestTimes[SelectedDifficulty] = _elapsedTime;
-            SaveBestTimes();
+        bool hasExistingRecord = _bestTimes.TryGetValue(SelectedDifficulty, out var currentBest);
+        bool isNewRecord = !hasExistingRecord || _elapsedTime < currentBest;
 
-            OnPropertyChanged(nameof(BestTime));
-            OnPropertyChanged(nameof(BestTimeDisplay));
-        }
+        if (!isNewRecord)
+            return;
+
+        _bestTimes[SelectedDifficulty] = _elapsedTime;
+        SaveBestTimes();
+
+        OnPropertyChanged(nameof(BestTime));
+        OnPropertyChanged(nameof(BestTimeDisplay));
+
+        NewBestTimeAchieved?.Invoke(
+            this,
+            new NewBestTimeEventArgs(
+                SelectedDifficulty,
+                _elapsedTime,
+                isFirstRecord: !hasExistingRecord));
     }
     #endregion
 }

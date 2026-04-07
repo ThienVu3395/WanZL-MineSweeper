@@ -637,6 +637,146 @@ public class MainWindowViewModelTests
 
     #endregion
 
+    #region NewBestTimeAchievedEvent
+
+    /// <summary>
+    /// - (EN) Verifies that the view model raises NewBestTimeAchieved when the player sets the first record.
+    /// - (VI) Kiểm tra ViewModel sẽ phát NewBestTimeAchieved khi người chơi thiết lập record đầu tiên.
+    /// </summary>
+    [Fact]
+    public void WinningGame_ShouldRaiseNewBestTimeAchieved_WhenFirstRecordIsCreated()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        string filePath = Path.Combine(tempDirectory, "best-times.json");
+
+        try
+        {
+            var vm = new MainWindowViewModel(filePath);
+            vm.SelectedDifficulty = DifficultyLevel.Beginner;
+
+            NewBestTimeEventArgs? eventArgs = null;
+            vm.NewBestTimeAchieved += (_, e) => eventArgs = e;
+
+            ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
+            SetPrivateFieldValue(vm, "_elapsedTime", TimeSpan.FromSeconds(42));
+            SetPrivateFieldValue(vm, "_isTimerRunning", true);
+            SetPrivateFieldValue(vm, "_gameStartTimeUtc", DateTime.UtcNow - TimeSpan.FromSeconds(42));
+
+            vm.RevealCellCommand.Execute(GetCell(vm, 0, 1));
+            vm.RevealCellCommand.Execute(GetCell(vm, 1, 0));
+            vm.RevealCellCommand.Execute(GetCell(vm, 1, 1));
+
+            Assert.NotNull(eventArgs);
+            Assert.Equal(DifficultyLevel.Beginner, eventArgs!.Difficulty);
+            Assert.Equal("00:42", eventArgs.BestTime.ToString(@"mm\:ss"));
+            Assert.True(eventArgs.IsFirstRecord);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that the view model raises NewBestTimeAchieved when an existing record is beaten.
+    /// - (VI) Kiểm tra ViewModel sẽ phát NewBestTimeAchieved khi một kỷ lục hiện có bị vượt qua.
+    /// </summary>
+    [Fact]
+    public void WinningGame_ShouldRaiseNewBestTimeAchieved_WhenExistingRecordIsBroken()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        string filePath = Path.Combine(tempDirectory, "best-times.json");
+
+        try
+        {
+            var vm = new MainWindowViewModel(filePath);
+            vm.SelectedDifficulty = DifficultyLevel.Beginner;
+
+            SetPrivateFieldValue(vm, "_bestTimes", new Dictionary<DifficultyLevel, TimeSpan>
+            {
+                [DifficultyLevel.Beginner] = TimeSpan.FromSeconds(60)
+            });
+
+            NewBestTimeEventArgs? eventArgs = null;
+            vm.NewBestTimeAchieved += (_, e) => eventArgs = e;
+
+            ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
+            SetPrivateFieldValue(vm, "_elapsedTime", TimeSpan.FromSeconds(45));
+            SetPrivateFieldValue(vm, "_isTimerRunning", true);
+            SetPrivateFieldValue(vm, "_gameStartTimeUtc", DateTime.UtcNow - TimeSpan.FromSeconds(45));
+
+            vm.RevealCellCommand.Execute(GetCell(vm, 0, 1));
+            vm.RevealCellCommand.Execute(GetCell(vm, 1, 0));
+            vm.RevealCellCommand.Execute(GetCell(vm, 1, 1));
+
+            Assert.NotNull(eventArgs);
+            Assert.Equal(DifficultyLevel.Beginner, eventArgs!.Difficulty);
+            Assert.Equal("00:45", eventArgs.BestTime.ToString(@"mm\:ss"));
+            Assert.False(eventArgs.IsFirstRecord);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that the view model does not raise NewBestTimeAchieved when the result is worse than the stored best time.
+    /// - (VI) Kiểm tra ViewModel sẽ không phát NewBestTimeAchieved khi kết quả mới kém hơn best time đã lưu.
+    /// </summary>
+    [Fact]
+    public void WinningGame_ShouldNotRaiseNewBestTimeAchieved_WhenResultIsWorseThanCurrentBest()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        string filePath = Path.Combine(tempDirectory, "best-times.json");
+
+        try
+        {
+            var vm = new MainWindowViewModel(filePath);
+            vm.SelectedDifficulty = DifficultyLevel.Beginner;
+
+            SetPrivateFieldValue(vm, "_bestTimes", new Dictionary<DifficultyLevel, TimeSpan>
+            {
+                [DifficultyLevel.Beginner] = TimeSpan.FromSeconds(40)
+            });
+
+            bool eventRaised = false;
+            vm.NewBestTimeAchieved += (_, _) => eventRaised = true;
+
+            ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
+            SetPrivateFieldValue(vm, "_elapsedTime", TimeSpan.FromSeconds(55));
+            SetPrivateFieldValue(vm, "_isTimerRunning", true);
+            SetPrivateFieldValue(vm, "_gameStartTimeUtc", DateTime.UtcNow - TimeSpan.FromSeconds(55));
+
+            vm.RevealCellCommand.Execute(GetCell(vm, 0, 1));
+            vm.RevealCellCommand.Execute(GetCell(vm, 1, 0));
+            vm.RevealCellCommand.Execute(GetCell(vm, 1, 1));
+
+            Assert.False(eventRaised);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    #endregion
+
     #region GameEndedEvent
     /// <summary>
     /// - (EN) Verifies that the view model raises GameEnded when the player loses
