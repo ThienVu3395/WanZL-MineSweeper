@@ -656,3 +656,24 @@ Added support for a user-configurable custom board size and mine count.
 ### Notes
 This commit improves product flexibility and gives players more control over board size and challenge level.
 Custom difficulty intentionally does not use persisted best-time tracking.
+
+## Commit 38 - Replace default message box with custom endgame dialog
+
+### Summary
+Replaced the default system message box with a custom in-window endgame dialog overlay.
+
+### Completed
+- Added a custom endgame dialog overlay in `MainWindow.xaml`
+- Reused the existing `GameEnded` event from `MainWindowViewModel`
+- Replaced default MessageBox-based endgame feedback with a styled in-window dialog
+- Added clear actions for:
+  - Play Again
+  - Close
+- Displayed relevant endgame information inside the dialog:
+  - final result
+  - elapsed time
+  - best time
+  - selected difficulty
+
+### Notes
+This commit improves product polish and keeps endgame feedback visually consistent with the rest of the application UI.

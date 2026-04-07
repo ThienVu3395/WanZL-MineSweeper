@@ -4,6 +4,7 @@ using MineSweeper.Core.Models;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
 
 namespace MineSweeper.App.Views
@@ -30,15 +31,11 @@ namespace MineSweeper.App.Views
         {
             InitializeComponent();
 
-            // Gắn ViewModel cho Window để XAML binding hoạt động
-            // Nghĩa là: Toàn bộ binding trong MainWindow.xaml sẽ lấy dữ liệu từ MainWindowViewModel
             var vm = new MainWindowViewModel();
             DataContext = vm;
 
             vm.PropertyChanged += Vm_PropertyChanged;
-
-            vm.GameEnded += Vm_GameEnded;
-
+            vm.GameEnded += OnGameEnded;
             vm.NewBestTimeAchieved += OnNewBestTimeAchieved;
         }
 
@@ -105,28 +102,27 @@ namespace MineSweeper.App.Views
         }
 
         /// <summary>
-        /// - (EN) Handles endgame notifications raised by the ViewModel and displays corresponding dialogs.
-        /// - (VI) Xử lý thông báo kết thúc game từ ViewModel và hiển thị dialog tương ứng.
+        /// - (EN) Handles the game-ended event raised by the view model and shows the custom endgame dialog.
+        /// - (VI) Xử lý sự kiện kết thúc game được phát ra từ view model và hiển thị hộp thoại kết thúc tùy biến.
         /// </summary>
-        /// <param name="sender">- (EN) Event sender / (VI) Đối tượng phát sự kiện</param>
-        /// <param name="e">- (EN) Game ended event data / (VI) Dữ liệu sự kiện kết thúc game</param>
-        private void Vm_GameEnded(object? sender, GameEndedEventArgs e)
+        /// <param name="sender">
+        /// - (EN) Event sender.
+        /// - (VI) Đối tượng phát sự kiện.
+        /// </param>
+        /// <param name="e">
+        /// - (EN) Event arguments containing the final game state.
+        /// - (VI) Dữ liệu sự kiện chứa trạng thái cuối cùng của game.
+        /// </param>
+        private void OnGameEnded(object? sender, GameEndedEventArgs e)
         {
-            if (e.State == GameState.Won)
-            {
-                MessageBox.Show("Congratulations! You cleared all cells!", "Victory 🎉");
-            }
-            else if (e.State == GameState.Lost)
-            {
-                MessageBox.Show("Boom! You hit a mine.", "Game Over 💥");
-            }
+            ShowEndGameDialog(e.State);
         }
 
         /// <summary>
         /// - (EN) Handles the new-best-time notification raised by the view model
-        /// and displays a toast-style message to the player.
+        /// and posts a toast-style message to the player.
         /// - (VI) Xử lý thông báo best time mới được phát ra từ view model
-        /// và hiển thị một thông báo dạng toast cho người chơi.
+        /// và gửi thông báo dạng toast cho người chơi.
         /// </summary>
         /// <param name="sender">
         /// - (EN) Event sender.
@@ -141,11 +137,98 @@ namespace MineSweeper.App.Views
             if (DataContext is not MainWindowViewModel vm)
                 return;
 
-            string recordTypeText = e.IsFirstRecord ? "🎉 First record!" : "🔥 New best time!";
+            string recordTypeText = e.IsFirstRecord
+                ? "🎉 First record!"
+                : "🔥 New best time!";
 
-            vm.ShowTemporaryMessage($"🏆 {recordTypeText}: {TimeFormatHelper.Format(e.BestTime)} ({e.Difficulty.ToString().ToUpper()})");
+            vm.ShowTemporaryMessage(
+                $"🏆 {recordTypeText}: {TimeFormatHelper.Format(e.BestTime)} ({e.Difficulty.ToString().ToUpper()})");
+        }
 
-            ShowToast();
+        /// <summary>
+        /// - (EN) Displays the custom endgame dialog with content based on the final game state.
+        /// - (VI) Hiển thị hộp thoại kết thúc game tùy biến với nội dung dựa trên trạng thái cuối cùng của game.
+        /// </summary>
+        /// <param name="state">
+        /// - (EN) The final game state.
+        /// - (VI) Trạng thái cuối cùng của game.
+        /// </param>
+        private void ShowEndGameDialog(GameState state)
+        {
+            if (state == GameState.Won)
+            {
+                EndGameDialogTitle.Text = "🎉 You won!";
+                EndGameDialogMessage.Text = "Great job! You cleared all safe cells on the board.";
+                EndGameDialogTitle.Foreground = new SolidColorBrush(Color.FromRgb(34, 139, 34));
+            }
+            else
+            {
+                EndGameDialogTitle.Text = "💥 Game over";
+                EndGameDialogMessage.Text = "You revealed a mine. Try again and beat your best time!";
+                EndGameDialogTitle.Foreground = new SolidColorBrush(Color.FromRgb(178, 34, 34));
+            }
+
+            EndGameDialogOverlay.Visibility = Visibility.Visible;
+            PlayAgainButton.Focus();
+
+            var fadeIn = new DoubleAnimation
+            {
+                From = 0,
+                To = 1,
+                Duration = TimeSpan.FromMilliseconds(180)
+            };
+
+            EndGameDialogOverlay.BeginAnimation(OpacityProperty, fadeIn);
+        }
+
+        /// <summary>
+        /// - (EN) Hides the custom endgame dialog.
+        /// - (VI) Ẩn hộp thoại kết thúc game tùy biến.
+        /// </summary>
+        private void HideEndGameDialog()
+        {
+            EndGameDialogOverlay.Visibility = Visibility.Collapsed;
+            EndGameDialogOverlay.Opacity = 0;
+        }
+
+        /// <summary>
+        /// - (EN) Starts a new game from the custom endgame dialog.
+        /// - (VI) Bắt đầu một ván mới từ hộp thoại kết thúc game tùy biến.
+        /// </summary>
+        /// <param name="sender">
+        /// - (EN) Event sender.
+        /// - (VI) Đối tượng phát sự kiện.
+        /// </param>
+        /// <param name="e">
+        /// - (EN) Routed event data.
+        /// - (VI) Dữ liệu sự kiện routed.
+        /// </param>
+        private void PlayAgainButton_Click(object sender, RoutedEventArgs e)
+        {
+            HideEndGameDialog();
+
+            if (DataContext is MainWindowViewModel viewModel &&
+                viewModel.NewGameCommand.CanExecute(null))
+            {
+                viewModel.NewGameCommand.Execute(null);
+            }
+        }
+
+        /// <summary>
+        /// - (EN) Closes the custom endgame dialog without starting a new game.
+        /// - (VI) Đóng hộp thoại kết thúc game tùy biến mà không bắt đầu ván mới.
+        /// </summary>
+        /// <param name="sender">
+        /// - (EN) Event sender.
+        /// - (VI) Đối tượng phát sự kiện.
+        /// </param>
+        /// <param name="e">
+        /// - (EN) Routed event data.
+        /// - (VI) Dữ liệu sự kiện routed.
+        /// </param>
+        private void CloseDialogButton_Click(object sender, RoutedEventArgs e)
+        {
+            HideEndGameDialog();
         }
 
         /// <summary>
@@ -156,7 +239,6 @@ namespace MineSweeper.App.Views
         /// </summary>
         private void ShowToast()
         {
-            // Nếu không có nội dung thì ẩn toast ngay
             if (DataContext is MainWindowViewModel vm && string.IsNullOrWhiteSpace(vm.Message))
             {
                 ToastMessage.BeginAnimation(OpacityProperty, null);
@@ -164,43 +246,38 @@ namespace MineSweeper.App.Views
                 return;
             }
 
-            // Hủy animation cũ
             ToastMessage.BeginAnimation(OpacityProperty, null);
             ToastMessage.Opacity = 0;
 
             var animation = new DoubleAnimationUsingKeyFrames();
 
-            // Bắt đầu từ 0
             animation.KeyFrames.Add(
                 new DiscreteDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.Zero)));
 
-            // Fade in nhanh
             animation.KeyFrames.Add(
                 new EasingDoubleKeyFrame(1, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(200)))
                 {
                     EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
                 });
 
-            // Giữ nguyên một lúc
             animation.KeyFrames.Add(
                 new DiscreteDoubleKeyFrame(1, KeyTime.FromTimeSpan(TimeSpan.FromSeconds(3))));
 
-            // Fade out mượt
             animation.KeyFrames.Add(
                 new EasingDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.FromSeconds(3.9)))
                 {
                     EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
                 });
 
-            ToastMessage.BeginAnimation(OpacityProperty, animation);
-
             animation.Completed += (_, _) =>
             {
-                if (DataContext is MainWindowViewModel vm)
+                if (DataContext is MainWindowViewModel currentVm)
                 {
-                    vm.ClearTemporaryMessage();
+                    currentVm.ClearTemporaryMessage();
                 }
             };
+
+            ToastMessage.BeginAnimation(OpacityProperty, animation);
         }
     }
 }

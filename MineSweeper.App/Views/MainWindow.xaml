@@ -61,11 +61,11 @@
 
                 <!-- Custom difficulty configuration -->
                 <Border Margin="0,0,0,10"
-        Padding="10"
-        Background="#F7F7F7"
-        BorderBrush="#DDDDDD"
-        BorderThickness="1"
-        CornerRadius="6">
+                        Padding="10"
+                        Background="#F7F7F7"
+                        BorderBrush="#DDDDDD"
+                        BorderThickness="1"
+                        CornerRadius="6">
 
                     <Border.Style>
                         <Style TargetType="Border">
@@ -338,5 +338,81 @@
                        FontWeight="SemiBold"/>
         </Border>
 
+        <!-- ================= ENDGAME DIALOG OVERLAY ================= -->
+        <Border x:Name="EndGameDialogOverlay"
+                Background="#80000000"
+                Visibility="Collapsed"
+                Panel.ZIndex="20">
+
+            <Grid HorizontalAlignment="Center"
+                  VerticalAlignment="Center"
+                  Margin="24">
+
+                <Border x:Name="EndGameDialog"
+                        Width="380"
+                        MaxWidth="420"
+                        Padding="20"
+                        Background="White"
+                        BorderBrush="#D9D9D9"
+                        BorderThickness="1"
+                        CornerRadius="12">
+
+                    <StackPanel>
+                        <TextBlock x:Name="EndGameDialogTitle"
+                                   Text="Game Over"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,10" />
+
+                        <TextBlock x:Name="EndGameDialogMessage"
+                                   Text="The game has ended."
+                                   FontSize="14"
+                                   TextAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,12" />
+
+                        <Border Background="#F7F7F7"
+                                BorderBrush="#E0E0E0"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="12"
+                                Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock Text="{Binding ElapsedTimeDisplay, StringFormat=Time: {0}}"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Margin="0,0,0,4" />
+
+                                <TextBlock Text="{Binding BestTimeDisplay, StringFormat=Best: {0}}"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Margin="0,0,0,4" />
+
+                                <TextBlock Text="{Binding SelectedDifficulty, Converter={StaticResource DifficultyConverter}, StringFormat=Difficulty: {0}}"
+                                   FontSize="13"
+                                   FontWeight="SemiBold" />
+                            </StackPanel>
+                        </Border>
+
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Center">
+                            <Button x:Name="PlayAgainButton"
+                                    Content="Play Again"
+                                    Width="120"
+                                    Height="34"
+                                    Margin="0,0,10,0"
+                                    Click="PlayAgainButton_Click" />
+
+                            <Button x:Name="CloseDialogButton"
+                                    Content="Close"
+                                    Width="100"
+                                    Height="34"
+                                    Click="CloseDialogButton_Click" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
     </Grid>
 </Window>
