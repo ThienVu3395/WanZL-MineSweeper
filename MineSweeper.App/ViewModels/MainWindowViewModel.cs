@@ -1,10 +1,13 @@
 ﻿using MineSweeper.App.Extensions;
 using MineSweeper.App.Helpers;
+using MineSweeper.App.Models;
 using MineSweeper.Core.Models;
 using MineSweeper.Core.Services;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using System.Windows.Input;
 using System.Windows.Threading;
 
@@ -34,12 +37,32 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private DifficultyLevel _selectedDifficulty;
 
     private readonly Dictionary<DifficultyLevel, TimeSpan> _bestTimes;
+    private readonly string _bestTimesFilePath;
 
     /// <summary>
     /// - (EN) Initializes a new instance of the <see cref="MainWindowViewModel"/> class.
+    /// Loads persisted best times from the default local storage path.
     /// - (VI) Khởi tạo một instance mới của <see cref="MainWindowViewModel"/>.
+    /// Đồng thời tải best time đã lưu từ đường dẫn lưu trữ mặc định trên máy.
     /// </summary>
     public MainWindowViewModel()
+        : this(GetDefaultBestTimesFilePath())
+    {
+    }
+
+    /// <summary>
+    /// - (EN) Initializes a new instance of the <see cref="MainWindowViewModel"/> class
+    /// using a specific best-times file path.
+    /// This overload is mainly intended for tests and controlled storage scenarios.
+    /// - (VI) Khởi tạo một instance mới của <see cref="MainWindowViewModel"/>
+    /// với đường dẫn file best time cụ thể.
+    /// Overload này chủ yếu phục vụ cho test và các kịch bản kiểm soát nơi lưu trữ.
+    /// </summary>
+    /// <param name="bestTimesFilePath">
+    /// - (EN) The file path used to load and save persisted best times.
+    /// - (VI) Đường dẫn file dùng để tải và lưu best time bền vững.
+    /// </param>
+    internal MainWindowViewModel(string bestTimesFilePath)
     {
         _game = new MineSweeperGame();
 
@@ -76,8 +99,10 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
         _gameTimer.Tick += OnGameTimerTick;
 
-        // Hiển thị danh sách best times theo độ khó của game
-        _bestTimes = new Dictionary<DifficultyLevel, TimeSpan>();
+        _bestTimesFilePath = bestTimesFilePath;
+
+        // Tải best time đã lưu từ local storage
+        _bestTimes = LoadBestTimes();
 
         // Khởi tạo game đầu tiên
         StartNewGameByDifficulty();
@@ -241,6 +266,12 @@ public class MainWindowViewModel : INotifyPropertyChanged
     /// - (VI) Lấy chuỗi thời gian tốt nhất đã được định dạng để hiển thị trên giao diện.
     /// </summary>
     public string BestTimeDisplay => BestTime?.ToString(@"mm\:ss") ?? "--:--";
+
+    /// <summary>
+    /// - (EN) Gets the full file path used to store persisted best times.
+    /// - (VI) Lấy đường dẫn đầy đủ của file dùng để lưu best time bền vững.
+    /// </summary>
+    public string BestTimesFilePath => _bestTimesFilePath;
     #endregion
 
     #region Events
@@ -439,6 +470,126 @@ public class MainWindowViewModel : INotifyPropertyChanged
     }
     #endregion
 
+    #region Persistence Helpers
+    /// <summary>
+    /// - (EN) Gets the default file path used to persist best times in local application data.
+    /// - (VI) Lấy đường dẫn file mặc định dùng để lưu best time trong thư mục dữ liệu cục bộ của ứng dụng.
+    /// </summary>
+    /// <returns>
+    /// - (EN) The full file path for the persisted best-times JSON file.
+    /// - (VI) Đường dẫn đầy đủ tới file JSON lưu best time.
+    /// </returns>
+    private static string GetDefaultBestTimesFilePath()
+    {
+        string appDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        string applicationFolder = Path.Combine(appDataFolder, "MineSweeper");
+
+        return Path.Combine(applicationFolder, "best-times.json");
+    }
+
+    /// <summary>
+    /// - (EN) Loads persisted best times from local storage.
+    /// Returns an empty dictionary when the file is missing, invalid, or unreadable.
+    /// - (VI) Tải best time đã lưu từ local storage.
+    /// Trả về dictionary rỗng nếu file không tồn tại, không hợp lệ, hoặc không thể đọc được.
+    /// </summary>
+    /// <returns>
+    /// - (EN) A dictionary of best times keyed by difficulty.
+    /// - (VI) Dictionary chứa best time được ánh xạ theo độ khó.
+    /// </returns>
+    private Dictionary<DifficultyLevel, TimeSpan> LoadBestTimes()
+    {
+        try
+        {
+            if (!File.Exists(_bestTimesFilePath))
+            {
+                return new Dictionary<DifficultyLevel, TimeSpan>();
+            }
+
+            string json = File.ReadAllText(_bestTimesFilePath);
+
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return new Dictionary<DifficultyLevel, TimeSpan>();
+            }
+
+            var storage = JsonSerializer.Deserialize<BestTimesStorage>(json);
+
+            if (storage?.BestTimesInSeconds == null)
+            {
+                return new Dictionary<DifficultyLevel, TimeSpan>();
+            }
+
+            var result = new Dictionary<DifficultyLevel, TimeSpan>();
+
+            foreach (var pair in storage.BestTimesInSeconds)
+            {
+                if (!Enum.TryParse<DifficultyLevel>(pair.Key, ignoreCase: true, out var difficulty))
+                {
+                    continue;
+                }
+
+                if (difficulty == DifficultyLevel.Custom)
+                {
+                    continue;
+                }
+
+                if (pair.Value < 0)
+                {
+                    continue;
+                }
+
+                result[difficulty] = TimeSpan.FromSeconds(pair.Value);
+            }
+
+            return result;
+        }
+        catch
+        {
+            return new Dictionary<DifficultyLevel, TimeSpan>();
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Saves the current best times to local storage.
+    /// Persistence failures are intentionally ignored so gameplay is not interrupted.
+    /// - (VI) Lưu best time hiện tại vào local storage.
+    /// Các lỗi khi lưu được cố ý bỏ qua để không làm gián đoạn trải nghiệm chơi game.
+    /// </summary>
+    private void SaveBestTimes()
+    {
+        try
+        {
+            string? directory = Path.GetDirectoryName(_bestTimesFilePath);
+
+            if (!string.IsNullOrWhiteSpace(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            var storage = new BestTimesStorage
+            {
+                BestTimesInSeconds = _bestTimes
+                    .Where(x => x.Key != DifficultyLevel.Custom)
+                    .ToDictionary(
+                        x => x.Key.ToString(),
+                        x => x.Value.TotalSeconds)
+            };
+
+            string json = JsonSerializer.Serialize(storage, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+
+            File.WriteAllText(_bestTimesFilePath, json);
+        }
+        catch
+        {
+            // Intentionally ignored.
+        }
+    }
+    #endregion
+
     #region Private Helpers
     /// <summary>
     /// - (EN) Clears the temporary UI message.
@@ -604,8 +755,10 @@ public class MainWindowViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// - (EN) Updates the best completion time for the current difficulty when the player wins.
-    /// - (VI) Cập nhật thời gian tốt nhất cho độ khó hiện tại khi người chơi thắng.
+    /// - (EN) Updates and persists the best completion time for the current difficulty when the player wins.
+    /// Saves the record only when a better time is achieved.
+    /// - (VI) Cập nhật và lưu best time cho độ khó hiện tại khi người chơi thắng.
+    /// Chỉ lưu lại record khi đạt được thời gian tốt hơn.
     /// </summary>
     private void UpdateBestTimeIfNeeded()
     {
@@ -618,6 +771,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
         if (!_bestTimes.TryGetValue(SelectedDifficulty, out var currentBest) || _elapsedTime < currentBest)
         {
             _bestTimes[SelectedDifficulty] = _elapsedTime;
+            SaveBestTimes();
+
             OnPropertyChanged(nameof(BestTime));
             OnPropertyChanged(nameof(BestTimeDisplay));
         }

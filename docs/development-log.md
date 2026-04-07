@@ -568,3 +568,19 @@ Added best-time tracking by difficulty to make the game feel more rewarding and 
 
 ### Notes
 This commit builds on the timer feature and improves product value by giving players a reason to replay and improve their performance across difficulty levels.
+
+## Commit 34 - Persist best times between application sessions
+
+### Summary
+Added local persistence for best times so player records are retained after closing and reopening the application.
+
+### Completed
+- Added JSON-based storage for persisted best times
+- Loaded best times from local storage during view model initialization
+- Saved best times when a new record was achieved
+- Preserved existing best-time display behavior in the UI
+- Added unit tests for persisted best-time loading and saving scenarios
+
+### Notes
+This commit improves product completeness by keeping player progress across sessions.
+A broader persistence refactor for player statistics and preferences can be introduced in a later commit.

@@ -482,11 +482,26 @@ public class MainWindowViewModelTests
     public void BestTimeDisplay_ShouldReturnFallback_WhenNoBestTimeExists()
     {
         // Arrange
-        var vm = new MainWindowViewModel();
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
 
-        // Assert
-        Assert.Null(vm.BestTime);
-        Assert.Equal("--:--", vm.BestTimeDisplay);
+        string filePath = Path.Combine(tempDirectory, "best-times.json");
+
+        // Assert & Actual
+        try
+        {
+            var vm = new MainWindowViewModel(filePath);
+
+            Assert.Null(vm.BestTime);
+            Assert.Equal("--:--", vm.BestTimeDisplay);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
     }
 
     /// <summary>
@@ -497,21 +512,39 @@ public class MainWindowViewModelTests
     public void WinningGame_ShouldStoreBestTime_ForSelectedDifficulty()
     {
         // Arrange
-        var vm = new MainWindowViewModel();
-        vm.SelectedDifficulty = DifficultyLevel.Beginner;
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
 
-        ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
-        SetPrivateFieldValue(vm, "_elapsedTime", TimeSpan.FromSeconds(42));
+        string filePath = Path.Combine(tempDirectory, "best-times.json");
 
-        vm.RevealCellCommand.Execute(GetCell(vm, 0, 1));
-        vm.RevealCellCommand.Execute(GetCell(vm, 1, 0));
+        try
+        {
+            var vm = new MainWindowViewModel(filePath);
+            vm.SelectedDifficulty = DifficultyLevel.Beginner;
 
-        // Act
-        vm.RevealCellCommand.Execute(GetCell(vm, 1, 1));
+            ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
 
-        // Assert
-        Assert.NotNull(vm.BestTime);
-        Assert.Equal("00:42", vm.BestTimeDisplay);
+            SetPrivateFieldValue(vm, "_elapsedTime", TimeSpan.FromSeconds(42));
+            SetPrivateFieldValue(vm, "_isTimerRunning", true);
+            SetPrivateFieldValue(vm, "_gameStartTimeUtc", DateTime.UtcNow - TimeSpan.FromSeconds(42));
+
+            vm.RevealCellCommand.Execute(GetCell(vm, 0, 1));
+            vm.RevealCellCommand.Execute(GetCell(vm, 1, 0));
+
+            // Act
+            vm.RevealCellCommand.Execute(GetCell(vm, 1, 1));
+
+            // Assert
+            Assert.NotNull(vm.BestTime);
+            Assert.Equal("00:42", vm.BestTimeDisplay);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
     }
 
     /// <summary>
@@ -660,6 +693,151 @@ public class MainWindowViewModelTests
 
         // Assert
         Assert.Equal(GameState.Won, finalState);
+    }
+    #endregion
+
+    #region Persistence
+    /// <summary>
+    /// - (EN) Verifies that the constructor loads persisted best times from a valid JSON file.
+    /// - (VI) Kiểm tra constructor sẽ tải best time đã lưu từ file JSON hợp lệ.
+    /// </summary>
+    [Fact]
+    public void Constructor_ShouldLoadPersistedBestTimes_FromJsonFile()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        string filePath = Path.Combine(tempDirectory, "best-times.json");
+
+        string json =
+            """
+        {
+          "BestTimesInSeconds": {
+            "Beginner": 42,
+            "Intermediate": 90
+          }
+        }
+        """;
+
+        File.WriteAllText(filePath, json);
+
+        try
+        {
+            var vm = new MainWindowViewModel(filePath);
+
+            Assert.Equal(DifficultyLevel.Beginner, vm.SelectedDifficulty);
+            Assert.Equal("00:42", vm.BestTimeDisplay);
+
+            vm.SelectedDifficulty = DifficultyLevel.Intermediate;
+            Assert.Equal("01:30", vm.BestTimeDisplay);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that the constructor falls back to empty best-time data when the file does not exist.
+    /// - (VI) Kiểm tra constructor sẽ fallback về dữ liệu best time rỗng khi file không tồn tại.
+    /// </summary>
+    [Fact]
+    public void Constructor_ShouldFallbackToEmptyBestTimes_WhenFileDoesNotExist()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        string filePath = Path.Combine(tempDirectory, "best-times.json");
+
+        try
+        {
+            var vm = new MainWindowViewModel(filePath);
+
+            Assert.Null(vm.BestTime);
+            Assert.Equal("--:--", vm.BestTimeDisplay);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that the constructor falls back to empty best-time data when the JSON content is invalid.
+    /// - (VI) Kiểm tra constructor sẽ fallback về dữ liệu best time rỗng khi nội dung JSON không hợp lệ.
+    /// </summary>
+    [Fact]
+    public void Constructor_ShouldFallbackToEmptyBestTimes_WhenJsonIsInvalid()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        string filePath = Path.Combine(tempDirectory, "best-times.json");
+        File.WriteAllText(filePath, "{ invalid json");
+
+        try
+        {
+            var vm = new MainWindowViewModel(filePath);
+
+            Assert.Null(vm.BestTime);
+            Assert.Equal("--:--", vm.BestTimeDisplay);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that winning a game persists the new best time to the configured JSON file.
+    /// - (VI) Kiểm tra khi thắng game thì best time mới sẽ được lưu vào file JSON đã cấu hình.
+    /// </summary>
+    [Fact]
+    public void WinningGame_ShouldPersistBestTime_ToJsonFile()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        string filePath = Path.Combine(tempDirectory, "best-times.json");
+
+        try
+        {
+            var vm = new MainWindowViewModel(filePath);
+            vm.SelectedDifficulty = DifficultyLevel.Beginner;
+
+            ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
+
+            SetPrivateFieldValue(vm, "_elapsedTime", TimeSpan.FromSeconds(42));
+            SetPrivateFieldValue(vm, "_isTimerRunning", true);
+            SetPrivateFieldValue(vm, "_gameStartTimeUtc", DateTime.UtcNow - TimeSpan.FromSeconds(42));
+
+            vm.RevealCellCommand.Execute(GetCell(vm, 0, 1));
+            vm.RevealCellCommand.Execute(GetCell(vm, 1, 0));
+            vm.RevealCellCommand.Execute(GetCell(vm, 1, 1));
+
+            Assert.True(File.Exists(filePath));
+
+            string json = File.ReadAllText(filePath);
+
+            Assert.Contains("Beginner", json);
+            Assert.Contains("42", json);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
     }
     #endregion
 
