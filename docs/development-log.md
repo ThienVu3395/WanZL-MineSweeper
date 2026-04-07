@@ -700,3 +700,23 @@ Improved the loss-state UX by visually distinguishing the exploded mine and any 
 
 ### Notes
 This commit improves clarity and player feedback by making it easier to understand exactly why the game was lost.
+
+## Commit 40 - Add quick restart support
+
+### Summary
+Added dedicated quick restart support so the application can explicitly restart the current board configuration without introducing duplicate header actions.
+
+### Completed
+- Added `QuickRestartCommand` to `MainWindowViewModel`
+- Added a dedicated quick restart flow that reuses the currently selected preset or custom configuration
+- Updated the endgame dialog `Play Again` action to use quick restart
+- Preserved the existing `New Game` button on the main UI without adding redundant restart controls
+- Added unit tests for:
+  - restarting with preset difficulty
+  - restarting with custom difficulty
+  - clearing warning messages
+  - resetting elapsed time
+
+### Notes
+This commit introduces a distinct restart action in the interaction flow while keeping the current header UI simple.
+It also prepares the application for upcoming keyboard shortcut support and restart confirmation behavior.

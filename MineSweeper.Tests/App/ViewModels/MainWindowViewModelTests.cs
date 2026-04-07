@@ -284,6 +284,109 @@ public class MainWindowViewModelTests
     }
     #endregion
 
+    #region QuickRestartCommand
+    /// <summary>
+    /// - (EN) Verifies that quick restart restarts the game using the currently selected preset difficulty.
+    /// - (VI) Kiểm tra restart nhanh sẽ khởi động lại game theo đúng preset difficulty đang được chọn.
+    /// </summary>
+    [Fact]
+    public void QuickRestartCommand_ShouldRestartUsingSelectedPresetDifficulty()
+    {
+        // Arrange
+        var vm = new MainWindowViewModel();
+        vm.SelectedDifficulty = DifficultyLevel.Expert;
+
+        vm.StartNewGame(9, 9, 10);
+
+        // Act
+        vm.QuickRestartCommand.Execute(null);
+
+        // Assert
+        Assert.Equal(16, vm.Rows);
+        Assert.Equal(30, vm.Columns);
+        Assert.Equal(99, vm.TotalMines);
+        Assert.Equal(16 * 30, vm.Cells.Count);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that quick restart restarts the game using the current custom board configuration.
+    /// - (VI) Kiểm tra restart nhanh sẽ khởi động lại game theo đúng cấu hình board custom hiện tại.
+    /// </summary>
+    [Fact]
+    public void QuickRestartCommand_ShouldRestartUsingCurrentCustomConfiguration()
+    {
+        // Arrange
+        var vm = new MainWindowViewModel();
+        vm.SelectedDifficulty = DifficultyLevel.Custom;
+        vm.CustomRows = 12;
+        vm.CustomColumns = 14;
+        vm.CustomMines = 20;
+
+        vm.StartNewGame(9, 9, 10);
+
+        // Act
+        vm.QuickRestartCommand.Execute(null);
+
+        // Assert
+        Assert.Equal(12, vm.Rows);
+        Assert.Equal(14, vm.Columns);
+        Assert.Equal(20, vm.TotalMines);
+        Assert.Equal(12 * 14, vm.Cells.Count);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that quick restart clears any previous warning message.
+    /// - (VI) Kiểm tra restart nhanh sẽ xóa các thông báo cảnh báo trước đó.
+    /// </summary>
+    [Fact]
+    public void QuickRestartCommand_ShouldClearPreviousWarningMessage()
+    {
+        // Arrange
+        var vm = new MainWindowViewModel();
+
+        foreach (var cell in vm.Cells.Take(vm.TotalMines))
+        {
+            vm.ToggleFlagCommand.Execute(cell);
+        }
+
+        var extraCell = vm.Cells.Skip(vm.TotalMines).First();
+        vm.ToggleFlagCommand.Execute(extraCell);
+
+        Assert.NotNull(vm.Message);
+
+        // Act
+        vm.QuickRestartCommand.Execute(null);
+
+        // Assert
+        Assert.Null(vm.Message);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that quick restart resets elapsed time back to zero.
+    /// - (VI) Kiểm tra restart nhanh sẽ đặt lại thời gian đã chơi về 0.
+    /// </summary>
+    [Fact]
+    public void QuickRestartCommand_ShouldResetElapsedTime()
+    {
+        // Arrange
+        var vm = new MainWindowViewModel();
+
+        SetPrivateFieldValue(vm, "_elapsedTime", TimeSpan.FromSeconds(95));
+        SetPrivateFieldValue(vm, "_isTimerRunning", true);
+        SetPrivateFieldValue(vm, "_gameStartTimeUtc", DateTime.UtcNow.AddSeconds(-95));
+
+        // Act
+        vm.QuickRestartCommand.Execute(null);
+
+        // Assert
+        Assert.Equal(TimeSpan.Zero, vm.ElapsedTime);
+        Assert.Equal("00:00", vm.ElapsedTimeDisplay);
+
+        bool isTimerRunning = GetPrivateFieldValue<bool>(vm, "_isTimerRunning");
+        Assert.False(isTimerRunning);
+    }
+    #endregion
+
     #region ToggleFlagCommand
     /// <summary>
     /// - (EN) Verifies that flagging a cell increases the flag counter and updates remaining mines.

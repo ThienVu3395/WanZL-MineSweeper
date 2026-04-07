@@ -192,8 +192,8 @@ namespace MineSweeper.App.Views
         }
 
         /// <summary>
-        /// - (EN) Starts a new game from the custom endgame dialog.
-        /// - (VI) Bắt đầu một ván mới từ hộp thoại kết thúc game tùy biến.
+        /// - (EN) Starts a quick restart from the custom endgame dialog.
+        /// - (VI) Thực hiện restart nhanh từ hộp thoại kết thúc game tùy biến.
         /// </summary>
         /// <param name="sender">
         /// - (EN) Event sender.
@@ -208,9 +208,9 @@ namespace MineSweeper.App.Views
             HideEndGameDialog();
 
             if (DataContext is MainWindowViewModel viewModel &&
-                viewModel.NewGameCommand.CanExecute(null))
+                viewModel.QuickRestartCommand.CanExecute(null))
             {
-                viewModel.NewGameCommand.Execute(null);
+                viewModel.QuickRestartCommand.Execute(null);
             }
         }
 

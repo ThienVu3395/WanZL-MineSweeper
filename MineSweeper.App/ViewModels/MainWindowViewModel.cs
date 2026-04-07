@@ -26,6 +26,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private readonly RelayCommand _revealCellCommand;
     private readonly RelayCommand _toggleFlagCommand;
     private readonly RelayCommand _newGameCommand;
+    private readonly RelayCommand _quickRestartCommand;
     private readonly RelayCommand _chordCellCommand;
 
     private readonly DispatcherTimer _gameTimer;
@@ -55,10 +56,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     /// - (VI) Khởi tạo một instance mới của <see cref="MainWindowViewModel"/>.
     /// Đồng thời tải best time đã lưu từ đường dẫn lưu trữ mặc định trên máy.
     /// </summary>
-    public MainWindowViewModel()
-        : this(GetDefaultBestTimesFilePath())
-    {
-    }
+    public MainWindowViewModel() : this(GetDefaultBestTimesFilePath()) { }
 
     /// <summary>
     /// - (EN) Initializes a new instance of the <see cref="MainWindowViewModel"/> class
@@ -99,6 +97,9 @@ public class MainWindowViewModel : INotifyPropertyChanged
         // Command dùng để bắt đầu game mới
         _newGameCommand = new RelayCommand(_ => StartNewGameByDifficulty());
 
+        // Command dùng để restart nhanh ván hiện tại với đúng cấu hình đang chọn
+        _quickRestartCommand = new RelayCommand(_ => QuickRestart(), _ => CanQuickRestart());
+
         // Command dùng để xử lý chording khi user double-click vào ô đã mở
         _chordCellCommand = new RelayCommand(OnChordCell, CanChordCell);
 
@@ -137,6 +138,14 @@ public class MainWindowViewModel : INotifyPropertyChanged
     /// - (VI) Lấy command dùng để bắt đầu một ván mới theo độ khó đang được chọn.
     /// </summary>
     public ICommand NewGameCommand => _newGameCommand;
+
+    /// <summary>
+    /// - (EN) Gets the command used to quickly restart the current game
+    /// using the currently selected difficulty or custom board configuration.
+    /// - (VI) Lấy command dùng để khởi động lại nhanh ván hiện tại
+    /// theo đúng độ khó hoặc cấu hình board custom đang được chọn.
+    /// </summary>
+    public ICommand QuickRestartCommand => _quickRestartCommand;
 
     /// <summary>
     /// - (EN) Gets the command used to perform chording on a revealed cell.
@@ -413,6 +422,17 @@ public class MainWindowViewModel : INotifyPropertyChanged
         RefreshGameProperties(includeBoardDimensions: true, includeTotalMines: true);
         RefreshCommandStates();
     }
+
+    /// <summary>
+    /// - (EN) Quickly restarts the current game using the currently selected difficulty
+    /// or the current custom board configuration.
+    /// - (VI) Khởi động lại nhanh ván hiện tại theo độ khó đang chọn
+    /// hoặc cấu hình board custom hiện tại.
+    /// </summary>
+    public void QuickRestart()
+    {
+        StartNewGameByDifficulty();
+    }
     #endregion
 
     #region Command Handlers
@@ -528,6 +548,21 @@ public class MainWindowViewModel : INotifyPropertyChanged
             return false;
 
         return cellVm.IsRevealed;
+    }
+
+    /// <summary>
+    /// - (EN) Determines whether the quick restart command can execute.
+    /// Quick restart is available whenever the current board has valid dimensions.
+    /// - (VI) Xác định command restart nhanh có thể thực thi hay không.
+    /// Restart nhanh khả dụng khi board hiện tại có kích thước hợp lệ.
+    /// </summary>
+    /// <returns>
+    /// - (EN) True if quick restart is available.
+    /// - (VI) True nếu restart nhanh đang khả dụng.
+    /// </returns>
+    private bool CanQuickRestart()
+    {
+        return Rows > 0 && Columns > 0;
     }
     #endregion
 
@@ -794,6 +829,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
         _revealCellCommand.RaiseCanExecuteChanged();
         _toggleFlagCommand.RaiseCanExecuteChanged();
         _chordCellCommand.RaiseCanExecuteChanged();
+        _quickRestartCommand.RaiseCanExecuteChanged();
     }
 
     /// <summary>
