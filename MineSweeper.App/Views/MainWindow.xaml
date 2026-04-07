@@ -259,37 +259,55 @@
                                     <Style TargetType="Button">
 
                                         <!-- Default -->
-                                        <Setter Property="Background" Value="LightGray" />
-                                        <Setter Property="BorderBrush" Value="Gray" />
+                                        <Setter Property="Background" Value="#DADADA" />
+                                        <Setter Property="BorderBrush" Value="#9E9E9E" />
                                         <Setter Property="BorderThickness" Value="1" />
                                         <Setter Property="Foreground" Value="Black" />
                                         <Setter Property="Padding" Value="0" />
+                                        <Setter Property="Cursor" Value="Hand" />
 
                                         <Style.Triggers>
 
-                                            <!-- Hover -->
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter Property="Background" Value="#DCDCDC" />
+                                            <!-- Hover (only when hidden & game active) -->
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsRevealed}" Value="False"/>
+                                                    <Condition Binding="{Binding DataContext.IsGameFinished, RelativeSource={RelativeSource AncestorType=Window}}" Value="False"/>
+                                                    <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=IsMouseOver}" Value="True"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Background" Value="#E8E8E8" />
+                                                <Setter Property="BorderBrush" Value="#7F7F7F" />
+                                            </MultiDataTrigger>
+
+                                            <!-- Pressed -->
+                                            <Trigger Property="IsPressed" Value="True">
+                                                <Setter Property="Background" Value="#C8C8C8" />
+                                                <Setter Property="BorderBrush" Value="#6F6F6F" />
                                             </Trigger>
 
                                             <!-- Disabled -->
                                             <Trigger Property="IsEnabled" Value="False">
-                                                <Setter Property="Opacity" Value="0.6"/>
+                                                <Setter Property="Opacity" Value="0.75"/>
                                             </Trigger>
 
                                             <!-- Revealed -->
                                             <DataTrigger Binding="{Binding IsRevealed}" Value="True">
-                                                <Setter Property="Background" Value="#F3F3F3" />
-                                                <Setter Property="BorderBrush" Value="#C8C8C8" />
+                                                <Setter Property="Background" Value="#F4F4F4" />
+                                                <Setter Property="BorderBrush" Value="#CFCFCF" />
                                             </DataTrigger>
 
-                                            <!-- Flag -->
-                                            <DataTrigger Binding="{Binding IsFlagged}" Value="True">
-                                                <Setter Property="Foreground" Value="DarkRed" />
-                                            </DataTrigger>
+                                            <!-- Flag (hidden) -->
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsFlagged}" Value="True"/>
+                                                    <Condition Binding="{Binding IsRevealed}" Value="False"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Background" Value="#FFF4F4"/>
+                                                <Setter Property="Foreground" Value="DarkRed"/>
+                                                <Setter Property="BorderBrush" Value="#C97B7B"/>
+                                            </MultiDataTrigger>
 
-                                            <!-- Colored Numbers -->
-                                            <!-- 1 -->
+                                            <!-- Number colors -->
                                             <MultiDataTrigger>
                                                 <MultiDataTrigger.Conditions>
                                                     <Condition Binding="{Binding IsRevealed}" Value="True"/>
@@ -298,7 +316,6 @@
                                                 <Setter Property="Foreground" Value="Blue"/>
                                             </MultiDataTrigger>
 
-                                            <!-- 2 -->
                                             <MultiDataTrigger>
                                                 <MultiDataTrigger.Conditions>
                                                     <Condition Binding="{Binding IsRevealed}" Value="True"/>
@@ -307,58 +324,12 @@
                                                 <Setter Property="Foreground" Value="Green"/>
                                             </MultiDataTrigger>
 
-                                            <!-- 3 -->
                                             <MultiDataTrigger>
                                                 <MultiDataTrigger.Conditions>
                                                     <Condition Binding="{Binding IsRevealed}" Value="True"/>
                                                     <Condition Binding="{Binding AdjacentMines}" Value="3"/>
                                                 </MultiDataTrigger.Conditions>
                                                 <Setter Property="Foreground" Value="Red"/>
-                                            </MultiDataTrigger>
-
-                                            <!-- 4 -->
-                                            <MultiDataTrigger>
-                                                <MultiDataTrigger.Conditions>
-                                                    <Condition Binding="{Binding IsRevealed}" Value="True"/>
-                                                    <Condition Binding="{Binding AdjacentMines}" Value="4"/>
-                                                </MultiDataTrigger.Conditions>
-                                                <Setter Property="Foreground" Value="DarkBlue"/>
-                                            </MultiDataTrigger>
-
-                                            <!-- 5 -->
-                                            <MultiDataTrigger>
-                                                <MultiDataTrigger.Conditions>
-                                                    <Condition Binding="{Binding IsRevealed}" Value="True"/>
-                                                    <Condition Binding="{Binding AdjacentMines}" Value="5"/>
-                                                </MultiDataTrigger.Conditions>
-                                                <Setter Property="Foreground" Value="Brown"/>
-                                            </MultiDataTrigger>
-
-                                            <!-- 6 -->
-                                            <MultiDataTrigger>
-                                                <MultiDataTrigger.Conditions>
-                                                    <Condition Binding="{Binding IsRevealed}" Value="True"/>
-                                                    <Condition Binding="{Binding AdjacentMines}" Value="6"/>
-                                                </MultiDataTrigger.Conditions>
-                                                <Setter Property="Foreground" Value="Cyan"/>
-                                            </MultiDataTrigger>
-
-                                            <!-- 7 -->
-                                            <MultiDataTrigger>
-                                                <MultiDataTrigger.Conditions>
-                                                    <Condition Binding="{Binding IsRevealed}" Value="True"/>
-                                                    <Condition Binding="{Binding AdjacentMines}" Value="7"/>
-                                                </MultiDataTrigger.Conditions>
-                                                <Setter Property="Foreground" Value="Black"/>
-                                            </MultiDataTrigger>
-
-                                            <!-- 8 -->
-                                            <MultiDataTrigger>
-                                                <MultiDataTrigger.Conditions>
-                                                    <Condition Binding="{Binding IsRevealed}" Value="True"/>
-                                                    <Condition Binding="{Binding AdjacentMines}" Value="8"/>
-                                                </MultiDataTrigger.Conditions>
-                                                <Setter Property="Foreground" Value="Gray"/>
                                             </MultiDataTrigger>
 
                                             <!-- Exploded mine -->
@@ -369,7 +340,7 @@
                                                 </MultiDataTrigger.Conditions>
                                                 <Setter Property="Background" Value="#FF4D4D"/>
                                                 <Setter Property="Foreground" Value="White"/>
-                                                <Setter Property="BorderBrush" Value="#B30000"/>
+                                                <Setter Property="BorderBrush" Value="#990000"/>
                                                 <Setter Property="FontSize" Value="20"/>
                                             </MultiDataTrigger>
 
@@ -379,9 +350,9 @@
                                                     <Condition Binding="{Binding IsIncorrectFlag}" Value="True"/>
                                                     <Condition Binding="{Binding IsRevealed}" Value="True"/>
                                                 </MultiDataTrigger.Conditions>
-                                                <Setter Property="Background" Value="#FFE5E5"/>
+                                                <Setter Property="Background" Value="#FFF0F0"/>
                                                 <Setter Property="Foreground" Value="#B30000"/>
-                                                <Setter Property="BorderBrush" Value="#CC6666"/>
+                                                <Setter Property="BorderBrush" Value="#D28A8A"/>
                                             </MultiDataTrigger>
 
                                             <!-- Mine -->
@@ -390,14 +361,13 @@
                                                     <Condition Binding="{Binding IsMine}" Value="True"/>
                                                     <Condition Binding="{Binding IsRevealed}" Value="True"/>
                                                 </MultiDataTrigger.Conditions>
-                                                <Setter Property="Background" Value="#FFB3B3"/>
+                                                <Setter Property="Background" Value="#FFD6D6"/>
                                                 <Setter Property="Foreground" Value="DarkRed"/>
                                             </MultiDataTrigger>
 
                                             <!-- Game finished -->
-                                            <DataTrigger Binding="{Binding DataContext.IsGameFinished, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                         Value="True">
-                                                <Setter Property="Opacity" Value="0.8" />
+                                            <DataTrigger Binding="{Binding DataContext.IsGameFinished, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                <Setter Property="Opacity" Value="0.88"/>
                                             </DataTrigger>
 
                                         </Style.Triggers>

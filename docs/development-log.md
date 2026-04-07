@@ -773,3 +773,26 @@ Refined the header layout to improve visual hierarchy, readability, and grouping
 This commit focuses purely on UI layout and presentation.
 No gameplay logic or behavior was modified.
 The header is now cleaner, less redundant, and easier to scan during gameplay.
+
+## Commit 43 - Polish board visuals
+
+### Summary
+Enhanced the visual feedback and interaction states of board cells to improve clarity and responsiveness during gameplay.
+
+### Completed
+- Improved hover behavior:
+  - Applied only to hidden cells
+  - Disabled hover when the game is finished
+- Added pressed state feedback for better click interaction
+- Refined styling for hidden flagged cells to make flags more noticeable
+- Improved revealed cell appearance with softer background and borders
+- Enhanced visual distinction for:
+  - Exploded mines
+  - Incorrect flags
+  - Revealed mines
+- Adjusted board appearance when the game is finished to create a more polished end-state
+
+### Notes
+This commit focuses on visual polish and interaction feedback only.
+No changes were made to game logic or state handling.
+The board now feels more responsive and visually consistent across different states.
