@@ -677,3 +677,26 @@ Replaced the default system message box with a custom in-window endgame dialog o
 
 ### Notes
 This commit improves product polish and keeps endgame feedback visually consistent with the rest of the application UI.
+
+## Commit 39 - Highlight exploded mine and incorrect flags on game over
+
+### Summary
+Improved the loss-state UX by visually distinguishing the exploded mine and any incorrectly flagged cells.
+
+### Completed
+- Added `IsExplodedMine` and `IsIncorrectFlag` to the `Cell` model
+- Marked the clicked mine as exploded when the player loses
+- Marked flagged non-mine cells as incorrect after a loss
+- Updated `CellViewModel` to expose and display exploded mines and incorrect flags
+- Added dedicated WPF visual states for:
+  - exploded mine
+  - incorrect flag
+  - regular revealed mine
+- Added unit tests for:
+  - exploded mine marking
+  - incorrect flag marking
+  - exploded-mine display text
+  - incorrect-flag display text
+
+### Notes
+This commit improves clarity and player feedback by making it easier to understand exactly why the game was lost.

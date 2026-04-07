@@ -294,6 +294,29 @@
                                                 <Setter Property="Foreground" Value="Gray"/>
                                             </MultiDataTrigger>
 
+                                            <!-- Exploded mine -->
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsExplodedMine}" Value="True"/>
+                                                    <Condition Binding="{Binding IsRevealed}" Value="True"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Background" Value="#FF4D4D"/>
+                                                <Setter Property="Foreground" Value="White"/>
+                                                <Setter Property="BorderBrush" Value="#B30000"/>
+                                                <Setter Property="FontSize" Value="20"/>
+                                            </MultiDataTrigger>
+
+                                            <!-- Incorrect flag -->
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsIncorrectFlag}" Value="True"/>
+                                                    <Condition Binding="{Binding IsRevealed}" Value="True"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Background" Value="#FFE5E5"/>
+                                                <Setter Property="Foreground" Value="#B30000"/>
+                                                <Setter Property="BorderBrush" Value="#CC6666"/>
+                                            </MultiDataTrigger>
+
                                             <!-- Mine -->
                                             <MultiDataTrigger>
                                                 <MultiDataTrigger.Conditions>

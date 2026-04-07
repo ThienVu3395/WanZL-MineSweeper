@@ -1,5 +1,6 @@
 ﻿using MineSweeper.Core.Models;
 using MineSweeper.Core.Services;
+using System.Reflection;
 
 namespace MineSweeper.Tests.Core.Services;
 
@@ -520,6 +521,90 @@ public class MineSweeperGameTests
         Assert.Equal(GameState.Lost, game.State);
         Assert.True(board.Cells[0, 0].IsRevealed);
         Assert.True(board.Cells[2, 2].IsRevealed);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that the clicked mine is marked as the exploded mine when the player loses.
+    /// - (VI) Kiểm tra ô mìn bị click sẽ được đánh dấu là ô phát nổ khi người chơi thua.
+    /// </summary>
+    [Fact]
+    public void RevealCell_ShouldMarkExplodedMine_WhenPlayerHitsMine()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+        game.StartNewGame(2, 2, 1);
+
+        var board = game.Board!;
+
+        foreach (var cell in board.Cells)
+        {
+            cell.IsMine = false;
+            cell.IsRevealed = false;
+            cell.IsFlagged = false;
+            cell.AdjacentMines = 0;
+            cell.IsExplodedMine = false;
+            cell.IsIncorrectFlag = false;
+        }
+
+        board.Cells[0, 0].IsMine = true;
+        game.CalculateAdjacentMines(board);
+
+        var firstRevealPendingField = typeof(MineSweeperGame)
+            .GetField("_isFirstRevealPending", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        Assert.NotNull(firstRevealPendingField);
+        firstRevealPendingField!.SetValue(game, false);
+
+        // Act
+        game.RevealCell(0, 0);
+
+        // Assert
+        Assert.Equal(GameState.Lost, game.State);
+        Assert.True(board.Cells[0, 0].IsExplodedMine);
+        Assert.True(board.Cells[0, 0].IsRevealed);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that flagged non-mine cells are marked as incorrect after the player loses.
+    /// - (VI) Kiểm tra các ô bị cắm cờ nhưng không phải mìn sẽ bị đánh dấu là cờ sai sau khi người chơi thua.
+    /// </summary>
+    [Fact]
+    public void RevealCell_ShouldMarkIncorrectFlags_WhenPlayerLoses()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+        game.StartNewGame(2, 2, 1);
+
+        var board = game.Board!;
+
+        foreach (var cell in board.Cells)
+        {
+            cell.IsMine = false;
+            cell.IsRevealed = false;
+            cell.IsFlagged = false;
+            cell.AdjacentMines = 0;
+            cell.IsExplodedMine = false;
+            cell.IsIncorrectFlag = false;
+        }
+
+        board.Cells[0, 0].IsMine = true;
+        board.Cells[1, 1].IsFlagged = true; // wrong flag
+        game.CalculateAdjacentMines(board);
+
+        var firstRevealPendingField = typeof(MineSweeperGame)
+            .GetField("_isFirstRevealPending", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        Assert.NotNull(firstRevealPendingField);
+        firstRevealPendingField!.SetValue(game, false);
+
+        // Act
+        game.RevealCell(0, 0);
+
+        // Assert
+        Assert.Equal(GameState.Lost, game.State);
+        Assert.True(board.Cells[1, 1].IsIncorrectFlag);
+        Assert.True(board.Cells[1, 1].IsRevealed);
+        Assert.False(board.Cells[1, 1].IsMine);
     }
     #endregion
 

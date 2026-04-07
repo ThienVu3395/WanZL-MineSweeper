@@ -120,6 +120,8 @@ public class CellViewModelTests
         Assert.Contains(nameof(vm.IsHidden), changedProperties);
         Assert.Contains(nameof(vm.IsFlagged), changedProperties);
         Assert.Contains(nameof(vm.IsMine), changedProperties);
+        Assert.Contains(nameof(vm.IsExplodedMine), changedProperties);
+        Assert.Contains(nameof(vm.IsIncorrectFlag), changedProperties);
         Assert.Contains(nameof(vm.AdjacentMines), changedProperties);
         Assert.Contains(nameof(vm.DisplayText), changedProperties);
     }
@@ -148,5 +150,50 @@ public class CellViewModelTests
         Assert.True(vm.IsFlagged);
         Assert.Equal(2, vm.AdjacentMines);
         Assert.Equal("🚩", vm.DisplayText);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that the exploded mine is displayed with the explosion icon.
+    /// - (VI) Kiểm tra ô mìn phát nổ sẽ hiển thị biểu tượng vụ nổ.
+    /// </summary>
+    [Fact]
+    public void DisplayText_ShouldShowExplosion_WhenCellIsExplodedMine()
+    {
+        // Arrange
+        var cell = new Cell(0, 0)
+        {
+            IsRevealed = true,
+            IsMine = true,
+            IsExplodedMine = true
+        };
+
+        var vm = new CellViewModel(cell);
+
+        // Assert
+        Assert.True(vm.IsExplodedMine);
+        Assert.Equal("💥", vm.DisplayText);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that an incorrect flag is displayed with the incorrect-marker icon.
+    /// - (VI) Kiểm tra cờ sai sẽ hiển thị biểu tượng đánh dấu sai.
+    /// </summary>
+    [Fact]
+    public void DisplayText_ShouldShowIncorrectMarker_WhenFlagIsIncorrect()
+    {
+        // Arrange
+        var cell = new Cell(0, 0)
+        {
+            IsRevealed = true,
+            IsFlagged = true,
+            IsMine = false,
+            IsIncorrectFlag = true
+        };
+
+        var vm = new CellViewModel(cell);
+
+        // Assert
+        Assert.True(vm.IsIncorrectFlag);
+        Assert.Equal("❌", vm.DisplayText);
     }
 }

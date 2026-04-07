@@ -46,5 +46,17 @@
         /// - Số mìn xung quanh
         /// </summary>
         public int AdjacentMines { get; set; }
+
+        /// <summary>
+        /// - (EN) Gets or sets a value indicating whether this mine cell is the one that exploded.
+        /// - (VI) Lấy hoặc gán giá trị cho biết ô mìn này có phải là ô phát nổ hay không.
+        /// </summary>
+        public bool IsExplodedMine { get; set; }
+
+        /// <summary>
+        /// - (EN) Gets or sets a value indicating whether this flagged cell is incorrect.
+        /// - (VI) Lấy hoặc gán giá trị cho biết ô đang cắm cờ này có phải là cờ sai hay không.
+        /// </summary>
+        public bool IsIncorrectFlag { get; set; }
     }
 }

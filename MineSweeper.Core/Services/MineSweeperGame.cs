@@ -124,7 +124,11 @@ public class MineSweeperGame
         if (cell.IsMine)
         {
             cell.IsRevealed = true;
+            cell.IsExplodedMine = true;
+
             RevealAllMines();
+            MarkIncorrectFlags();
+
             State = GameState.Lost;
             return;
         }
@@ -324,6 +328,22 @@ public class MineSweeperGame
         {
             if (cell.IsMine)
             {
+                cell.IsRevealed = true;
+            }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Marks all flagged cells that do not actually contain mines as incorrect.
+    /// - (VI) Đánh dấu tất cả các ô đang cắm cờ nhưng thực tế không chứa mìn là cờ sai.
+    /// </summary>
+    private void MarkIncorrectFlags()
+    {
+        foreach (var cell in Board!.Cells)
+        {
+            if (cell.IsFlagged && !cell.IsMine)
+            {
+                cell.IsIncorrectFlag = true;
                 cell.IsRevealed = true;
             }
         }
