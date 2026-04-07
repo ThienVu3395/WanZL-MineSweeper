@@ -747,3 +747,29 @@ Added keyboard shortcuts for restart and difficulty actions, and introduced conf
 ### Notes
 This combined UX commit makes the application faster to control from the keyboard while reducing the risk of losing progress accidentally.
 It also builds naturally on the quick restart support added in the previous commit.
+
+## Commit 42 - Refine header layout
+
+### Summary
+Refined the header layout to improve visual hierarchy, readability, and grouping of game controls and statistics.
+
+### Completed
+- Reorganized header into structured sections:
+  - Title and tips
+  - Game controls (difficulty selection and New Game)
+  - Status and message
+  - Statistics panel
+- Improved layout and spacing for difficulty selector and action button
+- Removed redundant "current difficulty" text to avoid duplicated information and layout overflow
+- Introduced a cleaner statistics panel for:
+  - Total mines
+  - Flags
+  - Remaining mines
+  - Elapsed time
+  - Best time
+- Improved alignment and consistency across header elements
+
+### Notes
+This commit focuses purely on UI layout and presentation.
+No gameplay logic or behavior was modified.
+The header is now cleaner, less redundant, and easier to scan during gameplay.

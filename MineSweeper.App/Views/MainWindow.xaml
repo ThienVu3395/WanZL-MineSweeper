@@ -24,51 +24,70 @@
         <DockPanel Margin="16">
 
             <!-- HEADER -->
-            <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+            <StackPanel DockPanel.Dock="Top" Margin="0,0,0,14">
 
+                <!-- Title -->
                 <TextBlock Text="MineSweeper"
-                           FontSize="26"
+                           FontSize="28"
                            FontWeight="Bold"
-                           Margin="0,0,0,10" />
+                           Margin="0,0,0,6" />
 
-                <TextBlock Text="* Tips: Double-click a revealed number cell to chord | F2 = Restart | Ctrl+1/2/3/4 = Difficulty shortcuts"
+                <!-- Tips -->
+                <TextBlock Text="* Tips: Double-click a revealed number cell to chord • F2 = Restart • Ctrl+1/2/3/4 = Difficulty shortcuts"
                            FontSize="13"
                            FontWeight="Bold"
                            Foreground="Gray"
                            TextWrapping="Wrap"
-                           Margin="0,0,0,10" />
+                           Margin="0,0,0,12" />
 
-                <!-- Difficulty + New Game -->
-                <StackPanel Orientation="Horizontal" Margin="0,0,12,10">
-                    <TextBlock Text="Difficulty:"
-                               VerticalAlignment="Center"
-                               Margin="0,0,8,0" />
+                <!-- Primary controls -->
+                <Border Background="#F8F8F8"
+                        BorderBrush="#DDDDDD"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="12"
+                        Margin="0,0,0,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="220" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
 
-                    <ComboBox Width="200"
-                              ItemsSource="{Binding AvailableDifficulties}"
-                              SelectedItem="{Binding SelectedDifficulty}"
-                              Margin="0,0,12,0">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Converter={StaticResource DifficultyConverter}}" />
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
+                        <TextBlock Grid.Column="0"
+                                   Text="Difficulty:"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,8,0" />
 
-                    <Button x:Name="NewGameButton"
-                            Content="New Game"
-                            Width="110"
-                            Height="30"
-                            Click="NewGameButton_Click" />
-                </StackPanel>
+                        <ComboBox Grid.Column="1"
+                                  ItemsSource="{Binding AvailableDifficulties}"
+                                  SelectedItem="{Binding SelectedDifficulty}"
+                                  VerticalAlignment="Center">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Converter={StaticResource DifficultyConverter}}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+
+                        <Button Grid.Column="3"
+                                x:Name="NewGameButton"
+                                Content="New Game"
+                                Width="110"
+                                Height="32"
+                                Click="NewGameButton_Click" />
+                    </Grid>
+                </Border>
 
                 <!-- Custom difficulty configuration -->
                 <Border Margin="0,0,0,10"
-                        Padding="10"
+                        Padding="12"
                         Background="#F7F7F7"
                         BorderBrush="#DDDDDD"
                         BorderThickness="1"
-                        CornerRadius="6">
+                        CornerRadius="8">
 
                     <Border.Style>
                         <Style TargetType="Border">
@@ -87,81 +106,126 @@
                                    FontWeight="SemiBold"
                                    Margin="0,0,0,8" />
 
-                        <StackPanel Orientation="Horizontal">
-                            <StackPanel Margin="0,0,12,0">
-                                <TextBlock Text="Rows" Margin="0,0,0,4" />
-                                <TextBox Width="70" Text="{Binding CustomRows, UpdateSourceTrigger=LostFocus}" />
-                            </StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="90" />
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="90" />
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="90" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
 
-                            <StackPanel Margin="0,0,12,0">
-                                <TextBlock Text="Columns" Margin="0,0,0,4" />
-                                <TextBox Width="70" Text="{Binding CustomColumns, UpdateSourceTrigger=LostFocus}" />
-                            </StackPanel>
+                            <TextBlock Grid.Column="0"
+                                       Text="Rows"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,6,0" />
+                            
+                            <TextBox Grid.Column="1"  Text="{Binding CustomRows, UpdateSourceTrigger=LostFocus}" />
 
-                            <StackPanel>
-                                <TextBlock Text="Mines" Margin="0,0,0,4" />
-                                <TextBox Width="70" Text="{Binding CustomMines, UpdateSourceTrigger=LostFocus}" />
-                            </StackPanel>
-                        </StackPanel>
+                            <TextBlock Grid.Column="3"
+                                       Text="Columns"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,6,0" />
+                            
+                            <TextBox Grid.Column="4" Text="{Binding CustomColumns, UpdateSourceTrigger=LostFocus}" />
+
+                            <TextBlock Grid.Column="6"
+                                   Text="Mines"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,6,0" />
+                            
+                             <TextBox Grid.Column="7" 
+                                      Text="{Binding CustomMines, UpdateSourceTrigger=LostFocus}" />
+                        </Grid>
 
                         <TextBlock Text="{Binding CustomBoardSummary, StringFormat=Preview: {0}}"
-                           FontSize="12"
-                           Foreground="Gray"
-                           Margin="0,8,0,0" />
+                                   FontSize="12"
+                                   Foreground="Gray"
+                                   Margin="0,8,0,0" />
 
-                        <TextBlock Text="Allowed range: rows 5-30, columns 5-30, mines must leave at least one safe cell."
-                           FontSize="11"
-                           Foreground="Gray"
-                           TextWrapping="Wrap"
-                           Margin="0,4,0,0" />
+                        <TextBlock Text="Allowed range: rows 5–30, columns 5–30, mines must leave at least one safe cell."
+                                   FontSize="11"
+                                   Foreground="Gray"
+                                   TextWrapping="Wrap"
+                                   Margin="0,4,0,0" />
                     </StackPanel>
                 </Border>
 
-                <!-- Game Status -->
+                <!-- Status -->
                 <TextBlock Text="{Binding GameStatus}"
                            FontSize="14"
-                           FontWeight="SemiBold" />
+                           FontWeight="SemiBold"
+                           Margin="0,0,0,4" />
 
-                <!-- Optional inline message (fallback nếu không dùng toast) -->
                 <TextBlock Text="{Binding Message}"
                            Foreground="OrangeRed"
                            FontSize="12"
-                           Margin="0,4,0,0"
+                           Margin="0,0,0,10"
                            Visibility="{Binding Message, Converter={StaticResource NullToVisibilityConverter}}" />
 
-                <!-- Counters -->
-                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                <!-- Stats card -->
+                <Border Background="#FAFAFA"
+                        BorderBrush="#E1E1E1"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="12"
+                        Margin="0,0,0,6">
+                    <UniformGrid Columns="5">
+                        <StackPanel Margin="0,0,8,0">
+                            <TextBlock Text="Mines"
+                                       FontSize="11"
+                                       Foreground="Gray" />
+                            <TextBlock Text="{Binding TotalMines}"
+                                       FontSize="18"
+                                       FontWeight="Bold" />
+                        </StackPanel>
 
-                    <TextBlock Text="{Binding TotalMines, StringFormat=Mines: {0}}"
-                               FontSize="13"
-                               FontWeight="SemiBold"
-                               Margin="0,0,16,0" />
+                        <StackPanel Margin="0,0,8,0">
+                            <TextBlock Text="Flags"
+                                       FontSize="11"
+                                       Foreground="Gray" />
+                            <TextBlock Text="{Binding FlagCount}"
+                                       FontSize="18"
+                                       FontWeight="Bold" />
+                        </StackPanel>
 
-                    <TextBlock Text="{Binding FlagCount, StringFormat=Flags: {0}}"
-                               FontSize="13"
-                               FontWeight="SemiBold"
-                               Margin="0,0,16,0" />
+                        <StackPanel Margin="0,0,8,0">
+                            <TextBlock Text="Remaining"
+                                       FontSize="11"
+                                       Foreground="Gray" />
+                            <TextBlock Text="{Binding RemainingMines}"
+                                       FontSize="18"
+                                       FontWeight="Bold" />
+                        </StackPanel>
 
-                    <TextBlock Text="{Binding RemainingMines, StringFormat=Remaining: {0}}"
-                               FontSize="13"
-                               FontWeight="SemiBold"
-                               Margin="0,0,16,0" />
+                        <StackPanel Margin="0,0,8,0">
+                            <TextBlock Text="Time"
+                                       FontSize="11"
+                                       Foreground="Gray" />
+                            <TextBlock Text="{Binding ElapsedTimeDisplay}"
+                                       FontSize="18"
+                                       FontWeight="Bold" />
+                        </StackPanel>
 
-                    <TextBlock Text="{Binding ElapsedTimeDisplay, StringFormat=Time: {0}}"
-                               FontSize="13"
-                               FontWeight="SemiBold"
-                               Margin="0,0,16,0" />
-
-                    <TextBlock Text="{Binding BestTimeDisplay, StringFormat=Best: {0}}"
-                               FontSize="13"
-                               FontWeight="SemiBold" />
-                </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Best"
+                                       FontSize="11"
+                                       Foreground="Gray" />
+                            <TextBlock Text="{Binding BestTimeDisplay}"
+                                       FontSize="18"
+                                       FontWeight="Bold" />
+                        </StackPanel>
+                    </UniformGrid>
+                </Border>
 
                 <TextBlock Text="{Binding BestTimesFilePath, StringFormat=Best times are stored at: {0}}"
-                               FontSize="12"
-                               Foreground="Gray"
-                               TextWrapping="Wrap"
-                               Margin="0,6,0,0" />
+                           FontSize="12"
+                           Foreground="Gray"
+                           TextWrapping="Wrap" />
             </StackPanel>
 
             <!-- GAME BOARD -->

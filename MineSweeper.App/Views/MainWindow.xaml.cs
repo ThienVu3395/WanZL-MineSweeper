@@ -43,8 +43,10 @@ namespace MineSweeper.App.Views
         }
 
         /// <summary>
-        /// - (EN) Handles the New Game button click and routes it through the restart confirmation flow when needed.
-        /// - (VI) Xử lý thao tác nhấn nút New Game và đưa nó qua luồng xác nhận restart khi cần.
+        /// - (EN) Handles the New Game button click from the header area.
+        /// Routes the action through the restart confirmation flow when the current game has active progress.
+        /// - (VI) Xử lý thao tác nhấn nút New Game ở phần header.
+        /// Chuyển hành động này qua luồng xác nhận restart khi ván hiện tại đang có tiến trình.
         /// </summary>
         /// <param name="sender">
         /// - (EN) Event sender.
