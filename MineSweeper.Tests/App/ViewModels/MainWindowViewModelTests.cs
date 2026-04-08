@@ -27,12 +27,9 @@ public class MainWindowViewModelTests
         string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDirectory);
 
-        string bestTimesFilePath = Path.Combine(tempDirectory, "best-times.json");
-        string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
-
         try
         {
-            var vm = CreateViewModel(bestTimesFilePath, preferencesFilePath);
+            var vm = CreateViewModel(tempDirectory);
 
             Assert.NotNull(vm.Cells);
             Assert.NotEmpty(vm.Cells);
@@ -95,12 +92,9 @@ public class MainWindowViewModelTests
         string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDirectory);
 
-        string bestTimesFilePath = Path.Combine(tempDirectory, "best-times.json");
-        string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
-
         try
         {
-            var vm = CreateViewModel(bestTimesFilePath, preferencesFilePath);
+            var vm = CreateViewModel(tempDirectory);
             var changedProperties = new List<string>();
 
             vm.PropertyChanged += (_, e) =>
@@ -431,7 +425,10 @@ public class MainWindowViewModelTests
     public void QuickRestartCommand_ShouldClearPreviousWarningMessage()
     {
         // Arrange
-        var vm = new MainWindowViewModel();
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        var vm = CreateViewModel(tempDirectory);
 
         foreach (var cell in vm.Cells.Take(vm.TotalMines))
         {
@@ -816,13 +813,10 @@ public class MainWindowViewModelTests
         string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDirectory);
 
-        string filePath = Path.Combine(tempDirectory, "best-times.json");
-        string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
-
         // Assert & Actual
         try
         {
-            var vm = CreateViewModel(filePath, preferencesFilePath);
+            var vm = CreateViewModel(tempDirectory);
 
             Assert.Null(vm.BestTime);
             Assert.Equal("--:--", vm.BestTimeDisplay);
@@ -847,12 +841,9 @@ public class MainWindowViewModelTests
         string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDirectory);
 
-        string filePath = Path.Combine(tempDirectory, "best-times.json");
-        string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
-
         try
         {
-            var vm = CreateViewModel(filePath, preferencesFilePath);
+            var vm = CreateViewModel(tempDirectory);
             vm.SelectedDifficulty = DifficultyLevel.Beginner;
 
             ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
@@ -982,12 +973,9 @@ public class MainWindowViewModelTests
         string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDirectory);
 
-        string filePath = Path.Combine(tempDirectory, "best-times.json");
-        string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
-
         try
         {
-            var vm = CreateViewModel(filePath, preferencesFilePath);
+            var vm = CreateViewModel(tempDirectory);
             vm.SelectedDifficulty = DifficultyLevel.Beginner;
 
             NewBestTimeEventArgs? eventArgs = null;
@@ -1026,12 +1014,9 @@ public class MainWindowViewModelTests
         string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDirectory);
 
-        string filePath = Path.Combine(tempDirectory, "best-times.json");
-        string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
-
         try
         {
-            var vm = CreateViewModel(filePath, preferencesFilePath);
+            var vm = CreateViewModel(tempDirectory);
             vm.SelectedDifficulty = DifficultyLevel.Beginner;
 
             SetPrivateFieldValue(vm, "_bestTimes", new Dictionary<DifficultyLevel, TimeSpan>
@@ -1075,12 +1060,9 @@ public class MainWindowViewModelTests
         string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDirectory);
 
-        string filePath = Path.Combine(tempDirectory, "best-times.json");
-        string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
-
         try
         {
-            var vm = CreateViewModel(filePath, preferencesFilePath);
+            var vm = CreateViewModel(tempDirectory);
             vm.SelectedDifficulty = DifficultyLevel.Beginner;
 
             SetPrivateFieldValue(vm, "_bestTimes", new Dictionary<DifficultyLevel, TimeSpan>
@@ -1184,7 +1166,6 @@ public class MainWindowViewModelTests
         Directory.CreateDirectory(tempDirectory);
 
         string filePath = Path.Combine(tempDirectory, "best-times.json");
-        string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
 
         string json =
             """
@@ -1200,7 +1181,7 @@ public class MainWindowViewModelTests
 
         try
         {
-            var vm = CreateViewModel(filePath, preferencesFilePath);
+            var vm = CreateViewModel(tempDirectory);
 
             Assert.Equal(DifficultyLevel.Beginner, vm.SelectedDifficulty);
             Assert.Equal("00:42", vm.BestTimeDisplay);
@@ -1227,12 +1208,9 @@ public class MainWindowViewModelTests
         string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDirectory);
 
-        string filePath = Path.Combine(tempDirectory, "best-times.json");
-        string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
-
         try
         {
-            var vm = CreateViewModel(filePath, preferencesFilePath);
+            var vm = CreateViewModel(tempDirectory);
 
             Assert.Null(vm.BestTime);
             Assert.Equal("--:--", vm.BestTimeDisplay);
@@ -1257,13 +1235,12 @@ public class MainWindowViewModelTests
         Directory.CreateDirectory(tempDirectory);
 
         string filePath = Path.Combine(tempDirectory, "best-times.json");
-        string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
 
         File.WriteAllText(filePath, "{ invalid json");
 
         try
         {
-            var vm = CreateViewModel(filePath, preferencesFilePath);
+            var vm = CreateViewModel(tempDirectory);
 
             Assert.Null(vm.BestTime);
             Assert.Equal("--:--", vm.BestTimeDisplay);
@@ -1288,11 +1265,10 @@ public class MainWindowViewModelTests
         Directory.CreateDirectory(tempDirectory);
 
         string filePath = Path.Combine(tempDirectory, "best-times.json");
-        string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
 
         try
         {
-            var vm = CreateViewModel(filePath, preferencesFilePath);
+            var vm = CreateViewModel(tempDirectory);
             vm.SelectedDifficulty = DifficultyLevel.Beginner;
 
             ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
@@ -1331,7 +1307,6 @@ public class MainWindowViewModelTests
         string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDirectory);
 
-        string bestTimesFilePath = Path.Combine(tempDirectory, "best-times.json");
         string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
 
         string json =
@@ -1348,7 +1323,7 @@ public class MainWindowViewModelTests
 
         try
         {
-            var vm = CreateViewModel(bestTimesFilePath, preferencesFilePath);
+            var vm = CreateViewModel(tempDirectory);
 
             Assert.Equal(DifficultyLevel.Expert, vm.SelectedDifficulty);
         }
@@ -1376,7 +1351,7 @@ public class MainWindowViewModelTests
 
         try
         {
-            var vm = CreateViewModel(bestTimesFilePath, preferencesFilePath);
+            var vm = CreateViewModel(tempDirectory);
 
             vm.SelectedDifficulty = DifficultyLevel.Expert;
 
@@ -1405,12 +1380,11 @@ public class MainWindowViewModelTests
         string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDirectory);
 
-        string bestTimesFilePath = Path.Combine(tempDirectory, "best-times.json");
         string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
 
         try
         {
-            var vm = CreateViewModel(bestTimesFilePath, preferencesFilePath);
+            var vm = CreateViewModel(tempDirectory);
 
             vm.SelectedDifficulty = DifficultyLevel.Custom;
             vm.CustomRows = 12;
@@ -1425,6 +1399,197 @@ public class MainWindowViewModelTests
             Assert.Contains("\"CustomRows\": 12", json);
             Assert.Contains("\"CustomColumns\": 14", json);
             Assert.Contains("\"CustomMines\": 20", json);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that the constructor restores a valid in-progress game session from JSON.
+    /// - (VI) Kiểm tra constructor sẽ khôi phục một game session đang diễn ra hợp lệ từ file JSON.
+    /// </summary>
+    [Fact]
+    public void Constructor_ShouldRestoreInProgressGameSession_FromJsonFile()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        string gameSessionFilePath = Path.Combine(tempDirectory, "game-session.json");
+
+        string json =
+            """
+        {
+          "SelectedDifficulty": 3,
+          "Rows": 5,
+          "Columns": 5,
+          "MineCount": 3,
+          "GameState": 1,
+          "IsFirstRevealPending": false,
+          "ElapsedTimeInSeconds": 42,
+          "CustomRows": 5,
+          "CustomColumns": 5,
+          "CustomMines": 3,
+          "Cells": [
+            { "Row": 0, "Column": 0, "IsMine": true,  "IsRevealed": false, "IsFlagged": true,  "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 0, "Column": 1, "IsMine": false, "IsRevealed": true,  "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 0, "Column": 2, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 0, "Column": 3, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 0, "Column": 4, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+
+            { "Row": 1, "Column": 0, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 1, "Column": 1, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 1, "Column": 2, "IsMine": true,  "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 1, "Column": 3, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 1, "Column": 4, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+
+            { "Row": 2, "Column": 0, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 2, "Column": 1, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 2, "Column": 2, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 2, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 2, "Column": 3, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 2, "Column": 4, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+
+            { "Row": 3, "Column": 0, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 3, "Column": 1, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 3, "Column": 2, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 3, "Column": 3, "IsMine": true,  "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 3, "Column": 4, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+
+            { "Row": 4, "Column": 0, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 4, "Column": 1, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 4, "Column": 2, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 4, "Column": 3, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 4, "Column": 4, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false }
+          ]
+        }
+        """;
+
+        File.WriteAllText(gameSessionFilePath, json);
+
+        try
+        {
+            var vm = CreateViewModel(tempDirectory);
+
+            Assert.Equal(DifficultyLevel.Custom, vm.SelectedDifficulty);
+            Assert.Equal(5, vm.Rows);
+            Assert.Equal(5, vm.Columns);
+            Assert.Equal(3, vm.TotalMines);
+            Assert.Equal(TimeSpan.FromSeconds(42), vm.ElapsedTime);
+            Assert.Equal("00:42", vm.ElapsedTimeDisplay);
+            Assert.Equal(1, vm.FlagCount);
+            Assert.Equal(2, vm.RemainingMines);
+
+            var revealedCell = GetCell(vm, 0, 1);
+            Assert.True(revealedCell.IsRevealed);
+            Assert.Equal("1", revealedCell.DisplayText);
+
+            var flaggedCell = GetCell(vm, 0, 0);
+            Assert.True(flaggedCell.IsFlagged);
+            Assert.Equal("🚩", flaggedCell.DisplayText);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that the constructor falls back to a fresh new game when the persisted session JSON is invalid.
+    /// - (VI) Kiểm tra constructor sẽ fallback về một ván mới khi file session JSON đã lưu không hợp lệ.
+    /// </summary>
+    [Fact]
+    public void Constructor_ShouldFallbackToNewGame_WhenSessionJsonIsInvalid()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        string gameSessionFilePath = Path.Combine(tempDirectory, "game-session.json");
+
+        File.WriteAllText(gameSessionFilePath, "{ invalid json");
+
+        try
+        {
+            var vm = CreateViewModel(tempDirectory);
+
+            Assert.Equal(9, vm.Rows);
+            Assert.Equal(9, vm.Columns);
+            Assert.Equal(10, vm.TotalMines);
+            Assert.Equal(DifficultyLevel.Beginner, vm.SelectedDifficulty);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that the persisted in-progress session is cleared after the player wins the game.
+    /// - (VI) Kiểm tra session đang chơi đã lưu sẽ bị xóa sau khi người chơi thắng game.
+    /// </summary>
+    [Fact]
+    public void WinningGame_ShouldClearPersistedGameSession()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        string gameSessionFilePath = Path.Combine(tempDirectory, "game-session.json");
+
+        try
+        {
+            var vm = CreateViewModel(tempDirectory);
+
+            ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
+
+            vm.RevealCellCommand.Execute(GetCell(vm, 0, 1));
+            vm.RevealCellCommand.Execute(GetCell(vm, 1, 0));
+            vm.RevealCellCommand.Execute(GetCell(vm, 1, 1));
+
+            Assert.False(File.Exists(gameSessionFilePath));
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that revealing a cell during an active game persists the in-progress session to JSON.
+    /// - (VI) Kiểm tra việc mở một ô trong lúc game đang diễn ra sẽ lưu session đang chơi vào file JSON.
+    /// </summary>
+    [Fact]
+    public void RevealCellCommand_ShouldPersistInProgressGameSession_ToJsonFile()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        string gameSessionFilePath = Path.Combine(tempDirectory, "game-session.json");
+
+        try
+        {
+            var vm = CreateViewModel(tempDirectory);
+
+            var firstCell = vm.Cells.First();
+            vm.RevealCellCommand.Execute(firstCell);
+
+            Assert.True(File.Exists(gameSessionFilePath));
+
+            string json = File.ReadAllText(gameSessionFilePath);
+            Assert.Contains("\"GameState\": 1", json);
+            Assert.Contains("\"ElapsedTimeInSeconds\"", json);
+            Assert.Contains("\"Cells\"", json);
         }
         finally
         {
@@ -1503,8 +1668,10 @@ public class MainWindowViewModelTests
     }
 
     /// <summary>
-    /// - (EN) Rebuilds the board with deterministic mine positions for ViewModel tests.
-    /// - (VI) Cấu hình lại board với vị trí mìn cố định để test ViewModel một cách ổn định.
+    /// - (EN) Rebuilds the board with deterministic mine positions for ViewModel tests
+    /// without relying on deferred random mine placement.
+    /// - (VI) Cấu hình lại board với vị trí mìn cố định cho các ViewModel test
+    /// mà không phụ thuộc vào cơ chế đặt mìn ngẫu nhiên trì hoãn.
     /// </summary>
     /// <param name="vm">- (EN) Target view model / (VI) ViewModel cần cấu hình board</param>
     /// <param name="rows">- (EN) Board rows / (VI) Số hàng của board</param>
@@ -1529,6 +1696,8 @@ public class MainWindowViewModelTests
             cell.IsRevealed = false;
             cell.IsFlagged = false;
             cell.AdjacentMines = 0;
+            cell.IsExplodedMine = false;
+            cell.IsIncorrectFlag = false;
         }
 
         foreach (var mine in minePositions)
@@ -1538,15 +1707,9 @@ public class MainWindowViewModelTests
 
         game.CalculateAdjacentMines(board);
 
-        // Important for first-click-safe mode:
-        // disable deferred mine placement because the board is already configured manually.
-        // Quan trọng với chế độ first-click-safe:
-        // tắt cơ chế đặt mìn trì hoãn vì board đã được cấu hình thủ công.
-        var firstRevealPendingField = typeof(MineSweeperGame)
-            .GetField("_isFirstRevealPending", BindingFlags.NonPublic | BindingFlags.Instance);
-
-        Assert.NotNull(firstRevealPendingField);
-        firstRevealPendingField!.SetValue(game, false);
+        // - (EN) Replace reflection-based private field mutation with the official restore API.
+        // - (VI) Thay việc sửa private field bằng reflection bằng API restore chính thức.
+        game.RestoreGame(board, GameState.InProgress, isFirstRevealPending: false);
 
         foreach (var cellVm in vm.Cells)
         {
@@ -1558,13 +1721,16 @@ public class MainWindowViewModelTests
     /// - (EN) Creates a view model that uses temporary files for best times and player preferences.
     /// - (VI) Tạo view model sử dụng file tạm cho best time và tùy chọn người chơi.
     /// </summary>
-    private static MainWindowViewModel CreateViewModel(
-        string bestTimesFilePath,
-        string preferencesFilePath)
+    private static MainWindowViewModel CreateViewModel(string tempDirectory)
     {
+        string bestTimesFilePath = Path.Combine(tempDirectory, "best-times.json");
+        string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
+        string gameSessionFilePath = Path.Combine(tempDirectory, "game-session.json");
+
         return new MainWindowViewModel(
             new PlayerStatisticsStore(bestTimesFilePath),
-            new PlayerPreferencesStore(preferencesFilePath));
+            new PlayerPreferencesStore(preferencesFilePath),
+            new GameSessionStore(gameSessionFilePath));
     }
     #endregion
 }

@@ -39,8 +39,10 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private readonly Dictionary<DifficultyLevel, TimeSpan> _bestTimes;
     private readonly PlayerStatisticsStore _playerStatisticsStore;
     private readonly PlayerPreferencesStore _playerPreferencesStore;
+    private readonly GameSessionStore _gameSessionStore;
 
     private bool _isApplyingPlayerPreferences;
+    private bool _isRestoringGameSession;
 
     private const int MinCustomRows = 5;
     private const int MaxCustomRows = 30;
@@ -61,7 +63,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public MainWindowViewModel()
     : this(
         new PlayerStatisticsStore(PlayerStatisticsStore.GetDefaultFilePath()),
-        new PlayerPreferencesStore(PlayerPreferencesStore.GetDefaultFilePath()))
+        new PlayerPreferencesStore(PlayerPreferencesStore.GetDefaultFilePath()),
+        new GameSessionStore(GameSessionStore.GetDefaultFilePath()))
     {
     }
 
@@ -79,9 +82,14 @@ public class MainWindowViewModel : INotifyPropertyChanged
     /// - (EN) Store used to load and save player preferences.
     /// - (VI) Store dùng để tải và lưu tùy chọn người chơi.
     /// </param>
+    /// <param name="gameSessionStore">
+    /// - (EN) Store used to load and save game session.
+    /// - (VI) Store dùng để tải và lưu tiến trình chơi.
+    /// </param>
     internal MainWindowViewModel(
         PlayerStatisticsStore playerStatisticsStore,
-        PlayerPreferencesStore playerPreferencesStore)
+        PlayerPreferencesStore playerPreferencesStore,
+        GameSessionStore gameSessionStore)
     {
         _game = new MineSweeperGame();
 
@@ -123,8 +131,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
         _gameTimer.Tick += OnGameTimerTick;
 
         _playerStatisticsStore = playerStatisticsStore;
-
         _playerPreferencesStore = playerPreferencesStore;
+        _gameSessionStore = gameSessionStore;
 
         // Tải best time đã lưu từ local storage
         _bestTimes = _playerStatisticsStore.LoadBestTimes();
@@ -133,8 +141,13 @@ public class MainWindowViewModel : INotifyPropertyChanged
         ApplyPlayerPreferences(_playerPreferencesStore.Load());
         _isApplyingPlayerPreferences = false;
 
-        // Khởi tạo game đầu tiên
-        StartNewGameByDifficulty();
+        bool restored = TryRestorePersistedGameSession();
+
+        if (!restored)
+        {
+            // Khởi tạo game theo cấu hình mặc định nếu không có file game session
+            StartNewGameByDifficulty();
+        }
     }
 
     #region Commands
@@ -331,6 +344,12 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public string PlayerPreferencesFilePath => _playerPreferencesStore.FilePath;
 
     /// <summary>
+    /// - (EN) Gets the full file path used to store the in-progress game session.
+    /// - (VI) Lấy đường dẫn đầy đủ của file dùng để lưu phiên chơi đang diễn ra.
+    /// </summary>
+    public string GameSessionFilePath => _gameSessionStore.FilePath;
+
+    /// <summary>
     /// - (EN) Gets or sets the custom board row count used when Custom difficulty is selected.
     /// - (VI) Lấy hoặc gán số hàng của board custom khi độ khó Custom được chọn.
     /// </summary>
@@ -443,6 +462,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
     /// <param name="mineCount">Number of mines / Số lượng mìn</param>
     public void StartNewGame(int rows, int columns, int mineCount)
     {
+        _gameSessionStore.Clear();
+
         // Gọi logic từ Core
         _game.StartNewGame(rows, columns, mineCount);
 
@@ -513,6 +534,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
         RefreshBoardState();
         HandleEndGameNotification();
+        PersistSessionIfNeeded();
     }
 
     /// <summary>
@@ -537,6 +559,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
         _game.ToggleFlag(cellVm.Row, cellVm.Column);
 
         RefreshBoardState();
+        PersistSessionIfNeeded();
     }
 
     /// <summary>
@@ -558,6 +581,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
         RefreshBoardState();
         HandleEndGameNotification();
+        PersistSessionIfNeeded();
     }
     #endregion
 
@@ -777,6 +801,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
         {
             StopTimer();
             UpdateBestTimeIfNeeded();
+            _gameSessionStore.Clear();
             GameEnded?.Invoke(this, new GameEndedEventArgs(_game.State));
         }
     }
@@ -835,6 +860,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private void OnGameTimerTick(object? sender, EventArgs e)
     {
         UpdateElapsedTime();
+        PersistSessionIfNeeded();
     }
 
     /// <summary>
@@ -961,6 +987,181 @@ public class MainWindowViewModel : INotifyPropertyChanged
         };
 
         _playerPreferencesStore.Save(preferences);
+    }
+
+    /// <summary>
+    /// - (EN) Persists the current in-progress game session when it contains meaningful progress.
+    /// Clears the saved session when the game is no longer restorable, such as after a win, loss,
+    /// or when no actual player progress exists.
+    /// - (VI) Lưu phiên chơi đang diễn ra hiện tại khi nó có tiến trình chơi thực sự.
+    /// Đồng thời xóa session đã lưu khi game không còn phù hợp để khôi phục nữa, ví dụ sau khi thắng,
+    /// thua, hoặc khi chưa có tiến trình chơi đáng kể.
+    /// </summary>
+    private void PersistSessionIfNeeded()
+    {
+        if (_isRestoringGameSession)
+            return;
+
+        if (_game.Board is null)
+            return;
+
+        if (_game.State != GameState.InProgress)
+        {
+            _gameSessionStore.Clear();
+            return;
+        }
+
+        if (!HasActiveGameProgress)
+        {
+            _gameSessionStore.Clear();
+            return;
+        }
+
+        var session = new GameSessionStorage
+        {
+            SelectedDifficulty = SelectedDifficulty,
+            Rows = _game.Board.Rows,
+            Columns = _game.Board.Columns,
+            MineCount = _game.Board.MineCount,
+            GameState = _game.State,
+            IsFirstRevealPending = _game.IsFirstRevealPending,
+            ElapsedTimeInSeconds = (int)_elapsedTime.TotalSeconds,
+            CustomRows = CustomRows,
+            CustomColumns = CustomColumns,
+            CustomMines = CustomMines,
+            Cells = _game.Board.Cells
+                .Cast<Cell>()
+                .Select(cell => new CellSessionStorage
+                {
+                    Row = cell.Row,
+                    Column = cell.Column,
+                    IsMine = cell.IsMine,
+                    IsRevealed = cell.IsRevealed,
+                    IsFlagged = cell.IsFlagged,
+                    AdjacentMines = cell.AdjacentMines,
+                    IsExplodedMine = cell.IsExplodedMine,
+                    IsIncorrectFlag = cell.IsIncorrectFlag
+                })
+                .ToList()
+        };
+
+        _gameSessionStore.Save(session);
+    }
+
+    /// <summary>
+    /// - (EN) Attempts to restore a previously persisted in-progress game session.
+    /// Returns <see langword="true"/> when a valid session is successfully applied to the view model;
+    /// otherwise returns <see langword="false"/> and allows the caller to continue with normal startup flow.
+    /// - (VI) Thử khôi phục một phiên chơi đang diễn ra đã được lưu trước đó.
+    /// Trả về <see langword="true"/> khi một session hợp lệ được áp dụng thành công vào view model;
+    /// ngược lại trả về <see langword="false"/> để luồng khởi động thông thường tiếp tục thực thi.
+    /// </summary>
+    /// <returns>
+    /// - (EN) <see langword="true"/> if the session was restored successfully; otherwise <see langword="false"/>.
+    /// - (VI) <see langword="true"/> nếu session được khôi phục thành công; ngược lại là <see langword="false"/>.
+    /// </returns>
+    private bool TryRestorePersistedGameSession()
+    {
+        var session = _gameSessionStore.Load();
+
+        if (!IsValidSession(session))
+            return false;
+
+        _isRestoringGameSession = true;
+
+        try
+        {
+            CustomRows = session!.CustomRows;
+            CustomColumns = session.CustomColumns;
+            CustomMines = session.CustomMines;
+            SelectedDifficulty = session.SelectedDifficulty;
+
+            var board = new Board(session.Rows, session.Columns, session.MineCount);
+
+            foreach (var storedCell in session.Cells)
+            {
+                if (storedCell.Row < 0 || storedCell.Row >= board.Rows)
+                    return false;
+
+                if (storedCell.Column < 0 || storedCell.Column >= board.Columns)
+                    return false;
+
+                var cell = board.Cells[storedCell.Row, storedCell.Column];
+                cell.IsMine = storedCell.IsMine;
+                cell.IsRevealed = storedCell.IsRevealed;
+                cell.IsFlagged = storedCell.IsFlagged;
+                cell.AdjacentMines = storedCell.AdjacentMines;
+                cell.IsExplodedMine = storedCell.IsExplodedMine;
+                cell.IsIncorrectFlag = storedCell.IsIncorrectFlag;
+            }
+
+            _game.RestoreGame(board, session.GameState, session.IsFirstRevealPending);
+
+            Cells.Clear();
+            foreach (var cell in _game.Board!.Cells)
+            {
+                Cells.Add(new CellViewModel(cell));
+            }
+
+            _elapsedTime = TimeSpan.FromSeconds(Math.Max(0, session.ElapsedTimeInSeconds));
+            _gameStartTimeUtc = null;
+            _isTimerRunning = false;
+
+            if (_game.State == GameState.InProgress && _elapsedTime > TimeSpan.Zero)
+            {
+                _gameStartTimeUtc = DateTime.UtcNow - _elapsedTime;
+                _gameTimer.Start();
+                _isTimerRunning = true;
+            }
+
+            ClearMessage();
+            RefreshGameProperties(includeBoardDimensions: true, includeTotalMines: true);
+            RefreshCommandStates();
+
+            return true;
+        }
+        finally
+        {
+            _isRestoringGameSession = false;
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Validates whether a persisted game session contains enough consistent data
+    /// to be safely restored as an active in-progress game.
+    /// - (VI) Kiểm tra một game session đã lưu có chứa đủ dữ liệu nhất quán
+    /// để có thể khôi phục an toàn thành một ván chơi đang diễn ra hay không.
+    /// </summary>
+    /// <param name="session">
+    /// - (EN) The persisted session to validate.
+    /// - (VI) Session đã lưu cần được kiểm tra.
+    /// </param>
+    /// <returns>
+    /// - (EN) <see langword="true"/> when the session is valid for restore; otherwise <see langword="false"/>.
+    /// - (VI) <see langword="true"/> khi session hợp lệ để khôi phục; ngược lại là <see langword="false"/>.
+    /// </returns>
+    private static bool IsValidSession(GameSessionStorage? session)
+    {
+        if (session is null)
+            return false;
+
+        if (session.GameState != GameState.InProgress)
+            return false;
+
+        if (session.Rows <= 0 || session.Columns <= 0)
+            return false;
+
+        if (session.MineCount < 0)
+            return false;
+
+        if (session.Cells is null || session.Cells.Count != session.Rows * session.Columns)
+            return false;
+
+        bool hasMeaningfulProgress =
+            session.ElapsedTimeInSeconds > 0 ||
+            session.Cells.Any(c => c.IsRevealed || c.IsFlagged);
+
+        return hasMeaningfulProgress;
     }
     #endregion
 }

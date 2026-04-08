@@ -837,3 +837,43 @@ Added persistence for the selected difficulty and custom board preferences so th
 This commit focuses on player preferences only.
 It does not persist an active game session, revealed cells, flags, or elapsed gameplay progress.
 The goal is to restore the player’s preferred setup when the application is opened again.
+
+## Commit 46 - Persist and restore in-progress game session on app reopen
+
+### Summary
+Added persistence for the current in-progress game session so the application can restore an unfinished board, cell states, and elapsed time when the player reopens the app.
+
+### Completed
+- Added `CellSessionStorage` model to represent persisted state for each board cell
+- Added `GameSessionStorage` model to represent persisted state for an active game session
+- Added `GameSessionStore` to load, save, and clear the persisted game session from a local JSON file
+- Added support in `MineSweeperGame` to restore a previously saved board and game state through an explicit restore API
+- Exposed first-reveal pending state from `MineSweeperGame` for session persistence support
+- Updated `MainWindowViewModel` to attempt restoring a persisted in-progress session during initialization before falling back to starting a fresh game
+- Persisted active session data after meaningful gameplay updates:
+  - Cell reveal
+  - Flag toggle
+  - Chord action
+  - Timer tick updates
+- Restored the following game session data when reopening the application:
+  - Selected difficulty
+  - Custom board configuration
+  - Board dimensions and mine count
+  - Cell states
+  - First-reveal pending state
+  - Elapsed gameplay time
+- Cleared persisted game session data when the game ends in a win or loss
+- Cleared persisted game session data when starting a new game or restarting the current game
+- Added `GameSessionFilePath` for UI/debug visibility of the persisted session file location
+- Replaced reflection-based first-reveal test setup in deterministic board helpers with the explicit game restore API
+- Added persistence coverage for `GameSessionStore`
+- Added view model tests to verify:
+  - Restoring a valid in-progress session from JSON
+  - Falling back to a fresh game when session data is invalid
+  - Persisting session progress during gameplay
+  - Clearing saved session data after game completion
+
+### Notes
+This commit focuses on restoring unfinished gameplay progress.
+It persists active board state, revealed cells, flags, elapsed time, and restore-related session data.
+It does not change best-time persistence or player-preference persistence behavior introduced in earlier commits.

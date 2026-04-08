@@ -33,6 +33,12 @@ public class MineSweeperGame
     private bool _isFirstRevealPending;
 
     /// <summary>
+    /// - (EN) Gets whether the first reveal is still pending.
+    /// - (VI) Lấy giá trị cho biết lần mở ô đầu tiên còn đang chờ hay không.
+    /// </summary>
+    public bool IsFirstRevealPending => _isFirstRevealPending;
+
+    /// <summary>
     /// - (EN) Starts a new MineSweeper game session by creating a new board.
     /// Mine placement is deferred until the first reveal so the first clicked cell is always safe.
     /// - (VI) Bắt đầu một phiên chơi MineSweeper mới bằng cách tạo board mới.
@@ -227,6 +233,26 @@ public class MineSweeperGame
         // - (EN) Check win condition after chord reveal
         // - (VI) Kiểm tra điều kiện thắng sau khi chord
         CheckWinCondition();
+    }
+
+    /// <summary>
+    /// - (EN) Restores a previously persisted game session using the supplied board and state.
+    /// - (VI) Khôi phục một phiên chơi đã được lưu trước đó bằng board và state được cung cấp.
+    /// </summary>
+    /// <param name="board">- (EN) Restored board instance. / (VI) Board đã được khôi phục.</param>
+    /// <param name="state">- (EN) Restored game state. / (VI) Trạng thái game đã được khôi phục.</param>
+    /// <param name="isFirstRevealPending">
+    /// - (EN) Indicates whether deferred first-reveal mine placement is still pending.
+    /// - (VI) Cho biết cơ chế đặt mìn trì hoãn cho lần mở ô đầu tiên còn đang chờ hay không.
+    /// </param>
+    public void RestoreGame(Board board, GameState state, bool isFirstRevealPending)
+    {
+        if (board is null)
+            throw new ArgumentNullException(nameof(board));
+
+        Board = board;
+        State = state;
+        _isFirstRevealPending = isFirstRevealPending;
     }
 
     #region Private Helpers
