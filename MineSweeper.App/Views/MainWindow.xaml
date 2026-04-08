@@ -226,6 +226,12 @@
                            FontSize="12"
                            Foreground="Gray"
                            TextWrapping="Wrap" />
+
+                <TextBlock Text="{Binding PlayerPreferencesFilePath, StringFormat=Preferences are stored at: {0}}"
+                           FontSize="12"
+                           Foreground="Gray"
+                           TextWrapping="Wrap"
+                           Margin="0,4,0,0" />
             </StackPanel>
 
             <!-- GAME BOARD -->

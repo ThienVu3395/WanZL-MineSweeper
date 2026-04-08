@@ -813,3 +813,27 @@ Refactored best-time persistence out of `MainWindowViewModel` into a dedicated c
 ### Notes
 This commit is a structural refactor only.
 It keeps the current best-time feature intact while preparing a cleaner foundation for upcoming persistence features such as player preferences and full game-state persistence.
+
+## Commit 45 - Persist selected difficulty and player preferences
+
+### Summary
+Added persistence for the selected difficulty and custom board preferences so the application can restore the player’s last-used setup across sessions.
+
+### Completed
+- Added `PlayerPreferencesStorage` model to represent persisted player preference data
+- Added `PlayerPreferencesStore` to load and save player preferences from a local JSON file
+- Persisted the selected difficulty across application sessions
+- Persisted custom board configuration across application sessions:
+  - Custom rows
+  - Custom columns
+  - Custom mines
+- Applied persisted player preferences during view model initialization before starting the initial game
+- Added `PlayerPreferencesFilePath` for UI/debug visibility of the persisted preferences file location
+- Updated the UI to display the preferences storage path
+- Updated `MainWindowViewModel` setters to save preferences whenever the selected difficulty or custom configuration changes
+- Added a guard to avoid redundant preference saving while applying persisted values during initialization
+
+### Notes
+This commit focuses on player preferences only.
+It does not persist an active game session, revealed cells, flags, or elapsed gameplay progress.
+The goal is to restore the player’s preferred setup when the application is opened again.

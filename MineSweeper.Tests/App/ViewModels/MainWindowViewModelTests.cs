@@ -22,20 +22,34 @@ public class MainWindowViewModelTests
     /// - (VI) Kiểm tra constructor có khởi tạo đúng một ván chơi mặc định ở mức Beginner hay không.
     /// </summary>
     [Fact]
-    public void Constructor_ShouldInitializeDefaultBeginnerGame()
+    public void Constructor_ShouldInitializeDefaultBeginnerGame_WhenNoPreferencesExist()
     {
-        // Arrange & Act
-        var vm = new MainWindowViewModel();
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
 
-        // Assert
-        Assert.NotNull(vm.Cells);
-        Assert.NotEmpty(vm.Cells);
-        Assert.Equal(9, vm.Rows);
-        Assert.Equal(9, vm.Columns);
-        Assert.Equal(10, vm.TotalMines);
-        Assert.Equal(DifficultyLevel.Beginner, vm.SelectedDifficulty);
-        Assert.Equal("Game in progress", vm.GameStatus);
-        Assert.False(vm.IsGameFinished);
+        string bestTimesFilePath = Path.Combine(tempDirectory, "best-times.json");
+        string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
+
+        try
+        {
+            var vm = CreateViewModel(bestTimesFilePath, preferencesFilePath);
+
+            Assert.NotNull(vm.Cells);
+            Assert.NotEmpty(vm.Cells);
+            Assert.Equal(9, vm.Rows);
+            Assert.Equal(9, vm.Columns);
+            Assert.Equal(10, vm.TotalMines);
+            Assert.Equal(DifficultyLevel.Beginner, vm.SelectedDifficulty);
+            Assert.Equal("Game in progress", vm.GameStatus);
+            Assert.False(vm.IsGameFinished);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
     }
 
     /// <summary>
@@ -78,25 +92,38 @@ public class MainWindowViewModelTests
     [Fact]
     public void SelectedDifficulty_ShouldRaisePropertyChanged_ForSelectedDifficulty()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
-        var changedProperties = new List<string>();
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
 
-        vm.PropertyChanged += (_, e) =>
+        string bestTimesFilePath = Path.Combine(tempDirectory, "best-times.json");
+        string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
+
+        try
         {
-            if (e.PropertyName is not null)
+            var vm = CreateViewModel(bestTimesFilePath, preferencesFilePath);
+            var changedProperties = new List<string>();
+
+            vm.PropertyChanged += (_, e) =>
             {
-                changedProperties.Add(e.PropertyName);
+                if (e.PropertyName is not null)
+                {
+                    changedProperties.Add(e.PropertyName);
+                }
+            };
+
+            vm.SelectedDifficulty = DifficultyLevel.Intermediate;
+
+            Assert.Contains(nameof(MainWindowViewModel.SelectedDifficulty), changedProperties);
+            Assert.Contains(nameof(MainWindowViewModel.BestTime), changedProperties);
+            Assert.Contains(nameof(MainWindowViewModel.BestTimeDisplay), changedProperties);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
             }
-        };
-
-        // Act
-        vm.SelectedDifficulty = DifficultyLevel.Intermediate;
-
-        // Assert
-        Assert.Contains(nameof(MainWindowViewModel.SelectedDifficulty), changedProperties);
-        Assert.Contains(nameof(MainWindowViewModel.BestTime), changedProperties);
-        Assert.Contains(nameof(MainWindowViewModel.BestTimeDisplay), changedProperties);
+        }
     }
 
     /// <summary>
@@ -790,11 +817,12 @@ public class MainWindowViewModelTests
         Directory.CreateDirectory(tempDirectory);
 
         string filePath = Path.Combine(tempDirectory, "best-times.json");
+        string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
 
         // Assert & Actual
         try
         {
-            var vm = new MainWindowViewModel(new PlayerStatisticsStore(filePath));
+            var vm = CreateViewModel(filePath, preferencesFilePath);
 
             Assert.Null(vm.BestTime);
             Assert.Equal("--:--", vm.BestTimeDisplay);
@@ -820,10 +848,11 @@ public class MainWindowViewModelTests
         Directory.CreateDirectory(tempDirectory);
 
         string filePath = Path.Combine(tempDirectory, "best-times.json");
+        string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
 
         try
         {
-            var vm = new MainWindowViewModel(new PlayerStatisticsStore(filePath));
+            var vm = CreateViewModel(filePath, preferencesFilePath);
             vm.SelectedDifficulty = DifficultyLevel.Beginner;
 
             ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
@@ -954,10 +983,11 @@ public class MainWindowViewModelTests
         Directory.CreateDirectory(tempDirectory);
 
         string filePath = Path.Combine(tempDirectory, "best-times.json");
+        string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
 
         try
         {
-            var vm = new MainWindowViewModel(new PlayerStatisticsStore(filePath));
+            var vm = CreateViewModel(filePath, preferencesFilePath);
             vm.SelectedDifficulty = DifficultyLevel.Beginner;
 
             NewBestTimeEventArgs? eventArgs = null;
@@ -997,10 +1027,11 @@ public class MainWindowViewModelTests
         Directory.CreateDirectory(tempDirectory);
 
         string filePath = Path.Combine(tempDirectory, "best-times.json");
+        string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
 
         try
         {
-            var vm = new MainWindowViewModel(new PlayerStatisticsStore(filePath));
+            var vm = CreateViewModel(filePath, preferencesFilePath);
             vm.SelectedDifficulty = DifficultyLevel.Beginner;
 
             SetPrivateFieldValue(vm, "_bestTimes", new Dictionary<DifficultyLevel, TimeSpan>
@@ -1045,10 +1076,11 @@ public class MainWindowViewModelTests
         Directory.CreateDirectory(tempDirectory);
 
         string filePath = Path.Combine(tempDirectory, "best-times.json");
+        string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
 
         try
         {
-            var vm = new MainWindowViewModel(new PlayerStatisticsStore(filePath));
+            var vm = CreateViewModel(filePath, preferencesFilePath);
             vm.SelectedDifficulty = DifficultyLevel.Beginner;
 
             SetPrivateFieldValue(vm, "_bestTimes", new Dictionary<DifficultyLevel, TimeSpan>
@@ -1152,6 +1184,7 @@ public class MainWindowViewModelTests
         Directory.CreateDirectory(tempDirectory);
 
         string filePath = Path.Combine(tempDirectory, "best-times.json");
+        string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
 
         string json =
             """
@@ -1167,7 +1200,7 @@ public class MainWindowViewModelTests
 
         try
         {
-            var vm = new MainWindowViewModel(new PlayerStatisticsStore(filePath));
+            var vm = CreateViewModel(filePath, preferencesFilePath);
 
             Assert.Equal(DifficultyLevel.Beginner, vm.SelectedDifficulty);
             Assert.Equal("00:42", vm.BestTimeDisplay);
@@ -1195,10 +1228,11 @@ public class MainWindowViewModelTests
         Directory.CreateDirectory(tempDirectory);
 
         string filePath = Path.Combine(tempDirectory, "best-times.json");
+        string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
 
         try
         {
-            var vm = new MainWindowViewModel(new PlayerStatisticsStore(filePath));
+            var vm = CreateViewModel(filePath, preferencesFilePath);
 
             Assert.Null(vm.BestTime);
             Assert.Equal("--:--", vm.BestTimeDisplay);
@@ -1223,11 +1257,13 @@ public class MainWindowViewModelTests
         Directory.CreateDirectory(tempDirectory);
 
         string filePath = Path.Combine(tempDirectory, "best-times.json");
+        string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
+
         File.WriteAllText(filePath, "{ invalid json");
 
         try
         {
-            var vm = new MainWindowViewModel(new PlayerStatisticsStore(filePath));
+            var vm = CreateViewModel(filePath, preferencesFilePath);
 
             Assert.Null(vm.BestTime);
             Assert.Equal("--:--", vm.BestTimeDisplay);
@@ -1252,10 +1288,11 @@ public class MainWindowViewModelTests
         Directory.CreateDirectory(tempDirectory);
 
         string filePath = Path.Combine(tempDirectory, "best-times.json");
+        string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
 
         try
         {
-            var vm = new MainWindowViewModel(new PlayerStatisticsStore(filePath));
+            var vm = CreateViewModel(filePath, preferencesFilePath);
             vm.SelectedDifficulty = DifficultyLevel.Beginner;
 
             ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
@@ -1274,6 +1311,120 @@ public class MainWindowViewModelTests
 
             Assert.Contains("Beginner", json);
             Assert.Contains("42", json);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that the constructor restores the persisted selected difficulty from JSON.
+    /// - (VI) Kiểm tra constructor sẽ khôi phục độ khó đã được lưu từ file JSON.
+    /// </summary>
+    [Fact]
+    public void Constructor_ShouldLoadPersistedSelectedDifficulty_FromJsonFile()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        string bestTimesFilePath = Path.Combine(tempDirectory, "best-times.json");
+        string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
+
+        string json =
+            """
+        {
+          "SelectedDifficulty": 2,
+          "CustomRows": 12,
+          "CustomColumns": 14,
+          "CustomMines": 20
+        }
+        """;
+
+        File.WriteAllText(preferencesFilePath, json);
+
+        try
+        {
+            var vm = CreateViewModel(bestTimesFilePath, preferencesFilePath);
+
+            Assert.Equal(DifficultyLevel.Expert, vm.SelectedDifficulty);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that changing the selected difficulty persists the player preference to JSON.
+    /// - (VI) Kiểm tra khi thay đổi độ khó được chọn thì tùy chọn người chơi sẽ được lưu vào file JSON.
+    /// </summary>
+    [Fact]
+    public void SelectedDifficulty_ShouldPersistPreference_ToJsonFile()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        string bestTimesFilePath = Path.Combine(tempDirectory, "best-times.json");
+        string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
+
+        try
+        {
+            var vm = CreateViewModel(bestTimesFilePath, preferencesFilePath);
+
+            vm.SelectedDifficulty = DifficultyLevel.Expert;
+
+            Assert.True(File.Exists(preferencesFilePath));
+
+            string json = File.ReadAllText(preferencesFilePath);
+
+            Assert.Contains("\"SelectedDifficulty\": 2", json);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that updating custom difficulty settings persists the player preferences to JSON.
+    /// - (VI) Kiểm tra việc cập nhật cấu hình độ khó custom sẽ lưu tùy chọn người chơi vào file JSON.
+    /// </summary>
+    [Fact]
+    public void CustomSettings_ShouldPersistPreferences_ToJsonFile()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        string bestTimesFilePath = Path.Combine(tempDirectory, "best-times.json");
+        string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
+
+        try
+        {
+            var vm = CreateViewModel(bestTimesFilePath, preferencesFilePath);
+
+            vm.SelectedDifficulty = DifficultyLevel.Custom;
+            vm.CustomRows = 12;
+            vm.CustomColumns = 14;
+            vm.CustomMines = 20;
+
+            Assert.True(File.Exists(preferencesFilePath));
+
+            string json = File.ReadAllText(preferencesFilePath);
+
+            Assert.Contains("\"SelectedDifficulty\": 3", json);
+            Assert.Contains("\"CustomRows\": 12", json);
+            Assert.Contains("\"CustomColumns\": 14", json);
+            Assert.Contains("\"CustomMines\": 20", json);
         }
         finally
         {
@@ -1401,6 +1552,19 @@ public class MainWindowViewModelTests
         {
             cellVm.Refresh();
         }
+    }
+
+    /// <summary>
+    /// - (EN) Creates a view model that uses temporary files for best times and player preferences.
+    /// - (VI) Tạo view model sử dụng file tạm cho best time và tùy chọn người chơi.
+    /// </summary>
+    private static MainWindowViewModel CreateViewModel(
+        string bestTimesFilePath,
+        string preferencesFilePath)
+    {
+        return new MainWindowViewModel(
+            new PlayerStatisticsStore(bestTimesFilePath),
+            new PlayerPreferencesStore(preferencesFilePath));
     }
     #endregion
 }

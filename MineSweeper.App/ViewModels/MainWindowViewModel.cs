@@ -6,9 +6,7 @@ using MineSweeper.Core.Models;
 using MineSweeper.Core.Services;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.IO;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
 using System.Windows.Input;
 using System.Windows.Threading;
 
@@ -40,6 +38,9 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     private readonly Dictionary<DifficultyLevel, TimeSpan> _bestTimes;
     private readonly PlayerStatisticsStore _playerStatisticsStore;
+    private readonly PlayerPreferencesStore _playerPreferencesStore;
+
+    private bool _isApplyingPlayerPreferences;
 
     private const int MinCustomRows = 5;
     private const int MaxCustomRows = 30;
@@ -53,28 +54,34 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     /// <summary>
     /// - (EN) Initializes a new instance of the <see cref="MainWindowViewModel"/> class.
-    /// Loads persisted best times from the default local storage path.
+    /// Loads persisted best times and player preferences from default local storage paths.
     /// - (VI) Khởi tạo một instance mới của <see cref="MainWindowViewModel"/>.
-    /// Đồng thời tải best time đã lưu từ đường dẫn lưu trữ mặc định trên máy.
+    /// Đồng thời tải best time và tùy chọn người chơi đã lưu từ các đường dẫn mặc định trên máy.
     /// </summary>
     public MainWindowViewModel()
-        : this(new PlayerStatisticsStore(PlayerStatisticsStore.GetDefaultFilePath()))
+    : this(
+        new PlayerStatisticsStore(PlayerStatisticsStore.GetDefaultFilePath()),
+        new PlayerPreferencesStore(PlayerPreferencesStore.GetDefaultFilePath()))
     {
     }
 
     /// <summary>
     /// - (EN) Initializes a new instance of the <see cref="MainWindowViewModel"/> class
-    /// using a specific player statistics store.
-    /// This overload is mainly intended for tests and controlled storage scenarios.
-    /// - (VI) Khởi tạo một instance mới của <see cref="MainWindowViewModel"/>
-    /// với một store thống kê người chơi cụ thể.
-    /// Overload này chủ yếu phục vụ cho test và các kịch bản kiểm soát nơi lưu trữ.
+    /// using specific stores for player statistics and player preferences.
+    /// — (VI) Khởi tạo một instance mới của < see cref="MainWindowViewModel"/>
+    /// với các store cụ thể cho thống kê người chơi và tùy chọn người chơi.
     /// </summary>
     /// <param name="playerStatisticsStore">
-    /// - (EN) The store used to load and save persisted player statistics.
-    /// - (VI) Store dùng để tải và lưu thống kê người chơi bền vững.
+    /// - (EN) Store used to load and save best times.
+    /// - (VI) Store dùng để tải và lưu best time.
     /// </param>
-    internal MainWindowViewModel(PlayerStatisticsStore playerStatisticsStore)
+    /// <param name="playerPreferencesStore">
+    /// - (EN) Store used to load and save player preferences.
+    /// - (VI) Store dùng để tải và lưu tùy chọn người chơi.
+    /// </param>
+    internal MainWindowViewModel(
+        PlayerStatisticsStore playerStatisticsStore,
+        PlayerPreferencesStore playerPreferencesStore)
     {
         _game = new MineSweeperGame();
 
@@ -117,8 +124,14 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
         _playerStatisticsStore = playerStatisticsStore;
 
+        _playerPreferencesStore = playerPreferencesStore;
+
         // Tải best time đã lưu từ local storage
         _bestTimes = _playerStatisticsStore.LoadBestTimes();
+
+        _isApplyingPlayerPreferences = true;
+        ApplyPlayerPreferences(_playerPreferencesStore.Load());
+        _isApplyingPlayerPreferences = false;
 
         // Khởi tạo game đầu tiên
         StartNewGameByDifficulty();
@@ -184,6 +197,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
                 return;
 
             _selectedDifficulty = value;
+
+            SavePlayerPreferences();
 
             OnPropertyChanged();
             OnPropertyChanged(nameof(IsCustomDifficultySelected));
@@ -310,6 +325,12 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public string BestTimesFilePath => _playerStatisticsStore.FilePath;
 
     /// <summary>
+    /// - (EN) Gets the full file path used to store persisted player preferences.
+    /// - (VI) Lấy đường dẫn đầy đủ của file dùng để lưu tùy chọn người chơi bền vững.
+    /// </summary>
+    public string PlayerPreferencesFilePath => _playerPreferencesStore.FilePath;
+
+    /// <summary>
     /// - (EN) Gets or sets the custom board row count used when Custom difficulty is selected.
     /// - (VI) Lấy hoặc gán số hàng của board custom khi độ khó Custom được chọn.
     /// </summary>
@@ -325,6 +346,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
             _customRows = normalizedValue;
             EnsureCustomMineCountIsValid();
+            SavePlayerPreferences();
 
             OnPropertyChanged();
             OnPropertyChanged(nameof(CustomBoardSummary));
@@ -347,6 +369,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
             _customColumns = normalizedValue;
             EnsureCustomMineCountIsValid();
+            SavePlayerPreferences();
 
             OnPropertyChanged();
             OnPropertyChanged(nameof(CustomBoardSummary));
@@ -369,6 +392,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
                 return;
 
             _customMines = normalizedValue;
+            SavePlayerPreferences();
 
             OnPropertyChanged();
             OnPropertyChanged(nameof(CustomBoardSummary));
@@ -899,6 +923,44 @@ public class MainWindowViewModel : INotifyPropertyChanged
     {
         int totalCells = CustomRows * CustomColumns;
         return Math.Max(MinCustomMines, totalCells - 1);
+    }
+
+    /// <summary>
+    /// - (EN) Applies persisted player preferences to the current view model state.
+    /// Invalid or out-of-range values are normalized through the existing property setters.
+    /// - (VI) Áp dụng các tùy chọn người chơi đã lưu vào trạng thái hiện tại của view model.
+    /// Các giá trị không hợp lệ hoặc vượt phạm vi sẽ được chuẩn hóa thông qua các setter hiện có.
+    /// </summary>
+    /// <param name="preferences">
+    /// - (EN) The persisted player preferences to apply.
+    /// - (VI) Tùy chọn người chơi đã lưu cần được áp dụng.
+    /// </param>
+    private void ApplyPlayerPreferences(PlayerPreferencesStorage preferences)
+    {
+        CustomRows = preferences.CustomRows;
+        CustomColumns = preferences.CustomColumns;
+        CustomMines = preferences.CustomMines;
+        SelectedDifficulty = preferences.SelectedDifficulty;
+    }
+
+    /// <summary>
+    /// - (EN) Saves the current player preferences to local storage.
+    /// - (VI) Lưu các tùy chọn người chơi hiện tại vào local storage.
+    /// </summary>
+    private void SavePlayerPreferences()
+    {
+        if (_isApplyingPlayerPreferences)
+            return;
+
+        var preferences = new PlayerPreferencesStorage
+        {
+            SelectedDifficulty = SelectedDifficulty,
+            CustomRows = CustomRows,
+            CustomColumns = CustomColumns,
+            CustomMines = CustomMines
+        };
+
+        _playerPreferencesStore.Save(preferences);
     }
     #endregion
 }
