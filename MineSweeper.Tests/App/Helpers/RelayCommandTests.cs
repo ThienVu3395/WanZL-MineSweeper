@@ -1,5 +1,4 @@
 ﻿using MineSweeper.App.Helpers;
-using Xunit;
 
 namespace MineSweeper.Tests.App.Helpers;
 

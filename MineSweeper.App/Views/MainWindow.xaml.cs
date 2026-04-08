@@ -1,12 +1,12 @@
-﻿using MineSweeper.App.Helpers;
+﻿using MineSweeper.App.Extensions;
+using MineSweeper.App.Helpers;
+using MineSweeper.App.Models;
+using MineSweeper.App.Services;
 using MineSweeper.App.ViewModels;
 using MineSweeper.Core.Models;
-using MineSweeper.App.Extensions;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Animation;
 
 namespace MineSweeper.App.Views
 {
@@ -22,7 +22,7 @@ namespace MineSweeper.App.Views
     /// </summary>
     public partial class MainWindow : Window
     {
-        private Action? _pendingRestartAction;
+        private readonly MainWindowDialogService _dialogService;
 
         /// <summary>
         /// - (EN) Initializes a new instance of the <see cref="MainWindow"/> class.
@@ -37,11 +37,23 @@ namespace MineSweeper.App.Views
             var vm = new MainWindowViewModel();
             DataContext = vm;
 
+            _dialogService = new MainWindowDialogService(
+                ToastMessage,
+                EndGameDialogOverlay,
+                EndGameDialogTitle,
+                EndGameDialogMessage,
+                RestartConfirmationOverlay,
+                RestartConfirmationTitle,
+                RestartConfirmationMessage,
+                ConfirmRestartButton,
+                PlayAgainButton);
+
             vm.PropertyChanged += Vm_PropertyChanged;
             vm.GameEnded += OnGameEnded;
             vm.NewBestTimeAchieved += OnNewBestTimeAchieved;
         }
 
+        #region Handlers
         /// <summary>
         /// - (EN) Handles the New Game button click from the header area.
         /// Routes the action through the restart confirmation flow when the current game has active progress.
@@ -58,17 +70,23 @@ namespace MineSweeper.App.Views
         /// </param>
         private void NewGameButton_Click(object sender, RoutedEventArgs e)
         {
-            RequestRestartAction(
+            if (DataContext is not MainWindowViewModel vm)
+                return;
+
+            _dialogService.RequestRestartAction(
+                vm,
                 executeAction: () =>
                 {
-                    if (DataContext is MainWindowViewModel vm &&
-                        vm.NewGameCommand.CanExecute(null))
+                    if (vm.NewGameCommand.CanExecute(null))
                     {
                         vm.NewGameCommand.Execute(null);
                     }
                 },
-                title: "Start new game?",
-                message: "Your current progress will be lost. Start a new game using the currently selected configuration?");
+                request: new DialogRequest
+                {
+                    Title = "Start new game?",
+                    Message = "Your current progress will be lost. Start a new game using the currently selected configuration?"
+                });
         }
 
         /// <summary>
@@ -118,6 +136,145 @@ namespace MineSweeper.App.Views
         }
 
         /// <summary>
+        /// - (EN) Starts a quick restart from the custom endgame dialog.
+        /// - (VI) Thực hiện restart nhanh từ hộp thoại kết thúc game tùy biến.
+        /// </summary>
+        /// <param name="sender">
+        /// - (EN) Event sender.
+        /// - (VI) Đối tượng phát sự kiện.
+        /// </param>
+        /// <param name="e">
+        /// - (EN) Routed event data.
+        /// - (VI) Dữ liệu sự kiện routed.
+        /// </param>
+        private void PlayAgainButton_Click(object sender, RoutedEventArgs e)
+        {
+            _dialogService.HideEndGameDialog();
+
+            if (DataContext is MainWindowViewModel viewModel &&
+                viewModel.QuickRestartCommand.CanExecute(null))
+            {
+                viewModel.QuickRestartCommand.Execute(null);
+            }
+        }
+
+        /// <summary>
+        /// - (EN) Closes the custom endgame dialog without starting a new game.
+        /// - (VI) Đóng hộp thoại kết thúc game tùy biến mà không bắt đầu ván mới.
+        /// </summary>
+        /// <param name="sender">
+        /// - (EN) Event sender.
+        /// - (VI) Đối tượng phát sự kiện.
+        /// </param>
+        /// <param name="e">
+        /// - (EN) Routed event data.
+        /// - (VI) Dữ liệu sự kiện routed.
+        /// </param>
+        private void CloseDialogButton_Click(object sender, RoutedEventArgs e)
+        {
+            _dialogService.HideEndGameDialog();
+        }
+
+        /// <summary>
+        /// - (EN) Confirms the pending restart-related action and executes it.
+        /// - (VI) Xác nhận hành động liên quan đến restart đang chờ và thực thi nó.
+        /// </summary>
+        /// <param name="sender">
+        /// - (EN) Event sender.
+        /// - (VI) Đối tượng phát sự kiện.
+        /// </param>
+        /// <param name="e">
+        /// - (EN) Routed event data.
+        /// - (VI) Dữ liệu sự kiện routed.
+        /// </param>
+        private void ConfirmRestartButton_Click(object sender, RoutedEventArgs e)
+        {
+            _dialogService.ConfirmRestartConfirmation();
+        }
+
+        /// <summary>
+        /// - (EN) Cancels the pending restart-related action.
+        /// - (VI) Hủy hành động liên quan đến restart đang chờ.
+        /// </summary>
+        /// <param name="sender">
+        /// - (EN) Event sender.
+        /// - (VI) Đối tượng phát sự kiện.
+        /// </param>
+        /// <param name="e">
+        /// - (EN) Routed event data.
+        /// - (VI) Dữ liệu sự kiện routed.
+        /// </param>
+        private void CancelRestartButton_Click(object sender, RoutedEventArgs e)
+        {
+            _dialogService.CancelRestartConfirmation();
+        }
+
+        /// <summary>
+        /// - (EN) Handles keyboard shortcuts for restart and difficulty actions.
+        /// - (VI) Xử lý các phím tắt bàn phím cho thao tác restart và đổi độ khó.
+        /// </summary>
+        /// <param name="sender">
+        /// - (EN) Event sender.
+        /// - (VI) Đối tượng phát sự kiện.
+        /// </param>
+        /// <param name="e">
+        /// - (EN) Key event data.
+        /// - (VI) Dữ liệu sự kiện bàn phím.
+        /// </param>
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (_dialogService.IsRestartConfirmationVisible)
+            {
+                if (e.Key == Key.Enter)
+                {
+                    ConfirmRestartButton_Click(this, new RoutedEventArgs());
+                    e.Handled = true;
+                }
+                else if (e.Key == Key.Escape)
+                {
+                    CancelRestartButton_Click(this, new RoutedEventArgs());
+                    e.Handled = true;
+                }
+
+                return;
+            }
+
+            if (Keyboard.Modifiers == ModifierKeys.None && e.Key == Key.F2)
+            {
+                if (DataContext is MainWindowViewModel vm)
+                {
+                    _dialogService.RequestRestartAction(
+                        vm,
+                        executeAction: () =>
+                        {
+                            if (vm.QuickRestartCommand.CanExecute(null))
+                            {
+                                vm.QuickRestartCommand.Execute(null);
+                            }
+                        },
+                        request: new DialogRequest
+                        {
+                            Title = "Restart current game?",
+                            Message = "Your current progress will be lost. Restart the current game with the same configuration?"
+                        });
+                }
+
+                e.Handled = true;
+                return;
+            }
+
+            if (Keyboard.Modifiers == ModifierKeys.Control)
+            {
+                if (TryHandleDifficultyShortcut(e.Key))
+                {
+                    e.Handled = true;
+                }
+            }
+        }
+        #endregion
+
+        #region Events
+        /// <summary>
         /// - (EN) Handles PropertyChanged events from the ViewModel.
         /// Triggers UI behaviors such as showing toast notifications when Message changes.
         /// - (VI) Xử lý sự kiện PropertyChanged từ ViewModel.
@@ -127,9 +284,10 @@ namespace MineSweeper.App.Views
         /// <param name="e">- (EN) Property changed event arguments / (VI) Tham số sự kiện thay đổi thuộc tính</param>
         private void Vm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(MainWindowViewModel.Message))
+            if (e.PropertyName == nameof(MainWindowViewModel.Message) && 
+                DataContext is MainWindowViewModel vm)
             {
-                ShowToast();
+                _dialogService.ShowToast(vm);
             }
         }
 
@@ -147,7 +305,7 @@ namespace MineSweeper.App.Views
         /// </param>
         private void OnGameEnded(object? sender, GameEndedEventArgs e)
         {
-            ShowEndGameDialog(e.State);
+            _dialogService.ShowEndGameDialog(e.State);
         }
 
         /// <summary>
@@ -176,199 +334,9 @@ namespace MineSweeper.App.Views
             vm.ShowTemporaryMessage(
                 $"🏆 {recordTypeText}: {TimeFormatHelper.Format(e.BestTime)} ({e.Difficulty.ToString().ToUpper()})");
         }
+        #endregion
 
-        /// <summary>
-        /// - (EN) Handles keyboard shortcuts for restart and difficulty actions.
-        /// - (VI) Xử lý các phím tắt bàn phím cho thao tác restart và đổi độ khó.
-        /// </summary>
-        /// <param name="sender">
-        /// - (EN) Event sender.
-        /// - (VI) Đối tượng phát sự kiện.
-        /// </param>
-        /// <param name="e">
-        /// - (EN) Key event data.
-        /// - (VI) Dữ liệu sự kiện bàn phím.
-        /// </param>
-        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
-        {
-            if (RestartConfirmationOverlay.Visibility == Visibility.Visible)
-            {
-                if (e.Key == Key.Enter)
-                {
-                    ConfirmRestartButton_Click(this, new RoutedEventArgs());
-                    e.Handled = true;
-                }
-                else if (e.Key == Key.Escape)
-                {
-                    CancelRestartButton_Click(this, new RoutedEventArgs());
-                    e.Handled = true;
-                }
-
-                return;
-            }
-
-            if (Keyboard.Modifiers == ModifierKeys.None && e.Key == Key.F2)
-            {
-                RequestRestartAction(
-                    executeAction: () =>
-                    {
-                        if (DataContext is MainWindowViewModel vm &&
-                            vm.QuickRestartCommand.CanExecute(null))
-                        {
-                            vm.QuickRestartCommand.Execute(null);
-                        }
-                    },
-                    title: "Restart current game?",
-                    message: "Your current progress will be lost. Restart the current game with the same configuration?");
-
-                e.Handled = true;
-                return;
-            }
-
-            if (Keyboard.Modifiers == ModifierKeys.Control)
-            {
-                if (TryHandleDifficultyShortcut(e.Key))
-                {
-                    e.Handled = true;
-                }
-            }
-        }
-
-        /// <summary>
-        /// - (EN) Displays the custom endgame dialog with content based on the final game state.
-        /// - (VI) Hiển thị hộp thoại kết thúc game tùy biến với nội dung dựa trên trạng thái cuối cùng của game.
-        /// </summary>
-        /// <param name="state">
-        /// - (EN) The final game state.
-        /// - (VI) Trạng thái cuối cùng của game.
-        /// </param>
-        private void ShowEndGameDialog(GameState state)
-        {
-            if (state == GameState.Won)
-            {
-                EndGameDialogTitle.Text = "🎉 You won!";
-                EndGameDialogMessage.Text = "Great job! You cleared all safe cells on the board.";
-                EndGameDialogTitle.Foreground = new SolidColorBrush(Color.FromRgb(34, 139, 34));
-            }
-            else
-            {
-                EndGameDialogTitle.Text = "💥 Game over";
-                EndGameDialogMessage.Text = "You revealed a mine. Try again and beat your best time!";
-                EndGameDialogTitle.Foreground = new SolidColorBrush(Color.FromRgb(178, 34, 34));
-            }
-
-            EndGameDialogOverlay.Visibility = Visibility.Visible;
-            PlayAgainButton.Focus();
-
-            var fadeIn = new DoubleAnimation
-            {
-                From = 0,
-                To = 1,
-                Duration = TimeSpan.FromMilliseconds(180)
-            };
-
-            EndGameDialogOverlay.BeginAnimation(OpacityProperty, fadeIn);
-        }
-
-        /// <summary>
-        /// - (EN) Hides the custom endgame dialog.
-        /// - (VI) Ẩn hộp thoại kết thúc game tùy biến.
-        /// </summary>
-        private void HideEndGameDialog()
-        {
-            EndGameDialogOverlay.Visibility = Visibility.Collapsed;
-            EndGameDialogOverlay.Opacity = 0;
-        }
-
-        /// <summary>
-        /// - (EN) Starts a quick restart from the custom endgame dialog.
-        /// - (VI) Thực hiện restart nhanh từ hộp thoại kết thúc game tùy biến.
-        /// </summary>
-        /// <param name="sender">
-        /// - (EN) Event sender.
-        /// - (VI) Đối tượng phát sự kiện.
-        /// </param>
-        /// <param name="e">
-        /// - (EN) Routed event data.
-        /// - (VI) Dữ liệu sự kiện routed.
-        /// </param>
-        private void PlayAgainButton_Click(object sender, RoutedEventArgs e)
-        {
-            HideEndGameDialog();
-
-            if (DataContext is MainWindowViewModel viewModel &&
-                viewModel.QuickRestartCommand.CanExecute(null))
-            {
-                viewModel.QuickRestartCommand.Execute(null);
-            }
-        }
-
-        /// <summary>
-        /// - (EN) Closes the custom endgame dialog without starting a new game.
-        /// - (VI) Đóng hộp thoại kết thúc game tùy biến mà không bắt đầu ván mới.
-        /// </summary>
-        /// <param name="sender">
-        /// - (EN) Event sender.
-        /// - (VI) Đối tượng phát sự kiện.
-        /// </param>
-        /// <param name="e">
-        /// - (EN) Routed event data.
-        /// - (VI) Dữ liệu sự kiện routed.
-        /// </param>
-        private void CloseDialogButton_Click(object sender, RoutedEventArgs e)
-        {
-            HideEndGameDialog();
-        }
-
-        /// <summary>
-        /// - (EN) Displays a toast notification using fade-in and fade-out animations.
-        /// Automatically hides the toast if there is no message.
-        /// - (VI) Hiển thị toast notification với animation fade-in và fade-out.
-        /// Tự động ẩn toast nếu không có nội dung.
-        /// </summary>
-        private void ShowToast()
-        {
-            if (DataContext is MainWindowViewModel vm && string.IsNullOrWhiteSpace(vm.Message))
-            {
-                ToastMessage.BeginAnimation(OpacityProperty, null);
-                ToastMessage.Opacity = 0;
-                return;
-            }
-
-            ToastMessage.BeginAnimation(OpacityProperty, null);
-            ToastMessage.Opacity = 0;
-
-            var animation = new DoubleAnimationUsingKeyFrames();
-
-            animation.KeyFrames.Add(
-                new DiscreteDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.Zero)));
-
-            animation.KeyFrames.Add(
-                new EasingDoubleKeyFrame(1, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(200)))
-                {
-                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
-                });
-
-            animation.KeyFrames.Add(
-                new DiscreteDoubleKeyFrame(1, KeyTime.FromTimeSpan(TimeSpan.FromSeconds(3))));
-
-            animation.KeyFrames.Add(
-                new EasingDoubleKeyFrame(0, KeyTime.FromTimeSpan(TimeSpan.FromSeconds(3.9)))
-                {
-                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
-                });
-
-            animation.Completed += (_, _) =>
-            {
-                if (DataContext is MainWindowViewModel currentVm)
-                {
-                    currentVm.ClearTemporaryMessage();
-                }
-            };
-
-            ToastMessage.BeginAnimation(OpacityProperty, animation);
-        }
-
+        #region Private Helpers
         /// <summary>
         /// - (EN) Tries to handle a difficulty shortcut key and start a new game with the matching difficulty.
         /// - (VI) Thử xử lý một phím tắt đổi độ khó và bắt đầu ván mới với độ khó tương ứng.
@@ -397,128 +365,23 @@ namespace MineSweeper.App.Views
                 return false;
             }
 
-            RequestRestartAction(
+            if (DataContext is not MainWindowViewModel vm)
+                return false;
+
+            _dialogService.RequestRestartAction(
+                vm,
                 executeAction: () =>
                 {
-                    if (DataContext is MainWindowViewModel vm)
-                    {
-                        vm.StartNewGameForDifficulty(targetDifficulty.Value);
-                    }
+                    vm.StartNewGameForDifficulty(targetDifficulty.Value);
                 },
-                title: "Change difficulty?",
-                message: $"Your current progress will be lost. Switch to {targetDifficulty.Value.ToDisplayString()} and start a new game?");
+                request: new DialogRequest
+                {
+                    Title = "Change difficulty?",
+                    Message = $"Your current progress will be lost. Switch to {targetDifficulty.Value.ToDisplayString()} and start a new game?"
+                });
 
             return true;
         }
-
-        /// <summary>
-        /// - (EN) Requests a restart-related action and shows a confirmation dialog
-        /// when the current game has active progress that could be lost.
-        /// - (VI) Yêu cầu thực hiện một hành động liên quan đến restart và hiển thị hộp thoại xác nhận
-        /// khi ván chơi hiện tại có tiến trình đang chơi có thể bị mất.
-        /// </summary>
-        /// <param name="executeAction">
-        /// - (EN) The action to execute after confirmation.
-        /// - (VI) Hành động sẽ được thực thi sau khi xác nhận.
-        /// </param>
-        /// <param name="title">
-        /// - (EN) The confirmation dialog title.
-        /// - (VI) Tiêu đề của hộp thoại xác nhận.
-        /// </param>
-        /// <param name="message">
-        /// - (EN) The confirmation dialog message.
-        /// - (VI) Nội dung của hộp thoại xác nhận.
-        /// </param>
-        private void RequestRestartAction(Action executeAction, string title, string message)
-        {
-            if (DataContext is not MainWindowViewModel vm)
-                return;
-
-            if (!vm.HasActiveGameProgress)
-            {
-                executeAction();
-                return;
-            }
-
-            _pendingRestartAction = executeAction;
-            ShowRestartConfirmationDialog(title, message);
-        }
-
-        /// <summary>
-        /// - (EN) Displays the restart confirmation dialog with the provided content.
-        /// - (VI) Hiển thị hộp thoại xác nhận restart với nội dung được cung cấp.
-        /// </summary>
-        /// <param name="title">
-        /// - (EN) The dialog title.
-        /// - (VI) Tiêu đề của hộp thoại.
-        /// </param>
-        /// <param name="message">
-        /// - (EN) The dialog message.
-        /// - (VI) Nội dung của hộp thoại.
-        /// </param>
-        private void ShowRestartConfirmationDialog(string title, string message)
-        {
-            RestartConfirmationTitle.Text = title;
-            RestartConfirmationMessage.Text = message;
-
-            RestartConfirmationOverlay.Visibility = Visibility.Visible;
-            ConfirmRestartButton.Focus();
-
-            var fadeIn = new DoubleAnimation
-            {
-                From = 0,
-                To = 1,
-                Duration = TimeSpan.FromMilliseconds(160)
-            };
-
-            RestartConfirmationOverlay.BeginAnimation(OpacityProperty, fadeIn);
-        }
-
-        /// <summary>
-        /// - (EN) Hides the restart confirmation dialog and clears any pending restart action.
-        /// - (VI) Ẩn hộp thoại xác nhận restart và xóa mọi hành động restart đang chờ.
-        /// </summary>
-        private void HideRestartConfirmationDialog()
-        {
-            RestartConfirmationOverlay.Visibility = Visibility.Collapsed;
-            RestartConfirmationOverlay.Opacity = 0;
-            _pendingRestartAction = null;
-        }
-
-        /// <summary>
-        /// - (EN) Confirms the pending restart-related action and executes it.
-        /// - (VI) Xác nhận hành động liên quan đến restart đang chờ và thực thi nó.
-        /// </summary>
-        /// <param name="sender">
-        /// - (EN) Event sender.
-        /// - (VI) Đối tượng phát sự kiện.
-        /// </param>
-        /// <param name="e">
-        /// - (EN) Routed event data.
-        /// - (VI) Dữ liệu sự kiện routed.
-        /// </param>
-        private void ConfirmRestartButton_Click(object sender, RoutedEventArgs e)
-        {
-            var pendingAction = _pendingRestartAction;
-            HideRestartConfirmationDialog();
-            pendingAction?.Invoke();
-        }
-
-        /// <summary>
-        /// - (EN) Cancels the pending restart-related action.
-        /// - (VI) Hủy hành động liên quan đến restart đang chờ.
-        /// </summary>
-        /// <param name="sender">
-        /// - (EN) Event sender.
-        /// - (VI) Đối tượng phát sự kiện.
-        /// </param>
-        /// <param name="e">
-        /// - (EN) Routed event data.
-        /// - (VI) Dữ liệu sự kiện routed.
-        /// </param>
-        private void CancelRestartButton_Click(object sender, RoutedEventArgs e)
-        {
-            HideRestartConfirmationDialog();
-        }
+        #endregion
     }
 }

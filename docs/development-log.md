@@ -877,3 +877,25 @@ Added persistence for the current in-progress game session so the application ca
 This commit focuses on restoring unfinished gameplay progress.
 It persists active board state, revealed cells, flags, elapsed time, and restore-related session data.
 It does not change best-time persistence or player-preference persistence behavior introduced in earlier commits.
+
+## Commit 47 - Introduce dedicated dialog service for UI notifications
+
+### Summary
+Refactored UI notification and dialog orchestration into a dedicated dialog service so the main window code-behind is easier to maintain and responsibilities are more clearly separated.
+
+### Completed
+- Added `DialogRequest` model to represent reusable dialog content
+- Added `MainWindowDialogService` to manage UI notification flows for:
+  - Toast messages
+  - End-game dialog
+  - Restart confirmation dialog
+- Moved toast display and animation orchestration out of `MainWindow.xaml.cs`
+- Moved end-game dialog show/hide logic out of `MainWindow.xaml.cs`
+- Moved restart confirmation flow and pending restart action handling out of `MainWindow.xaml.cs`
+- Updated `MainWindow.xaml.cs` to delegate dialog and notification responsibilities to the dedicated service
+- Reduced code-behind responsibilities so the window primarily acts as a UI bridge between WPF events, the ViewModel, and the dialog service
+
+### Notes
+This commit is a structural refactor focused on maintainability and separation of responsibilities.
+It does not change gameplay rules, persistence behavior, or user-facing feature scope.
+The goal is to keep notification-related UI behavior centralized and easier to evolve in later commits.
