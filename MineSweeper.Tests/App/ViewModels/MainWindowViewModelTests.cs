@@ -1599,6 +1599,570 @@ public class MainWindowViewModelTests
             }
         }
     }
+
+    /// <summary>
+    /// - (EN) Verifies that the constructor falls back to a fresh game when the persisted session state is not InProgress.
+    /// - (VI) Kiểm tra constructor sẽ fallback về một ván mới khi trạng thái session đã lưu không phải là InProgress.
+    /// </summary>
+    [Fact]
+    public void Constructor_ShouldNotRestoreSession_WhenGameStateIsNotInProgress()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        string gameSessionFilePath = Path.Combine(tempDirectory, "game-session.json");
+
+        string json =
+            """
+        {
+          "SelectedDifficulty": 3,
+          "Rows": 5,
+          "Columns": 5,
+          "MineCount": 3,
+          "GameState": 2,
+          "IsFirstRevealPending": false,
+          "ElapsedTimeInSeconds": 42,
+          "CustomRows": 5,
+          "CustomColumns": 5,
+          "CustomMines": 3,
+          "Cells": []
+        }
+        """;
+
+        File.WriteAllText(gameSessionFilePath, json);
+
+        try
+        {
+            var vm = CreateViewModel(tempDirectory);
+
+            Assert.Equal(9, vm.Rows);
+            Assert.Equal(9, vm.Columns);
+            Assert.Equal(10, vm.TotalMines);
+            Assert.Equal(DifficultyLevel.Beginner, vm.SelectedDifficulty);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that the constructor falls back to a fresh game when persisted cell count does not match the board size.
+    /// - (VI) Kiểm tra constructor sẽ fallback về một ván mới khi số lượng cell đã lưu không khớp với kích thước board.
+    /// </summary>
+    [Fact]
+    public void Constructor_ShouldNotRestoreSession_WhenCellCountDoesNotMatchBoardSize()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        string gameSessionFilePath = Path.Combine(tempDirectory, "game-session.json");
+
+        string json =
+            """
+        {
+          "SelectedDifficulty": 3,
+          "Rows": 2,
+          "Columns": 2,
+          "MineCount": 1,
+          "GameState": 1,
+          "IsFirstRevealPending": false,
+          "ElapsedTimeInSeconds": 42,
+          "CustomRows": 2,
+          "CustomColumns": 2,
+          "CustomMines": 1,
+          "Cells": [
+            { "Row": 0, "Column": 0, "IsMine": true, "IsRevealed": false, "IsFlagged": true, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false }
+          ]
+        }
+        """;
+
+        File.WriteAllText(gameSessionFilePath, json);
+
+        try
+        {
+            var vm = CreateViewModel(tempDirectory);
+
+            Assert.Equal(9, vm.Rows);
+            Assert.Equal(9, vm.Columns);
+            Assert.Equal(10, vm.TotalMines);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that the constructor falls back to a fresh game when persisted cell coordinates are outside the board range.
+    /// - (VI) Kiểm tra constructor sẽ fallback về một ván mới khi tọa độ cell đã lưu nằm ngoài phạm vi board.
+    /// </summary>
+    /// <summary>
+    /// - (EN) Verifies that the constructor falls back to a fresh game using the current applied preferences
+    /// when persisted cell coordinates are outside the board range.
+    /// - (VI) Kiểm tra constructor sẽ fallback về một ván mới theo các tùy chọn hiện đã được áp dụng
+    /// khi tọa độ cell đã lưu nằm ngoài phạm vi board.
+    /// </summary>
+    [Fact]
+    public void Constructor_ShouldNotRestoreSession_WhenCellCoordinatesAreOutOfRange()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        string gameSessionFilePath = Path.Combine(tempDirectory, "game-session.json");
+
+        string json =
+            """
+        {
+          "SelectedDifficulty": 3,
+          "Rows": 2,
+          "Columns": 2,
+          "MineCount": 1,
+          "GameState": 1,
+          "IsFirstRevealPending": false,
+          "ElapsedTimeInSeconds": 42,
+          "CustomRows": 2,
+          "CustomColumns": 2,
+          "CustomMines": 1,
+          "Cells": [
+            { "Row": 0, "Column": 0, "IsMine": true,  "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 0, "Column": 1, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 1, "Column": 0, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 5, "Column": 5, "IsMine": false, "IsRevealed": true,  "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false }
+          ]
+        }
+        """;
+
+        File.WriteAllText(gameSessionFilePath, json);
+
+        try
+        {
+            var vm = CreateViewModel(tempDirectory);
+
+            Assert.Equal(DifficultyLevel.Custom, vm.SelectedDifficulty);
+            Assert.Equal(5, vm.Rows);
+            Assert.Equal(5, vm.Columns);
+            Assert.Equal(1, vm.TotalMines);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that the constructor does not restore a persisted session when no meaningful gameplay progress exists.
+    /// - (VI) Kiểm tra constructor sẽ không khôi phục session đã lưu khi chưa có tiến trình chơi thực sự.
+    /// </summary>
+    [Fact]
+    public void Constructor_ShouldNotRestoreSession_WhenNoMeaningfulProgressExists()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        string gameSessionFilePath = Path.Combine(tempDirectory, "game-session.json");
+
+        string json =
+            """
+        {
+          "SelectedDifficulty": 3,
+          "Rows": 2,
+          "Columns": 2,
+          "MineCount": 1,
+          "GameState": 1,
+          "IsFirstRevealPending": true,
+          "ElapsedTimeInSeconds": 0,
+          "CustomRows": 2,
+          "CustomColumns": 2,
+          "CustomMines": 1,
+          "Cells": [
+            { "Row": 0, "Column": 0, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 0, "Column": 1, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 1, "Column": 0, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 1, "Column": 1, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false }
+          ]
+        }
+        """;
+
+        File.WriteAllText(gameSessionFilePath, json);
+
+        try
+        {
+            var vm = CreateViewModel(tempDirectory);
+
+            Assert.Equal(9, vm.Rows);
+            Assert.Equal(9, vm.Columns);
+            Assert.Equal(10, vm.TotalMines);
+            Assert.False(vm.HasActiveGameProgress);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that the constructor restores elapsed time and resumes timer state when the persisted session contains positive elapsed time.
+    /// - (VI) Kiểm tra constructor sẽ khôi phục thời gian đã chơi và tiếp tục trạng thái timer khi session đã lưu có elapsed time dương.
+    /// </summary>
+    [Fact]
+    public void Constructor_ShouldRestoreSessionWithElapsedTimeAndRunningTimer_WhenElapsedTimeIsPositive()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        string gameSessionFilePath = Path.Combine(tempDirectory, "game-session.json");
+
+        string json =
+            """
+        {
+          "SelectedDifficulty": 3,
+          "Rows": 2,
+          "Columns": 2,
+          "MineCount": 1,
+          "GameState": 1,
+          "IsFirstRevealPending": false,
+          "ElapsedTimeInSeconds": 42,
+          "CustomRows": 2,
+          "CustomColumns": 2,
+          "CustomMines": 1,
+          "Cells": [
+            { "Row": 0, "Column": 0, "IsMine": true,  "IsRevealed": false, "IsFlagged": true,  "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 0, "Column": 1, "IsMine": false, "IsRevealed": true,  "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 1, "Column": 0, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+            { "Row": 1, "Column": 1, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false }
+          ]
+        }
+        """;
+
+        File.WriteAllText(gameSessionFilePath, json);
+
+        try
+        {
+            var vm = CreateViewModel(tempDirectory);
+
+            bool isTimerRunning = GetPrivateFieldValue<bool>(vm, "_isTimerRunning");
+
+            Assert.Equal(TimeSpan.FromSeconds(42), vm.ElapsedTime);
+            Assert.Equal("00:42", vm.ElapsedTimeDisplay);
+            Assert.True(isTimerRunning);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that placing a flag persists the in-progress game session to storage.
+    /// - (VI) Kiểm tra việc đặt cờ sẽ lưu phiên chơi đang diễn ra vào storage.
+    /// </summary>
+    [Fact]
+    public void ToggleFlagCommand_ShouldPersistSession_WhenFlagIsPlaced()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        string gameSessionFilePath = Path.Combine(tempDirectory, "game-session.json");
+
+        try
+        {
+            var vm = CreateViewModel(tempDirectory);
+
+            vm.ToggleFlagCommand.Execute(vm.Cells.First());
+
+            Assert.True(File.Exists(gameSessionFilePath));
+
+            string json = File.ReadAllText(gameSessionFilePath);
+            Assert.Contains("\"GameState\": 1", json);
+            Assert.Contains("\"IsFlagged\": true", json);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that revealing a cell persists the in-progress game session to storage.
+    /// - (VI) Kiểm tra việc mở một ô sẽ lưu phiên chơi đang diễn ra vào storage.
+    /// </summary>
+    [Fact]
+    public void RevealCellCommand_ShouldPersistSession_WhenCellIsRevealed()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        string gameSessionFilePath = Path.Combine(tempDirectory, "game-session.json");
+
+        try
+        {
+            var vm = CreateViewModel(tempDirectory);
+
+            vm.RevealCellCommand.Execute(vm.Cells.First());
+
+            Assert.True(File.Exists(gameSessionFilePath));
+
+            string json = File.ReadAllText(gameSessionFilePath);
+            Assert.Contains("\"GameState\": 1", json);
+            Assert.Contains("\"Cells\"", json);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that performing a valid chord action persists the updated in-progress game session.
+    /// - (VI) Kiểm tra việc thực hiện một thao tác chord hợp lệ sẽ lưu phiên chơi đang diễn ra với trạng thái mới.
+    /// </summary>
+    [Fact]
+    public void ChordCellCommand_ShouldPersistSession_WhenBoardStateChanges()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        string gameSessionFilePath = Path.Combine(tempDirectory, "game-session.json");
+
+        try
+        {
+            var vm = CreateViewModel(tempDirectory);
+
+            ConfigureDeterministicBoard(
+                vm,
+                4,
+                4,
+                (0, 0),
+                (0, 2),
+                (2, 0),
+                (2, 2));
+
+            var centerCell = GetCell(vm, 1, 1);
+
+            vm.RevealCellCommand.Execute(centerCell);
+
+            vm.ToggleFlagCommand.Execute(GetCell(vm, 0, 0));
+            vm.ToggleFlagCommand.Execute(GetCell(vm, 0, 2));
+            vm.ToggleFlagCommand.Execute(GetCell(vm, 2, 0));
+            vm.ToggleFlagCommand.Execute(GetCell(vm, 2, 2));
+
+            vm.ChordCellCommand.Execute(centerCell);
+
+            Assert.False(vm.IsGameFinished);
+            Assert.True(File.Exists(gameSessionFilePath));
+
+            string json = File.ReadAllText(gameSessionFilePath);
+            Assert.Contains("\"Cells\"", json);
+            Assert.Contains("\"IsRevealed\": true", json);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that starting a new game clears any previously persisted in-progress session.
+    /// - (VI) Kiểm tra việc bắt đầu game mới sẽ xóa mọi session đang chơi đã được lưu trước đó.
+    /// </summary>
+    [Fact]
+    public void NewGameCommand_ShouldClearPersistedSession()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        string gameSessionFilePath = Path.Combine(tempDirectory, "game-session.json");
+
+        try
+        {
+            var vm = CreateViewModel(tempDirectory);
+
+            vm.ToggleFlagCommand.Execute(vm.Cells.First());
+            Assert.True(File.Exists(gameSessionFilePath));
+
+            vm.NewGameCommand.Execute(null);
+
+            Assert.False(File.Exists(gameSessionFilePath));
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that quick restart clears any previously persisted in-progress session.
+    /// - (VI) Kiểm tra restart nhanh sẽ xóa mọi session đang chơi đã được lưu trước đó.
+    /// </summary>
+    [Fact]
+    public void QuickRestartCommand_ShouldClearPersistedSession()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        string gameSessionFilePath = Path.Combine(tempDirectory, "game-session.json");
+
+        try
+        {
+            var vm = CreateViewModel(tempDirectory);
+
+            vm.ToggleFlagCommand.Execute(vm.Cells.First());
+            Assert.True(File.Exists(gameSessionFilePath));
+
+            vm.QuickRestartCommand.Execute(null);
+
+            Assert.False(File.Exists(gameSessionFilePath));
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that losing the game clears the persisted in-progress session.
+    /// - (VI) Kiểm tra việc thua game sẽ xóa session đang chơi đã được lưu.
+    /// </summary>
+    [Fact]
+    public void LosingGame_ShouldClearPersistedSession()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        string gameSessionFilePath = Path.Combine(tempDirectory, "game-session.json");
+
+        try
+        {
+            var vm = CreateViewModel(tempDirectory);
+
+            ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
+
+            vm.RevealCellCommand.Execute(GetCell(vm, 0, 1));
+            Assert.True(File.Exists(gameSessionFilePath));
+
+            vm.RevealCellCommand.Execute(GetCell(vm, 0, 0));
+
+            Assert.False(File.Exists(gameSessionFilePath));
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that revealing a cell clears the previous warning message.
+    /// - (VI) Kiểm tra việc mở một ô sẽ xóa thông báo cảnh báo trước đó.
+    /// </summary>
+    [Fact]
+    public void RevealCellCommand_ShouldClearPreviousWarningMessage()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        try
+        {
+            var vm = CreateViewModel(tempDirectory);
+
+            foreach (var cell in vm.Cells.Take(vm.TotalMines))
+            {
+                vm.ToggleFlagCommand.Execute(cell);
+            }
+
+            var extraCell = vm.Cells.Skip(vm.TotalMines).First();
+            vm.ToggleFlagCommand.Execute(extraCell);
+
+            Assert.NotNull(vm.Message);
+
+            vm.RevealCellCommand.Execute(vm.Cells.First(c => !c.IsFlagged));
+
+            Assert.Null(vm.Message);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that performing a chord action clears the previous warning message.
+    /// - (VI) Kiểm tra việc thực hiện thao tác chord sẽ xóa thông báo cảnh báo trước đó.
+    /// </summary>
+    [Fact]
+    public void ChordCellCommand_ShouldClearPreviousWarningMessage()
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        try
+        {
+            var vm = CreateViewModel(tempDirectory);
+
+            ConfigureDeterministicBoard(vm, 3, 3, (0, 0));
+
+            foreach (var cell in vm.Cells.Where(c => !c.IsFlagged).Take(vm.TotalMines))
+            {
+                vm.ToggleFlagCommand.Execute(cell);
+            }
+
+            var extraCell = vm.Cells.First(c => !c.IsFlagged && !c.IsRevealed);
+            vm.ToggleFlagCommand.Execute(extraCell);
+
+            Assert.NotNull(vm.Message);
+
+            var numberedCell = GetCell(vm, 0, 1);
+            vm.RevealCellCommand.Execute(numberedCell);
+
+            vm.ToggleFlagCommand.Execute(GetCell(vm, 0, 0));
+            vm.ChordCellCommand.Execute(numberedCell);
+
+            Assert.Null(vm.Message);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
     #endregion
 
     #region Private Helpers

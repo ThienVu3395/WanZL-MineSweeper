@@ -1,6 +1,5 @@
 ﻿using MineSweeper.Core.Models;
 using MineSweeper.Core.Services;
-using System.Reflection;
 
 namespace MineSweeper.Tests.Core.Services;
 
@@ -201,6 +200,63 @@ public class MineSweeperGameTests
         // Ô (0,2) chỉ gần 1 mìn → phải là 1
         Assert.Equal(1, board.Cells[0, 2].AdjacentMines);
     }
+
+    /// <summary>
+    /// - (EN) Verifies that starting a new game marks the first reveal as pending.
+    /// - (VI) Kiểm tra khi bắt đầu game mới thì trạng thái chờ lần mở ô đầu tiên sẽ được bật.
+    /// </summary>
+    [Fact]
+    public void StartNewGame_ShouldSetIsFirstRevealPending_ToTrue()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+
+        // Act
+        game.StartNewGame(9, 9, 10);
+
+        // Assert
+        Assert.True(game.IsFirstRevealPending);
+    }
+
+    #endregion
+
+    #region RestoreGame
+
+    /// <summary>
+    /// - (EN) Verifies that restoring a game applies the supplied board, game state, and first-reveal pending flag.
+    /// - (VI) Kiểm tra việc khôi phục game sẽ áp dụng đúng board, trạng thái game, và cờ chờ mở ô đầu tiên được cung cấp.
+    /// </summary>
+    [Fact]
+    public void RestoreGame_ShouldApplyBoardStateAndFirstRevealPending()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+        var board = new Board(5, 6, 7);
+
+        // Act
+        game.RestoreGame(board, GameState.InProgress, isFirstRevealPending: false);
+
+        // Assert
+        Assert.Same(board, game.Board);
+        Assert.Equal(GameState.InProgress, game.State);
+        Assert.False(game.IsFirstRevealPending);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that restoring a game throws <see cref="ArgumentNullException"/> when the board is null.
+    /// - (VI) Kiểm tra việc khôi phục game sẽ ném ra <see cref="ArgumentNullException"/> khi board là null.
+    /// </summary>
+    [Fact]
+    public void RestoreGame_ShouldThrowArgumentNullException_WhenBoardIsNull()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            game.RestoreGame(null!, GameState.InProgress, isFirstRevealPending: false));
+    }
+
     #endregion
 
     #region BoardConfigurationValidation
@@ -548,12 +604,7 @@ public class MineSweeperGameTests
 
         board.Cells[0, 0].IsMine = true;
         game.CalculateAdjacentMines(board);
-
-        var firstRevealPendingField = typeof(MineSweeperGame)
-            .GetField("_isFirstRevealPending", BindingFlags.NonPublic | BindingFlags.Instance);
-
-        Assert.NotNull(firstRevealPendingField);
-        firstRevealPendingField!.SetValue(game, false);
+        game.RestoreGame(board, GameState.InProgress, isFirstRevealPending: false);
 
         // Act
         game.RevealCell(0, 0);
@@ -590,12 +641,7 @@ public class MineSweeperGameTests
         board.Cells[0, 0].IsMine = true;
         board.Cells[1, 1].IsFlagged = true; // wrong flag
         game.CalculateAdjacentMines(board);
-
-        var firstRevealPendingField = typeof(MineSweeperGame)
-            .GetField("_isFirstRevealPending", BindingFlags.NonPublic | BindingFlags.Instance);
-
-        Assert.NotNull(firstRevealPendingField);
-        firstRevealPendingField!.SetValue(game, false);
+        game.RestoreGame(board, GameState.InProgress, isFirstRevealPending: false);
 
         // Act
         game.RevealCell(0, 0);
@@ -606,6 +652,25 @@ public class MineSweeperGameTests
         Assert.True(board.Cells[1, 1].IsRevealed);
         Assert.False(board.Cells[1, 1].IsMine);
     }
+
+    /// <summary>
+    /// - (EN) Verifies that the first reveal clears the pending first-reveal state.
+    /// - (VI) Kiểm tra lần mở ô đầu tiên sẽ tắt trạng thái chờ mở ô đầu tiên.
+    /// </summary>
+    [Fact]
+    public void RevealCell_ShouldSetIsFirstRevealPending_ToFalse_AfterFirstReveal()
+    {
+        // Arrange
+        var game = new MineSweeperGame();
+        game.StartNewGame(9, 9, 10);
+
+        // Act
+        game.RevealCell(0, 0);
+
+        // Assert
+        Assert.False(game.IsFirstRevealPending);
+    }
+
     #endregion
 
     #region ToggleFlag

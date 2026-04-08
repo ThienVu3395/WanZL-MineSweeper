@@ -899,3 +899,27 @@ Refactored UI notification and dialog orchestration into a dedicated dialog serv
 This commit is a structural refactor focused on maintainability and separation of responsibilities.
 It does not change gameplay rules, persistence behavior, or user-facing feature scope.
 The goal is to keep notification-related UI behavior centralized and easier to evolve in later commits.
+
+## Commit 48 - Complete unit test coverage across the solution
+
+### Summary
+Expanded the automated test suite across the entire solution to improve regression safety, cover persistence and restore scenarios more thoroughly, and align recently refactored UI and storage components with the project’s overall quality standard.
+
+### Completed
+- Added missing service-level tests for application persistence components:
+  - `PlayerPreferencesStore`
+  - `PlayerStatisticsStore`
+  - `GameSessionStore`
+- Added test coverage for dialog and notification orchestration in `MainWindowDialogService`
+- Added converter-level coverage for `DifficultyToStringConverter`
+- Expanded `MainWindowViewModel` tests to cover additional session restore and persistence edge cases
+- Expanded `MineSweeperGame` tests to cover restore-related behavior and first-reveal state transitions
+- Replaced remaining reflection-based first-reveal setup in tests with the explicit restore API where applicable
+- Hardened ViewModel tests by preferring isolated temporary storage over default local application paths
+- Reviewed and corrected inconsistent or misleading test intentions and names where necessary
+- Added missing edge-case tests for display and state-priority behavior in `CellViewModel`
+
+### Notes
+This commit focuses on test completeness and reliability across the full solution.
+It does not introduce new gameplay features.
+The main goal is to reduce regression risk and ensure persistence, restore, dialog, and UI-supporting behaviors are covered with stable, isolated automated tests.

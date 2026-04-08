@@ -10,7 +10,6 @@ namespace MineSweeper.Tests.App.Extensions;
 public class DifficultyExtensionsTests
 {
     #region ToDisplayString
-
     /// <summary>
     /// - (EN) Verifies that Beginner difficulty returns the correct display string.
     /// - (VI) Kiểm tra độ khó Beginner trả về đúng chuỗi hiển thị.
@@ -80,20 +79,20 @@ public class DifficultyExtensionsTests
     }
 
     /// <summary>
-    /// - (EN) Verifies that unsupported difficulty values fall back to the enum string.
-    /// - (VI) Kiểm tra các giá trị độ khó không được hỗ trợ sẽ fallback về chuỗi enum gốc.
+    /// - (EN) Verifies that unsupported difficulty values fall back to the enum string representation.
+    /// - (VI) Kiểm tra các giá trị độ khó không được hỗ trợ sẽ fallback về chuỗi biểu diễn của enum.
     /// </summary>
     [Fact]
-    public void ToDisplayString_ShouldFallbackToEnumString_ForUnsupportedDifficulty()
+    public void ToDisplayString_ShouldFallbackToEnumString_ForUnsupportedDifficultyValue()
     {
         // Arrange
-        var difficulty = DifficultyLevel.Custom;
+        var difficulty = (DifficultyLevel)999;
 
         // Act
         var result = difficulty.ToDisplayString();
 
         // Assert
-        Assert.Equal(nameof(DifficultyLevel.Custom), result);
+        Assert.Equal("999", result);
     }
 
     #endregion
@@ -186,6 +185,20 @@ public class DifficultyExtensionsTests
 
         // Assert
         Assert.NotNull(preset);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that unsupported difficulty values throw <see cref="InvalidOperationException"/> when converting to a preset.
+    /// - (VI) Kiểm tra các giá trị độ khó không được hỗ trợ sẽ ném ra <see cref="InvalidOperationException"/> khi chuyển sang preset.
+    /// </summary>
+    [Fact]
+    public void ToPreset_ShouldThrowInvalidOperationException_ForUnsupportedDifficultyValue()
+    {
+        // Arrange
+        var difficulty = (DifficultyLevel)999;
+
+        // Act & Assert
+        Assert.Throws<InvalidOperationException>(() => difficulty.ToPreset());
     }
 
     #endregion

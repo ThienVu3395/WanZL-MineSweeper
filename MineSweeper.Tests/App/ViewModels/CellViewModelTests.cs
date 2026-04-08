@@ -4,8 +4,8 @@ using MineSweeper.Core.Models;
 namespace MineSweeper.Tests.App.ViewModels;
 
 /// <summary>
-/// Unit tests for CellViewModel.
-/// Ensures correct mapping from domain model and proper UI behavior.
+/// - (EN) Verifies that the incorrect-flag marker takes priority over other display states.
+/// - (VI) Kiểm tra biểu tượng cờ sai sẽ được ưu tiên hiển thị hơn các trạng thái hiển thị khác.
 /// </summary>
 public class CellViewModelTests
 {
@@ -195,5 +195,51 @@ public class CellViewModelTests
         // Assert
         Assert.True(vm.IsIncorrectFlag);
         Assert.Equal("❌", vm.DisplayText);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that the incorrect-flag marker takes priority over other display states.
+    /// - (VI) Kiểm tra biểu tượng cờ sai sẽ được ưu tiên hiển thị hơn các trạng thái hiển thị khác.
+    /// </summary>
+    [Fact]
+    public void DisplayText_ShouldPrioritizeIncorrectFlag_OverOtherStates()
+    {
+        // Arrange
+        var cell = new Cell(0, 0)
+        {
+            IsRevealed = true,
+            IsFlagged = true,
+            IsMine = true,
+            IsExplodedMine = true,
+            IsIncorrectFlag = true,
+            AdjacentMines = 3
+        };
+
+        var vm = new CellViewModel(cell);
+
+        // Assert
+        Assert.Equal("❌", vm.DisplayText);
+    }
+
+    /// <summary>
+    /// - (EN) Verifies that the exploded-mine marker takes priority over the normal mine display.
+    /// - (VI) Kiểm tra biểu tượng mìn phát nổ sẽ được ưu tiên hiển thị hơn biểu tượng mìn thông thường.
+    /// </summary>
+    [Fact]
+    public void DisplayText_ShouldPrioritizeExplodedMine_OverNormalMineDisplay()
+    {
+        // Arrange
+        var cell = new Cell(0, 0)
+        {
+            IsRevealed = true,
+            IsMine = true,
+            IsExplodedMine = true,
+            IsIncorrectFlag = false
+        };
+
+        var vm = new CellViewModel(cell);
+
+        // Assert
+        Assert.Equal("💥", vm.DisplayText);
     }
 }
