@@ -990,3 +990,26 @@ The focus is on:
 - Providing clear release documentation for stakeholders and reviewers
 
 No functional changes were introduced in this commit.
+
+## Commit 51 - Isolate MainWindowViewModel persistence tests from real local storage
+
+### Summary
+Refactored persistence-related ViewModel tests to keep them isolated from real application storage and aligned them with the cleaner test style already used in other test regions.
+
+### Completed
+- Refactored `MainWindowViewModelTests` persistence region for consistency with other regions
+- Reused `RunWithIsolatedViewModel(...)` where tests only needed an isolated ViewModel instance
+- Kept explicit `tempDirectory + try/finally` setup for tests that must pre-create JSON files before ViewModel construction
+- Standardized test structure to follow the same Arrange / Act / Assert flow used across the suite
+- Removed duplicated XML summary block in the out-of-range session restoration test
+- Preserved all existing persistence coverage:
+  - best-time loading and fallback
+  - player preference persistence
+  - game-session restore, invalidation, save, and clear behaviors
+
+### Notes
+This commit does not change application behavior.
+
+The focus is on:
+- Preventing tests from touching real user JSON files
+- Making the persistence test suite easier to read, maintain, and extend

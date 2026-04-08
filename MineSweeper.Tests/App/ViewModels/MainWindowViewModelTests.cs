@@ -24,13 +24,8 @@ public class MainWindowViewModelTests
     [Fact]
     public void Constructor_ShouldInitializeDefaultBeginnerGame_WhenNoPreferencesExist()
     {
-        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-        Directory.CreateDirectory(tempDirectory);
-
-        try
+        RunWithIsolatedViewModel(vm =>
         {
-            var vm = CreateViewModel(tempDirectory);
-
             Assert.NotNull(vm.Cells);
             Assert.NotEmpty(vm.Cells);
             Assert.Equal(9, vm.Rows);
@@ -39,14 +34,7 @@ public class MainWindowViewModelTests
             Assert.Equal(DifficultyLevel.Beginner, vm.SelectedDifficulty);
             Assert.Equal("Game in progress", vm.GameStatus);
             Assert.False(vm.IsGameFinished);
-        }
-        finally
-        {
-            if (Directory.Exists(tempDirectory))
-            {
-                Directory.Delete(tempDirectory, recursive: true);
-            }
-        }
+        });
     }
 
     /// <summary>
@@ -56,28 +44,29 @@ public class MainWindowViewModelTests
     [Fact]
     public void Commands_ShouldBeDisabled_WhenGameIsFinished()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
+        RunWithIsolatedViewModel(vm =>
+        {
+            // Arrange
+            vm.StartNewGame(1, 2, 1);
 
-        vm.StartNewGame(1, 2, 1);
+            var firstCell = vm.Cells.Single(c => c.Row == 0 && c.Column == 0);
+            var secondCell = vm.Cells.Single(c => c.Row == 0 && c.Column == 1);
 
-        var firstCell = vm.Cells.Single(c => c.Row == 0 && c.Column == 0);
-        var secondCell = vm.Cells.Single(c => c.Row == 0 && c.Column == 1);
+            // First reveal is guaranteed safe
+            vm.RevealCellCommand.Execute(firstCell);
 
-        // First reveal is guaranteed safe
-        vm.RevealCellCommand.Execute(firstCell);
+            // Find the actual mine cell after deferred placement
+            var game = GetInternalGame(vm);
+            var mineCell = game.Board!.Cells[0, 0].IsMine ? firstCell : secondCell;
 
-        // Find the actual mine cell after deferred placement
-        var game = GetInternalGame(vm);
-        var mineCell = game.Board!.Cells[0, 0].IsMine ? firstCell : secondCell;
+            // Act
+            vm.RevealCellCommand.Execute(mineCell);
 
-        // Act
-        vm.RevealCellCommand.Execute(mineCell);
-
-        // Assert
-        Assert.True(vm.IsGameFinished);
-        Assert.False(vm.RevealCellCommand.CanExecute(mineCell));
-        Assert.False(vm.ToggleFlagCommand.CanExecute(mineCell));
+            // Assert
+            Assert.True(vm.IsGameFinished);
+            Assert.False(vm.RevealCellCommand.CanExecute(mineCell));
+            Assert.False(vm.ToggleFlagCommand.CanExecute(mineCell));
+        });
     }
 
     /// <summary>
@@ -89,12 +78,8 @@ public class MainWindowViewModelTests
     [Fact]
     public void SelectedDifficulty_ShouldRaisePropertyChanged_ForSelectedDifficulty()
     {
-        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-        Directory.CreateDirectory(tempDirectory);
-
-        try
+        RunWithIsolatedViewModel(vm =>
         {
-            var vm = CreateViewModel(tempDirectory);
             var changedProperties = new List<string>();
 
             vm.PropertyChanged += (_, e) =>
@@ -110,14 +95,7 @@ public class MainWindowViewModelTests
             Assert.Contains(nameof(MainWindowViewModel.SelectedDifficulty), changedProperties);
             Assert.Contains(nameof(MainWindowViewModel.BestTime), changedProperties);
             Assert.Contains(nameof(MainWindowViewModel.BestTimeDisplay), changedProperties);
-        }
-        finally
-        {
-            if (Directory.Exists(tempDirectory))
-            {
-                Directory.Delete(tempDirectory, recursive: true);
-            }
-        }
+        });
     }
 
     /// <summary>
@@ -127,11 +105,10 @@ public class MainWindowViewModelTests
     [Fact]
     public void Constructor_ShouldIncludeCustomDifficulty_InAvailableDifficulties()
     {
-        // Arrange & Act
-        var vm = new MainWindowViewModel();
-
-        // Assert
-        Assert.Contains(DifficultyLevel.Custom, vm.AvailableDifficulties);
+        RunWithIsolatedViewModel(vm =>
+        {
+            Assert.Contains(DifficultyLevel.Custom, vm.AvailableDifficulties);
+        });
     }
 
     /// <summary>
@@ -141,14 +118,14 @@ public class MainWindowViewModelTests
     [Fact]
     public void SelectedDifficulty_ShouldSetIsCustomDifficultySelected_WhenCustomIsSelected()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
+        RunWithIsolatedViewModel(vm =>
+        {
+            // Act
+            vm.SelectedDifficulty = DifficultyLevel.Custom;
 
-        // Act
-        vm.SelectedDifficulty = DifficultyLevel.Custom;
-
-        // Assert
-        Assert.True(vm.IsCustomDifficultySelected);
+            // Assert
+            Assert.True(vm.IsCustomDifficultySelected);
+        });
     }
 
     /// <summary>
@@ -158,11 +135,10 @@ public class MainWindowViewModelTests
     [Fact]
     public void Constructor_ShouldInitializeHasActiveGameProgress_AsFalse()
     {
-        // Arrange & Act
-        var vm = new MainWindowViewModel();
-
-        // Assert
-        Assert.False(vm.HasActiveGameProgress);
+        RunWithIsolatedViewModel(vm =>
+        {
+            Assert.False(vm.HasActiveGameProgress);
+        });
     }
     #endregion
 
@@ -174,18 +150,20 @@ public class MainWindowViewModelTests
     [Fact]
     public void NewGameCommand_ShouldApplySelectedDifficulty()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
-        vm.SelectedDifficulty = DifficultyLevel.Expert;
+        RunWithIsolatedViewModel(vm =>
+        {
+            // Arrange
+            vm.SelectedDifficulty = DifficultyLevel.Expert;
 
-        // Act
-        vm.NewGameCommand.Execute(null);
+            // Act
+            vm.NewGameCommand.Execute(null);
 
-        // Assert
-        Assert.Equal(16, vm.Rows);
-        Assert.Equal(30, vm.Columns);
-        Assert.Equal(99, vm.TotalMines);
-        Assert.Equal(16 * 30, vm.Cells.Count);
+            // Assert
+            Assert.Equal(16, vm.Rows);
+            Assert.Equal(30, vm.Columns);
+            Assert.Equal(99, vm.TotalMines);
+            Assert.Equal(16 * 30, vm.Cells.Count);
+        });
     }
 
     /// <summary>
@@ -195,24 +173,25 @@ public class MainWindowViewModelTests
     [Fact]
     public void NewGame_ShouldClearPreviousWarningMessage()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
-
-        foreach (var cell in vm.Cells.Take(vm.TotalMines))
+        RunWithIsolatedViewModel(vm =>
         {
-            vm.ToggleFlagCommand.Execute(cell);
-        }
+            // Arrange
+            foreach (var cell in vm.Cells.Take(vm.TotalMines))
+            {
+                vm.ToggleFlagCommand.Execute(cell);
+            }
 
-        var extraCell = vm.Cells.Skip(vm.TotalMines).First();
-        vm.ToggleFlagCommand.Execute(extraCell);
+            var extraCell = vm.Cells.Skip(vm.TotalMines).First();
+            vm.ToggleFlagCommand.Execute(extraCell);
 
-        Assert.NotNull(vm.Message);
+            Assert.NotNull(vm.Message);
 
-        // Act
-        vm.NewGameCommand.Execute(null);
+            // Act
+            vm.NewGameCommand.Execute(null);
 
-        // Assert
-        Assert.Null(vm.Message);
+            // Assert
+            Assert.Null(vm.Message);
+        });
     }
 
     /// <summary>
@@ -222,29 +201,31 @@ public class MainWindowViewModelTests
     [Fact]
     public void StartNewGame_ShouldRaisePropertyChanged_ForBoardRelatedProperties()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
-        var changedProperties = new List<string>();
-
-        vm.PropertyChanged += (_, e) =>
+        RunWithIsolatedViewModel(vm =>
         {
-            if (e.PropertyName is not null)
+            // Arrange
+            var changedProperties = new List<string>();
+
+            vm.PropertyChanged += (_, e) =>
             {
-                changedProperties.Add(e.PropertyName);
-            }
-        };
+                if (e.PropertyName is not null)
+                {
+                    changedProperties.Add(e.PropertyName);
+                }
+            };
 
-        // Act
-        vm.StartNewGame(16, 16, 40);
+            // Act
+            vm.StartNewGame(16, 16, 40);
 
-        // Assert
-        Assert.Contains(nameof(MainWindowViewModel.Rows), changedProperties);
-        Assert.Contains(nameof(MainWindowViewModel.Columns), changedProperties);
-        Assert.Contains(nameof(MainWindowViewModel.GameStatus), changedProperties);
-        Assert.Contains(nameof(MainWindowViewModel.IsGameFinished), changedProperties);
-        Assert.Contains(nameof(MainWindowViewModel.TotalMines), changedProperties);
-        Assert.Contains(nameof(MainWindowViewModel.FlagCount), changedProperties);
-        Assert.Contains(nameof(MainWindowViewModel.RemainingMines), changedProperties);
+            // Assert
+            Assert.Contains(nameof(MainWindowViewModel.Rows), changedProperties);
+            Assert.Contains(nameof(MainWindowViewModel.Columns), changedProperties);
+            Assert.Contains(nameof(MainWindowViewModel.GameStatus), changedProperties);
+            Assert.Contains(nameof(MainWindowViewModel.IsGameFinished), changedProperties);
+            Assert.Contains(nameof(MainWindowViewModel.TotalMines), changedProperties);
+            Assert.Contains(nameof(MainWindowViewModel.FlagCount), changedProperties);
+            Assert.Contains(nameof(MainWindowViewModel.RemainingMines), changedProperties);
+        });
     }
 
     /// <summary>
@@ -256,22 +237,23 @@ public class MainWindowViewModelTests
     [Fact]
     public void NewGameCommand_ShouldApplyCustomDifficultyConfiguration()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
+        RunWithIsolatedViewModel(vm =>
+        {
+            // Arrange
+            vm.SelectedDifficulty = DifficultyLevel.Custom;
+            vm.CustomRows = 12;
+            vm.CustomColumns = 14;
+            vm.CustomMines = 20;
 
-        vm.SelectedDifficulty = DifficultyLevel.Custom;
-        vm.CustomRows = 12;
-        vm.CustomColumns = 14;
-        vm.CustomMines = 20;
+            // Act
+            vm.NewGameCommand.Execute(null);
 
-        // Act
-        vm.NewGameCommand.Execute(null);
-
-        // Assert
-        Assert.Equal(12, vm.Rows);
-        Assert.Equal(14, vm.Columns);
-        Assert.Equal(20, vm.TotalMines);
-        Assert.Equal(12 * 14, vm.Cells.Count);
+            // Assert
+            Assert.Equal(12, vm.Rows);
+            Assert.Equal(14, vm.Columns);
+            Assert.Equal(20, vm.TotalMines);
+            Assert.Equal(12 * 14, vm.Cells.Count);
+        });
     }
 
     /// <summary>
@@ -283,40 +265,44 @@ public class MainWindowViewModelTests
     [Fact]
     public void CustomMines_ShouldBeClamped_WhenValueExceedsBoardCapacity()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
+        RunWithIsolatedViewModel(vm =>
+        {
+            // Arrange
+            vm.SelectedDifficulty = DifficultyLevel.Custom;
+            vm.CustomRows = 5;
+            vm.CustomColumns = 5;
 
-        vm.SelectedDifficulty = DifficultyLevel.Custom;
-        vm.CustomRows = 5;
-        vm.CustomColumns = 5;
+            // Act
+            vm.CustomMines = 999;
 
-        // Act
-        vm.CustomMines = 999;
-
-        // Assert
-        Assert.Equal(24, vm.CustomMines);
+            // Assert
+            Assert.Equal(24, vm.CustomMines);
+        });
     }
 
-    /// - (VI) Kiểm tra khi thay đổi kích thước board custom thì số lượng mìn custom hiện tại
+    /// <summary>
+    /// - (EN) Verifies that reducing the custom board size automatically adjusts the current custom mine count when needed.
+    /// - (VI) Kiểm tra khi thay đổi kích thước board custom nhỏ hơn thì số lượng mìn custom hiện tại
     /// sẽ tự động được điều chỉnh nếu cần.
     /// </summary>
     [Fact]
     public void CustomRowsAndColumns_ShouldAdjustCustomMines_WhenBoardBecomesSmaller()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
+        RunWithIsolatedViewModel(vm =>
+        {
+            // Arrange
+            vm.SelectedDifficulty = DifficultyLevel.Custom;
+            vm.CustomRows = 10;
+            vm.CustomColumns = 10;
+            vm.CustomMines = 90;
 
-        vm.SelectedDifficulty = DifficultyLevel.Custom;
-        vm.CustomRows = 10;
-        vm.CustomColumns = 10;
-        vm.CustomMines = 90;
+            // Act
+            vm.CustomRows = 5;
+            vm.CustomColumns = 5;
 
-        // Act
-        vm.CustomRows = 5;
-        vm.CustomColumns = 5;
-
-        // Assert
-        Assert.Equal(24, vm.CustomMines);
+            // Assert
+            Assert.Equal(24, vm.CustomMines);
+        });
     }
 
     /// <summary>
@@ -328,17 +314,17 @@ public class MainWindowViewModelTests
     [Fact]
     public void StartNewGameForDifficulty_ShouldApplySpecifiedPresetDifficulty()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
+        RunWithIsolatedViewModel(vm =>
+        {
+            // Act
+            vm.StartNewGameForDifficulty(DifficultyLevel.Intermediate);
 
-        // Act
-        vm.StartNewGameForDifficulty(DifficultyLevel.Intermediate);
-
-        // Assert
-        Assert.Equal(DifficultyLevel.Intermediate, vm.SelectedDifficulty);
-        Assert.Equal(16, vm.Rows);
-        Assert.Equal(16, vm.Columns);
-        Assert.Equal(40, vm.TotalMines);
+            // Assert
+            Assert.Equal(DifficultyLevel.Intermediate, vm.SelectedDifficulty);
+            Assert.Equal(16, vm.Rows);
+            Assert.Equal(16, vm.Columns);
+            Assert.Equal(40, vm.TotalMines);
+        });
     }
 
     /// <summary>
@@ -350,20 +336,22 @@ public class MainWindowViewModelTests
     [Fact]
     public void StartNewGameForDifficulty_ShouldApplyCurrentCustomConfiguration_WhenDifficultyIsCustom()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
-        vm.CustomRows = 12;
-        vm.CustomColumns = 14;
-        vm.CustomMines = 20;
+        RunWithIsolatedViewModel(vm =>
+        {
+            // Arrange
+            vm.CustomRows = 12;
+            vm.CustomColumns = 14;
+            vm.CustomMines = 20;
 
-        // Act
-        vm.StartNewGameForDifficulty(DifficultyLevel.Custom);
+            // Act
+            vm.StartNewGameForDifficulty(DifficultyLevel.Custom);
 
-        // Assert
-        Assert.Equal(DifficultyLevel.Custom, vm.SelectedDifficulty);
-        Assert.Equal(12, vm.Rows);
-        Assert.Equal(14, vm.Columns);
-        Assert.Equal(20, vm.TotalMines);
+            // Assert
+            Assert.Equal(DifficultyLevel.Custom, vm.SelectedDifficulty);
+            Assert.Equal(12, vm.Rows);
+            Assert.Equal(14, vm.Columns);
+            Assert.Equal(20, vm.TotalMines);
+        });
     }
     #endregion
 
@@ -375,20 +363,21 @@ public class MainWindowViewModelTests
     [Fact]
     public void QuickRestartCommand_ShouldRestartUsingSelectedPresetDifficulty()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
-        vm.SelectedDifficulty = DifficultyLevel.Expert;
+        RunWithIsolatedViewModel(vm =>
+        {
+            // Arrange
+            vm.SelectedDifficulty = DifficultyLevel.Expert;
+            vm.StartNewGame(9, 9, 10);
 
-        vm.StartNewGame(9, 9, 10);
+            // Act
+            vm.QuickRestartCommand.Execute(null);
 
-        // Act
-        vm.QuickRestartCommand.Execute(null);
-
-        // Assert
-        Assert.Equal(16, vm.Rows);
-        Assert.Equal(30, vm.Columns);
-        Assert.Equal(99, vm.TotalMines);
-        Assert.Equal(16 * 30, vm.Cells.Count);
+            // Assert
+            Assert.Equal(16, vm.Rows);
+            Assert.Equal(30, vm.Columns);
+            Assert.Equal(99, vm.TotalMines);
+            Assert.Equal(16 * 30, vm.Cells.Count);
+        });
     }
 
     /// <summary>
@@ -398,23 +387,25 @@ public class MainWindowViewModelTests
     [Fact]
     public void QuickRestartCommand_ShouldRestartUsingCurrentCustomConfiguration()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
-        vm.SelectedDifficulty = DifficultyLevel.Custom;
-        vm.CustomRows = 12;
-        vm.CustomColumns = 14;
-        vm.CustomMines = 20;
+        RunWithIsolatedViewModel(vm =>
+        {
+            // Arrange
+            vm.SelectedDifficulty = DifficultyLevel.Custom;
+            vm.CustomRows = 12;
+            vm.CustomColumns = 14;
+            vm.CustomMines = 20;
 
-        vm.StartNewGame(9, 9, 10);
+            vm.StartNewGame(9, 9, 10);
 
-        // Act
-        vm.QuickRestartCommand.Execute(null);
+            // Act
+            vm.QuickRestartCommand.Execute(null);
 
-        // Assert
-        Assert.Equal(12, vm.Rows);
-        Assert.Equal(14, vm.Columns);
-        Assert.Equal(20, vm.TotalMines);
-        Assert.Equal(12 * 14, vm.Cells.Count);
+            // Assert
+            Assert.Equal(12, vm.Rows);
+            Assert.Equal(14, vm.Columns);
+            Assert.Equal(20, vm.TotalMines);
+            Assert.Equal(12 * 14, vm.Cells.Count);
+        });
     }
 
     /// <summary>
@@ -424,27 +415,25 @@ public class MainWindowViewModelTests
     [Fact]
     public void QuickRestartCommand_ShouldClearPreviousWarningMessage()
     {
-        // Arrange
-        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-        Directory.CreateDirectory(tempDirectory);
-
-        var vm = CreateViewModel(tempDirectory);
-
-        foreach (var cell in vm.Cells.Take(vm.TotalMines))
+        RunWithIsolatedViewModel(vm =>
         {
-            vm.ToggleFlagCommand.Execute(cell);
-        }
+            // Arrange
+            foreach (var cell in vm.Cells.Take(vm.TotalMines))
+            {
+                vm.ToggleFlagCommand.Execute(cell);
+            }
 
-        var extraCell = vm.Cells.Skip(vm.TotalMines).First();
-        vm.ToggleFlagCommand.Execute(extraCell);
+            var extraCell = vm.Cells.Skip(vm.TotalMines).First();
+            vm.ToggleFlagCommand.Execute(extraCell);
 
-        Assert.NotNull(vm.Message);
+            Assert.NotNull(vm.Message);
 
-        // Act
-        vm.QuickRestartCommand.Execute(null);
+            // Act
+            vm.QuickRestartCommand.Execute(null);
 
-        // Assert
-        Assert.Null(vm.Message);
+            // Assert
+            Assert.Null(vm.Message);
+        });
     }
 
     /// <summary>
@@ -454,22 +443,23 @@ public class MainWindowViewModelTests
     [Fact]
     public void QuickRestartCommand_ShouldResetElapsedTime()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
+        RunWithIsolatedViewModel(vm =>
+        {
+            // Arrange
+            SetPrivateFieldValue(vm, "_elapsedTime", TimeSpan.FromSeconds(95));
+            SetPrivateFieldValue(vm, "_isTimerRunning", true);
+            SetPrivateFieldValue(vm, "_gameStartTimeUtc", DateTime.UtcNow.AddSeconds(-95));
 
-        SetPrivateFieldValue(vm, "_elapsedTime", TimeSpan.FromSeconds(95));
-        SetPrivateFieldValue(vm, "_isTimerRunning", true);
-        SetPrivateFieldValue(vm, "_gameStartTimeUtc", DateTime.UtcNow.AddSeconds(-95));
+            // Act
+            vm.QuickRestartCommand.Execute(null);
 
-        // Act
-        vm.QuickRestartCommand.Execute(null);
+            // Assert
+            Assert.Equal(TimeSpan.Zero, vm.ElapsedTime);
+            Assert.Equal("00:00", vm.ElapsedTimeDisplay);
 
-        // Assert
-        Assert.Equal(TimeSpan.Zero, vm.ElapsedTime);
-        Assert.Equal("00:00", vm.ElapsedTimeDisplay);
-
-        bool isTimerRunning = GetPrivateFieldValue<bool>(vm, "_isTimerRunning");
-        Assert.False(isTimerRunning);
+            bool isTimerRunning = GetPrivateFieldValue<bool>(vm, "_isTimerRunning");
+            Assert.False(isTimerRunning);
+        });
     }
     #endregion
 
@@ -481,17 +471,19 @@ public class MainWindowViewModelTests
     [Fact]
     public void ToggleFlagCommand_ShouldFlagCell_AndIncreaseFlagCount()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
-        var cell = vm.Cells.First();
+        RunWithIsolatedViewModel(vm =>
+        {
+            // Arrange
+            var cell = vm.Cells.First();
 
-        // Act
-        vm.ToggleFlagCommand.Execute(cell);
+            // Act
+            vm.ToggleFlagCommand.Execute(cell);
 
-        // Assert
-        Assert.True(cell.IsFlagged);
-        Assert.Equal(1, vm.FlagCount);
-        Assert.Equal(vm.TotalMines - 1, vm.RemainingMines);
+            // Assert
+            Assert.True(cell.IsFlagged);
+            Assert.Equal(1, vm.FlagCount);
+            Assert.Equal(vm.TotalMines - 1, vm.RemainingMines);
+        });
     }
 
     /// <summary>
@@ -501,18 +493,20 @@ public class MainWindowViewModelTests
     [Fact]
     public void ToggleFlagCommand_Twice_ShouldUnflagCell_AndRestoreCounters()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
-        var cell = vm.Cells.First();
+        RunWithIsolatedViewModel(vm =>
+        {
+            // Arrange
+            var cell = vm.Cells.First();
 
-        // Act
-        vm.ToggleFlagCommand.Execute(cell);
-        vm.ToggleFlagCommand.Execute(cell);
+            // Act
+            vm.ToggleFlagCommand.Execute(cell);
+            vm.ToggleFlagCommand.Execute(cell);
 
-        // Assert
-        Assert.False(cell.IsFlagged);
-        Assert.Equal(0, vm.FlagCount);
-        Assert.Equal(vm.TotalMines, vm.RemainingMines);
+            // Assert
+            Assert.False(cell.IsFlagged);
+            Assert.Equal(0, vm.FlagCount);
+            Assert.Equal(vm.TotalMines, vm.RemainingMines);
+        });
     }
 
     /// <summary>
@@ -522,25 +516,26 @@ public class MainWindowViewModelTests
     [Fact]
     public void ToggleFlagCommand_ShouldNotAllowMoreThanTotalMines()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
-
-        foreach (var cell in vm.Cells.Take(vm.TotalMines))
+        RunWithIsolatedViewModel(vm =>
         {
-            vm.ToggleFlagCommand.Execute(cell);
-        }
+            // Arrange
+            foreach (var cell in vm.Cells.Take(vm.TotalMines))
+            {
+                vm.ToggleFlagCommand.Execute(cell);
+            }
 
-        var extraCell = vm.Cells.Skip(vm.TotalMines).First();
+            var extraCell = vm.Cells.Skip(vm.TotalMines).First();
 
-        // Act
-        vm.ToggleFlagCommand.Execute(extraCell);
+            // Act
+            vm.ToggleFlagCommand.Execute(extraCell);
 
-        // Assert
-        Assert.Equal(vm.TotalMines, vm.FlagCount);
-        Assert.Equal(0, vm.RemainingMines);
-        Assert.False(extraCell.IsFlagged);
-        Assert.NotNull(vm.Message);
-        Assert.Contains("flags", vm.Message!, StringComparison.OrdinalIgnoreCase);
+            // Assert
+            Assert.Equal(vm.TotalMines, vm.FlagCount);
+            Assert.Equal(0, vm.RemainingMines);
+            Assert.False(extraCell.IsFlagged);
+            Assert.NotNull(vm.Message);
+            Assert.Contains("flags", vm.Message!, StringComparison.OrdinalIgnoreCase);
+        });
     }
 
     /// <summary>
@@ -550,27 +545,29 @@ public class MainWindowViewModelTests
     [Fact]
     public void ToggleFlagCommand_ShouldRaisePropertyChanged_ForCounters()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
-        var changedProperties = new List<string>();
-        var cell = vm.Cells.First();
-
-        vm.PropertyChanged += (_, e) =>
+        RunWithIsolatedViewModel(vm =>
         {
-            if (e.PropertyName is not null)
+            // Arrange
+            var changedProperties = new List<string>();
+            var cell = vm.Cells.First();
+
+            vm.PropertyChanged += (_, e) =>
             {
-                changedProperties.Add(e.PropertyName);
-            }
-        };
+                if (e.PropertyName is not null)
+                {
+                    changedProperties.Add(e.PropertyName);
+                }
+            };
 
-        // Act
-        vm.ToggleFlagCommand.Execute(cell);
+            // Act
+            vm.ToggleFlagCommand.Execute(cell);
 
-        // Assert
-        Assert.Contains(nameof(MainWindowViewModel.FlagCount), changedProperties);
-        Assert.Contains(nameof(MainWindowViewModel.RemainingMines), changedProperties);
-        Assert.Contains(nameof(MainWindowViewModel.GameStatus), changedProperties);
-        Assert.Contains(nameof(MainWindowViewModel.IsGameFinished), changedProperties);
+            // Assert
+            Assert.Contains(nameof(MainWindowViewModel.FlagCount), changedProperties);
+            Assert.Contains(nameof(MainWindowViewModel.RemainingMines), changedProperties);
+            Assert.Contains(nameof(MainWindowViewModel.GameStatus), changedProperties);
+            Assert.Contains(nameof(MainWindowViewModel.IsGameFinished), changedProperties);
+        });
     }
 
     /// <summary>
@@ -580,26 +577,27 @@ public class MainWindowViewModelTests
     [Fact]
     public void ValidToggleFlag_ShouldClearPreviousWarningMessage()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
-
-        foreach (var cell in vm.Cells.Take(vm.TotalMines))
+        RunWithIsolatedViewModel(vm =>
         {
-            vm.ToggleFlagCommand.Execute(cell);
-        }
+            // Arrange
+            foreach (var cell in vm.Cells.Take(vm.TotalMines))
+            {
+                vm.ToggleFlagCommand.Execute(cell);
+            }
 
-        var extraCell = vm.Cells.Skip(vm.TotalMines).First();
-        vm.ToggleFlagCommand.Execute(extraCell);
+            var extraCell = vm.Cells.Skip(vm.TotalMines).First();
+            vm.ToggleFlagCommand.Execute(extraCell);
 
-        Assert.NotNull(vm.Message);
+            Assert.NotNull(vm.Message);
 
-        var flaggedCell = vm.Cells.First(c => c.IsFlagged);
+            var flaggedCell = vm.Cells.First(c => c.IsFlagged);
 
-        // Act
-        vm.ToggleFlagCommand.Execute(flaggedCell);
+            // Act
+            vm.ToggleFlagCommand.Execute(flaggedCell);
 
-        // Assert
-        Assert.Null(vm.Message);
+            // Assert
+            Assert.Null(vm.Message);
+        });
     }
 
     /// <summary>
@@ -609,15 +607,17 @@ public class MainWindowViewModelTests
     [Fact]
     public void ToggleFlagCommand_ShouldSetHasActiveGameProgress_WhenFlagIsPlaced()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
-        var firstCell = vm.Cells.First();
+        RunWithIsolatedViewModel(vm =>
+        {
+            // Arrange
+            var firstCell = vm.Cells.First();
 
-        // Act
-        vm.ToggleFlagCommand.Execute(firstCell);
+            // Act
+            vm.ToggleFlagCommand.Execute(firstCell);
 
-        // Assert
-        Assert.True(vm.HasActiveGameProgress);
+            // Assert
+            Assert.True(vm.HasActiveGameProgress);
+        });
     }
     #endregion
 
@@ -629,15 +629,17 @@ public class MainWindowViewModelTests
     [Fact]
     public void RevealCellCommand_ShouldBeExecutable_WhileGameInProgress()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
-        var cell = vm.Cells.First();
+        RunWithIsolatedViewModel(vm =>
+        {
+            // Arrange
+            var cell = vm.Cells.First();
 
-        // Act
-        var canExecute = vm.RevealCellCommand.CanExecute(cell);
+            // Act
+            var canExecute = vm.RevealCellCommand.CanExecute(cell);
 
-        // Assert
-        Assert.True(canExecute);
+            // Assert
+            Assert.True(canExecute);
+        });
     }
 
     /// <summary>
@@ -647,27 +649,29 @@ public class MainWindowViewModelTests
     [Fact]
     public void RevealCellCommand_ShouldRaisePropertyChanged_ForGameStateProperties()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
-        var changedProperties = new List<string>();
-        var cell = vm.Cells.First();
-
-        vm.PropertyChanged += (_, e) =>
+        RunWithIsolatedViewModel(vm =>
         {
-            if (e.PropertyName is not null)
+            // Arrange
+            var changedProperties = new List<string>();
+            var cell = vm.Cells.First();
+
+            vm.PropertyChanged += (_, e) =>
             {
-                changedProperties.Add(e.PropertyName);
-            }
-        };
+                if (e.PropertyName is not null)
+                {
+                    changedProperties.Add(e.PropertyName);
+                }
+            };
 
-        // Act
-        vm.RevealCellCommand.Execute(cell);
+            // Act
+            vm.RevealCellCommand.Execute(cell);
 
-        // Assert
-        Assert.Contains(nameof(MainWindowViewModel.GameStatus), changedProperties);
-        Assert.Contains(nameof(MainWindowViewModel.IsGameFinished), changedProperties);
-        Assert.Contains(nameof(MainWindowViewModel.FlagCount), changedProperties);
-        Assert.Contains(nameof(MainWindowViewModel.RemainingMines), changedProperties);
+            // Assert
+            Assert.Contains(nameof(MainWindowViewModel.GameStatus), changedProperties);
+            Assert.Contains(nameof(MainWindowViewModel.IsGameFinished), changedProperties);
+            Assert.Contains(nameof(MainWindowViewModel.FlagCount), changedProperties);
+            Assert.Contains(nameof(MainWindowViewModel.RemainingMines), changedProperties);
+        });
     }
 
     /// <summary>
@@ -677,15 +681,17 @@ public class MainWindowViewModelTests
     [Fact]
     public void RevealCellCommand_ShouldSetHasActiveGameProgress_WhenFirstCellIsRevealed()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
-        var firstCell = vm.Cells.First();
+        RunWithIsolatedViewModel(vm =>
+        {
+            // Arrange
+            var firstCell = vm.Cells.First();
 
-        // Act
-        vm.RevealCellCommand.Execute(firstCell);
+            // Act
+            vm.RevealCellCommand.Execute(firstCell);
 
-        // Assert
-        Assert.True(vm.HasActiveGameProgress);
+            // Assert
+            Assert.True(vm.HasActiveGameProgress);
+        });
     }
     #endregion
 
@@ -698,12 +704,14 @@ public class MainWindowViewModelTests
     [Fact]
     public void Constructor_ShouldInitializeElapsedTimeDisplay_ToZero()
     {
-        // Arrange & Act
-        var vm = new MainWindowViewModel();
+        RunWithIsolatedViewModel(vm =>
+        {
+            // Arrange & Act
 
-        // Assert
-        Assert.Equal(TimeSpan.Zero, vm.ElapsedTime);
-        Assert.Equal("00:00", vm.ElapsedTimeDisplay);
+            // Assert
+            Assert.Equal(TimeSpan.Zero, vm.ElapsedTime);
+            Assert.Equal("00:00", vm.ElapsedTimeDisplay);
+        });
     }
 
     /// <summary>
@@ -713,16 +721,18 @@ public class MainWindowViewModelTests
     [Fact]
     public void RevealCellCommand_ShouldStartTimer_OnFirstReveal()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
-        var cell = vm.Cells.First();
+        RunWithIsolatedViewModel(vm =>
+        {
+            // Arrange
+            var cell = vm.Cells.First();
 
-        // Act
-        vm.RevealCellCommand.Execute(cell);
+            // Act
+            vm.RevealCellCommand.Execute(cell);
 
-        // Assert
-        bool isTimerRunning = GetPrivateFieldValue<bool>(vm, "_isTimerRunning");
-        Assert.True(isTimerRunning);
+            // Assert
+            bool isTimerRunning = GetPrivateFieldValue<bool>(vm, "_isTimerRunning");
+            Assert.True(isTimerRunning);
+        });
     }
 
     /// <summary>
@@ -732,22 +742,23 @@ public class MainWindowViewModelTests
     [Fact]
     public void StartNewGame_ShouldResetElapsedTime()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
+        RunWithIsolatedViewModel(vm =>
+        {
+            // Arrange
+            SetPrivateFieldValue(vm, "_elapsedTime", TimeSpan.FromSeconds(95));
+            SetPrivateFieldValue(vm, "_isTimerRunning", true);
+            SetPrivateFieldValue(vm, "_gameStartTimeUtc", DateTime.UtcNow.AddSeconds(-95));
 
-        SetPrivateFieldValue(vm, "_elapsedTime", TimeSpan.FromSeconds(95));
-        SetPrivateFieldValue(vm, "_isTimerRunning", true);
-        SetPrivateFieldValue(vm, "_gameStartTimeUtc", DateTime.UtcNow.AddSeconds(-95));
+            // Act
+            vm.StartNewGame(9, 9, 10);
 
-        // Act
-        vm.StartNewGame(9, 9, 10);
+            // Assert
+            Assert.Equal(TimeSpan.Zero, vm.ElapsedTime);
+            Assert.Equal("00:00", vm.ElapsedTimeDisplay);
 
-        // Assert
-        Assert.Equal(TimeSpan.Zero, vm.ElapsedTime);
-        Assert.Equal("00:00", vm.ElapsedTimeDisplay);
-
-        bool isTimerRunning = GetPrivateFieldValue<bool>(vm, "_isTimerRunning");
-        Assert.False(isTimerRunning);
+            bool isTimerRunning = GetPrivateFieldValue<bool>(vm, "_isTimerRunning");
+            Assert.False(isTimerRunning);
+        });
     }
 
     /// <summary>
@@ -757,16 +768,17 @@ public class MainWindowViewModelTests
     [Fact]
     public void ElapsedTimeDisplay_ShouldFormatElapsedTimeCorrectly()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
+        RunWithIsolatedViewModel(vm =>
+        {
+            // Arrange
+            SetPrivateFieldValue(vm, "_elapsedTime", TimeSpan.FromSeconds(65));
 
-        SetPrivateFieldValue(vm, "_elapsedTime", TimeSpan.FromSeconds(65));
+            // Act
+            var display = vm.ElapsedTimeDisplay;
 
-        // Act
-        var display = vm.ElapsedTimeDisplay;
-
-        // Assert
-        Assert.Equal("01:05", display);
+            // Assert
+            Assert.Equal("01:05", display);
+        });
     }
 
     /// <summary>
@@ -776,26 +788,27 @@ public class MainWindowViewModelTests
     [Fact]
     public void RevealCellCommand_ShouldStopTimer_WhenPlayerLoses()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
+        RunWithIsolatedViewModel(vm =>
+        {
+            // Arrange
+            ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
 
-        ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
+            var safeCell = GetCell(vm, 0, 1);
+            var mineCell = GetCell(vm, 0, 0);
 
-        var safeCell = GetCell(vm, 0, 1);
-        var mineCell = GetCell(vm, 0, 0);
+            // First reveal starts timer
+            vm.RevealCellCommand.Execute(safeCell);
 
-        // First reveal starts timer
-        vm.RevealCellCommand.Execute(safeCell);
+            bool timerRunningAfterFirstReveal = GetPrivateFieldValue<bool>(vm, "_isTimerRunning");
+            Assert.True(timerRunningAfterFirstReveal);
 
-        bool timerRunningAfterFirstReveal = GetPrivateFieldValue<bool>(vm, "_isTimerRunning");
-        Assert.True(timerRunningAfterFirstReveal);
+            // Act - reveal mine to lose
+            vm.RevealCellCommand.Execute(mineCell);
 
-        // Act - reveal mine to lose
-        vm.RevealCellCommand.Execute(mineCell);
-
-        // Assert
-        bool timerRunningAfterLoss = GetPrivateFieldValue<bool>(vm, "_isTimerRunning");
-        Assert.False(timerRunningAfterLoss);
+            // Assert
+            bool timerRunningAfterLoss = GetPrivateFieldValue<bool>(vm, "_isTimerRunning");
+            Assert.False(timerRunningAfterLoss);
+        });
     }
 
     #endregion
@@ -809,25 +822,12 @@ public class MainWindowViewModelTests
     [Fact]
     public void BestTimeDisplay_ShouldReturnFallback_WhenNoBestTimeExists()
     {
-        // Arrange
-        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-        Directory.CreateDirectory(tempDirectory);
-
-        // Assert & Actual
-        try
+        RunWithIsolatedViewModel(vm =>
         {
-            var vm = CreateViewModel(tempDirectory);
-
+            // Assert & Act
             Assert.Null(vm.BestTime);
             Assert.Equal("--:--", vm.BestTimeDisplay);
-        }
-        finally
-        {
-            if (Directory.Exists(tempDirectory))
-            {
-                Directory.Delete(tempDirectory, recursive: true);
-            }
-        }
+        });
     }
 
     /// <summary>
@@ -837,13 +837,9 @@ public class MainWindowViewModelTests
     [Fact]
     public void WinningGame_ShouldStoreBestTime_ForSelectedDifficulty()
     {
-        // Arrange
-        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-        Directory.CreateDirectory(tempDirectory);
-
-        try
+        RunWithIsolatedViewModel(vm =>
         {
-            var vm = CreateViewModel(tempDirectory);
+            // Arrange
             vm.SelectedDifficulty = DifficultyLevel.Beginner;
 
             ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
@@ -861,14 +857,7 @@ public class MainWindowViewModelTests
             // Assert
             Assert.NotNull(vm.BestTime);
             Assert.Equal("00:42", vm.BestTimeDisplay);
-        }
-        finally
-        {
-            if (Directory.Exists(tempDirectory))
-            {
-                Directory.Delete(tempDirectory, recursive: true);
-            }
-        }
+        });
     }
 
     /// <summary>
@@ -878,27 +867,28 @@ public class MainWindowViewModelTests
     [Fact]
     public void WinningGame_ShouldReplaceBestTime_WhenNewTimeIsBetter()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
-        vm.SelectedDifficulty = DifficultyLevel.Beginner;
-
-        SetPrivateFieldValue(vm, "_bestTimes", new Dictionary<DifficultyLevel, TimeSpan>
+        RunWithIsolatedViewModel(vm =>
         {
-            [DifficultyLevel.Beginner] = TimeSpan.FromSeconds(60)
+            vm.SelectedDifficulty = DifficultyLevel.Beginner;
+
+            SetPrivateFieldValue(vm, "_bestTimes", new Dictionary<DifficultyLevel, TimeSpan>
+            {
+                [DifficultyLevel.Beginner] = TimeSpan.FromSeconds(60)
+            });
+
+            ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
+            SetPrivateFieldValue(vm, "_elapsedTime", TimeSpan.FromSeconds(45));
+
+            vm.RevealCellCommand.Execute(GetCell(vm, 0, 1));
+            vm.RevealCellCommand.Execute(GetCell(vm, 1, 0));
+
+            // Act
+            vm.RevealCellCommand.Execute(GetCell(vm, 1, 1));
+
+            // Assert
+            Assert.NotNull(vm.BestTime);
+            Assert.Equal("00:45", vm.BestTimeDisplay);
         });
-
-        ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
-        SetPrivateFieldValue(vm, "_elapsedTime", TimeSpan.FromSeconds(45));
-
-        vm.RevealCellCommand.Execute(GetCell(vm, 0, 1));
-        vm.RevealCellCommand.Execute(GetCell(vm, 1, 0));
-
-        // Act
-        vm.RevealCellCommand.Execute(GetCell(vm, 1, 1));
-
-        // Assert
-        Assert.NotNull(vm.BestTime);
-        Assert.Equal("00:45", vm.BestTimeDisplay);
     }
 
     /// <summary>
@@ -908,27 +898,28 @@ public class MainWindowViewModelTests
     [Fact]
     public void WinningGame_ShouldNotReplaceBestTime_WhenNewTimeIsWorse()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
-        vm.SelectedDifficulty = DifficultyLevel.Beginner;
-
-        SetPrivateFieldValue(vm, "_bestTimes", new Dictionary<DifficultyLevel, TimeSpan>
+        RunWithIsolatedViewModel(vm =>
         {
-            [DifficultyLevel.Beginner] = TimeSpan.FromSeconds(40)
+            vm.SelectedDifficulty = DifficultyLevel.Beginner;
+
+            SetPrivateFieldValue(vm, "_bestTimes", new Dictionary<DifficultyLevel, TimeSpan>
+            {
+                [DifficultyLevel.Beginner] = TimeSpan.FromSeconds(40)
+            });
+
+            ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
+            SetPrivateFieldValue(vm, "_elapsedTime", TimeSpan.FromSeconds(55));
+
+            vm.RevealCellCommand.Execute(GetCell(vm, 0, 1));
+            vm.RevealCellCommand.Execute(GetCell(vm, 1, 0));
+
+            // Act
+            vm.RevealCellCommand.Execute(GetCell(vm, 1, 1));
+
+            // Assert
+            Assert.Equal(TimeSpan.FromSeconds(40), vm.BestTime);
+            Assert.Equal("00:40", vm.BestTimeDisplay);
         });
-
-        ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
-        SetPrivateFieldValue(vm, "_elapsedTime", TimeSpan.FromSeconds(55));
-
-        vm.RevealCellCommand.Execute(GetCell(vm, 0, 1));
-        vm.RevealCellCommand.Execute(GetCell(vm, 1, 0));
-
-        // Act
-        vm.RevealCellCommand.Execute(GetCell(vm, 1, 1));
-
-        // Assert
-        Assert.Equal(TimeSpan.FromSeconds(40), vm.BestTime);
-        Assert.Equal("00:40", vm.BestTimeDisplay);
     }
 
     /// <summary>
@@ -938,25 +929,26 @@ public class MainWindowViewModelTests
     [Fact]
     public void SelectedDifficulty_ShouldRefreshBestTimeDisplay()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
-
-        SetPrivateFieldValue(vm, "_bestTimes", new Dictionary<DifficultyLevel, TimeSpan>
+        RunWithIsolatedViewModel(vm =>
         {
-            [DifficultyLevel.Beginner] = TimeSpan.FromSeconds(30),
-            [DifficultyLevel.Intermediate] = TimeSpan.FromSeconds(90)
+            // Arrange
+            SetPrivateFieldValue(vm, "_bestTimes", new Dictionary<DifficultyLevel, TimeSpan>
+            {
+                [DifficultyLevel.Beginner] = TimeSpan.FromSeconds(30),
+                [DifficultyLevel.Intermediate] = TimeSpan.FromSeconds(90)
+            });
+
+            // Act
+            vm.SelectedDifficulty = DifficultyLevel.Beginner;
+            var beginnerDisplay = vm.BestTimeDisplay;
+
+            vm.SelectedDifficulty = DifficultyLevel.Intermediate;
+            var intermediateDisplay = vm.BestTimeDisplay;
+
+            // Assert
+            Assert.Equal("00:30", beginnerDisplay);
+            Assert.Equal("01:30", intermediateDisplay);
         });
-
-        // Act
-        vm.SelectedDifficulty = DifficultyLevel.Beginner;
-        var beginnerDisplay = vm.BestTimeDisplay;
-
-        vm.SelectedDifficulty = DifficultyLevel.Intermediate;
-        var intermediateDisplay = vm.BestTimeDisplay;
-
-        // Assert
-        Assert.Equal("00:30", beginnerDisplay);
-        Assert.Equal("01:30", intermediateDisplay);
     }
 
     #endregion
@@ -970,12 +962,9 @@ public class MainWindowViewModelTests
     [Fact]
     public void WinningGame_ShouldRaiseNewBestTimeAchieved_WhenFirstRecordIsCreated()
     {
-        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-        Directory.CreateDirectory(tempDirectory);
-
-        try
+        RunWithIsolatedViewModel(vm =>
         {
-            var vm = CreateViewModel(tempDirectory);
+            // Arrange
             vm.SelectedDifficulty = DifficultyLevel.Beginner;
 
             NewBestTimeEventArgs? eventArgs = null;
@@ -986,22 +975,17 @@ public class MainWindowViewModelTests
             SetPrivateFieldValue(vm, "_isTimerRunning", true);
             SetPrivateFieldValue(vm, "_gameStartTimeUtc", DateTime.UtcNow - TimeSpan.FromSeconds(42));
 
+            // Act
             vm.RevealCellCommand.Execute(GetCell(vm, 0, 1));
             vm.RevealCellCommand.Execute(GetCell(vm, 1, 0));
             vm.RevealCellCommand.Execute(GetCell(vm, 1, 1));
 
+            // Assert
             Assert.NotNull(eventArgs);
             Assert.Equal(DifficultyLevel.Beginner, eventArgs!.Difficulty);
             Assert.Equal("00:42", eventArgs.BestTime.ToString(@"mm\:ss"));
             Assert.True(eventArgs.IsFirstRecord);
-        }
-        finally
-        {
-            if (Directory.Exists(tempDirectory))
-            {
-                Directory.Delete(tempDirectory, recursive: true);
-            }
-        }
+        });
     }
 
     /// <summary>
@@ -1011,12 +995,9 @@ public class MainWindowViewModelTests
     [Fact]
     public void WinningGame_ShouldRaiseNewBestTimeAchieved_WhenExistingRecordIsBroken()
     {
-        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-        Directory.CreateDirectory(tempDirectory);
-
-        try
+        RunWithIsolatedViewModel(vm =>
         {
-            var vm = CreateViewModel(tempDirectory);
+            // Arrange
             vm.SelectedDifficulty = DifficultyLevel.Beginner;
 
             SetPrivateFieldValue(vm, "_bestTimes", new Dictionary<DifficultyLevel, TimeSpan>
@@ -1032,22 +1013,17 @@ public class MainWindowViewModelTests
             SetPrivateFieldValue(vm, "_isTimerRunning", true);
             SetPrivateFieldValue(vm, "_gameStartTimeUtc", DateTime.UtcNow - TimeSpan.FromSeconds(45));
 
+            // Act
             vm.RevealCellCommand.Execute(GetCell(vm, 0, 1));
             vm.RevealCellCommand.Execute(GetCell(vm, 1, 0));
             vm.RevealCellCommand.Execute(GetCell(vm, 1, 1));
 
+            // Assert
             Assert.NotNull(eventArgs);
             Assert.Equal(DifficultyLevel.Beginner, eventArgs!.Difficulty);
             Assert.Equal("00:45", eventArgs.BestTime.ToString(@"mm\:ss"));
             Assert.False(eventArgs.IsFirstRecord);
-        }
-        finally
-        {
-            if (Directory.Exists(tempDirectory))
-            {
-                Directory.Delete(tempDirectory, recursive: true);
-            }
-        }
+        });
     }
 
     /// <summary>
@@ -1057,12 +1033,9 @@ public class MainWindowViewModelTests
     [Fact]
     public void WinningGame_ShouldNotRaiseNewBestTimeAchieved_WhenResultIsWorseThanCurrentBest()
     {
-        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-        Directory.CreateDirectory(tempDirectory);
-
-        try
+        RunWithIsolatedViewModel(vm =>
         {
-            var vm = CreateViewModel(tempDirectory);
+            // Arrange
             vm.SelectedDifficulty = DifficultyLevel.Beginner;
 
             SetPrivateFieldValue(vm, "_bestTimes", new Dictionary<DifficultyLevel, TimeSpan>
@@ -1078,19 +1051,14 @@ public class MainWindowViewModelTests
             SetPrivateFieldValue(vm, "_isTimerRunning", true);
             SetPrivateFieldValue(vm, "_gameStartTimeUtc", DateTime.UtcNow - TimeSpan.FromSeconds(55));
 
+            // Act
             vm.RevealCellCommand.Execute(GetCell(vm, 0, 1));
             vm.RevealCellCommand.Execute(GetCell(vm, 1, 0));
             vm.RevealCellCommand.Execute(GetCell(vm, 1, 1));
 
+            // Assert
             Assert.False(eventRaised);
-        }
-        finally
-        {
-            if (Directory.Exists(tempDirectory))
-            {
-                Directory.Delete(tempDirectory, recursive: true);
-            }
-        }
+        });
     }
 
     #endregion
@@ -1105,29 +1073,31 @@ public class MainWindowViewModelTests
     [Fact]
     public void RevealCellCommand_ShouldRaiseGameEndedEvent_WhenPlayerLoses()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
-        GameState? finalState = null;
+        RunWithIsolatedViewModel(vm =>
+        {
+            // Arrange
+            GameState? finalState = null;
 
-        vm.GameEnded += (_, e) => finalState = e.State;
+            vm.GameEnded += (_, e) => finalState = e.State;
 
-        ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
+            ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
 
-        var safeCell = GetCell(vm, 0, 1);
-        var mineCell = GetCell(vm, 0, 0);
+            var safeCell = GetCell(vm, 0, 1);
+            var mineCell = GetCell(vm, 0, 0);
 
-        // Act - first reveal is safe and should not end the game yet
-        vm.RevealCellCommand.Execute(safeCell);
+            // Act - first reveal is safe and should not end the game yet
+            vm.RevealCellCommand.Execute(safeCell);
 
-        // Sanity check
-        Assert.False(vm.IsGameFinished);
-        Assert.Equal(GameState.InProgress, GetInternalGame(vm).State);
+            // Sanity check
+            Assert.False(vm.IsGameFinished);
+            Assert.Equal(GameState.InProgress, GetInternalGame(vm).State);
 
-        // Reveal the mine on the next move
-        vm.RevealCellCommand.Execute(mineCell);
+            // Reveal the mine on the next move
+            vm.RevealCellCommand.Execute(mineCell);
 
-        // Assert
-        Assert.Equal(GameState.Lost, finalState);
+            // Assert
+            Assert.Equal(GameState.Lost, finalState);
+        });
     }
 
     /// <summary>
@@ -1137,20 +1107,23 @@ public class MainWindowViewModelTests
     [Fact]
     public void RevealCellCommand_ShouldRaiseGameEndedEvent_WhenPlayerWins()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
-        GameState? finalState = null;
+        RunWithIsolatedViewModel(vm =>
+        {
+            // Arrange
+            GameState? finalState = null;
 
-        vm.GameEnded += (_, e) => finalState = e.State;
+            vm.GameEnded += (_, e) => finalState = e.State;
 
-        ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
+            ConfigureDeterministicBoard(vm, 2, 2, (0, 0));
 
-        vm.RevealCellCommand.Execute(GetCell(vm, 0, 1));
-        vm.RevealCellCommand.Execute(GetCell(vm, 1, 0));
-        vm.RevealCellCommand.Execute(GetCell(vm, 1, 1));
+            // Act
+            vm.RevealCellCommand.Execute(GetCell(vm, 0, 1));
+            vm.RevealCellCommand.Execute(GetCell(vm, 1, 0));
+            vm.RevealCellCommand.Execute(GetCell(vm, 1, 1));
 
-        // Assert
-        Assert.Equal(GameState.Won, finalState);
+            // Assert
+            Assert.Equal(GameState.Won, finalState);
+        });
     }
     #endregion
 
@@ -1169,13 +1142,13 @@ public class MainWindowViewModelTests
 
         string json =
             """
-        {
-          "BestTimesInSeconds": {
-            "Beginner": 42,
-            "Intermediate": 90
-          }
-        }
-        """;
+    {
+      "BestTimesInSeconds": {
+        "Beginner": 42,
+        "Intermediate": 90
+      }
+    }
+    """;
 
         File.WriteAllText(filePath, json);
 
@@ -1205,23 +1178,11 @@ public class MainWindowViewModelTests
     [Fact]
     public void Constructor_ShouldFallbackToEmptyBestTimes_WhenFileDoesNotExist()
     {
-        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-        Directory.CreateDirectory(tempDirectory);
-
-        try
+        RunWithIsolatedViewModel(vm =>
         {
-            var vm = CreateViewModel(tempDirectory);
-
             Assert.Null(vm.BestTime);
             Assert.Equal("--:--", vm.BestTimeDisplay);
-        }
-        finally
-        {
-            if (Directory.Exists(tempDirectory))
-            {
-                Directory.Delete(tempDirectory, recursive: true);
-            }
-        }
+        });
     }
 
     /// <summary>
@@ -1311,13 +1272,13 @@ public class MainWindowViewModelTests
 
         string json =
             """
-        {
-          "SelectedDifficulty": 2,
-          "CustomRows": 12,
-          "CustomColumns": 14,
-          "CustomMines": 20
-        }
-        """;
+    {
+      "SelectedDifficulty": 2,
+      "CustomRows": 12,
+      "CustomColumns": 14,
+      "CustomMines": 20
+    }
+    """;
 
         File.WriteAllText(preferencesFilePath, json);
 
@@ -1346,7 +1307,6 @@ public class MainWindowViewModelTests
         string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDirectory);
 
-        string bestTimesFilePath = Path.Combine(tempDirectory, "best-times.json");
         string preferencesFilePath = Path.Combine(tempDirectory, "player-preferences.json");
 
         try
@@ -1423,50 +1383,50 @@ public class MainWindowViewModelTests
 
         string json =
             """
-        {
-          "SelectedDifficulty": 3,
-          "Rows": 5,
-          "Columns": 5,
-          "MineCount": 3,
-          "GameState": 1,
-          "IsFirstRevealPending": false,
-          "ElapsedTimeInSeconds": 42,
-          "CustomRows": 5,
-          "CustomColumns": 5,
-          "CustomMines": 3,
-          "Cells": [
-            { "Row": 0, "Column": 0, "IsMine": true,  "IsRevealed": false, "IsFlagged": true,  "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 0, "Column": 1, "IsMine": false, "IsRevealed": true,  "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 0, "Column": 2, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 0, "Column": 3, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 0, "Column": 4, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+    {
+      "SelectedDifficulty": 3,
+      "Rows": 5,
+      "Columns": 5,
+      "MineCount": 3,
+      "GameState": 1,
+      "IsFirstRevealPending": false,
+      "ElapsedTimeInSeconds": 42,
+      "CustomRows": 5,
+      "CustomColumns": 5,
+      "CustomMines": 3,
+      "Cells": [
+        { "Row": 0, "Column": 0, "IsMine": true,  "IsRevealed": false, "IsFlagged": true,  "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 0, "Column": 1, "IsMine": false, "IsRevealed": true,  "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 0, "Column": 2, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 0, "Column": 3, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 0, "Column": 4, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
 
-            { "Row": 1, "Column": 0, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 1, "Column": 1, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 1, "Column": 2, "IsMine": true,  "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 1, "Column": 3, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 1, "Column": 4, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 1, "Column": 0, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 1, "Column": 1, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 1, "Column": 2, "IsMine": true,  "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 1, "Column": 3, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 1, "Column": 4, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
 
-            { "Row": 2, "Column": 0, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 2, "Column": 1, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 2, "Column": 2, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 2, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 2, "Column": 3, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 2, "Column": 4, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 2, "Column": 0, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 2, "Column": 1, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 2, "Column": 2, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 2, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 2, "Column": 3, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 2, "Column": 4, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
 
-            { "Row": 3, "Column": 0, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 3, "Column": 1, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 3, "Column": 2, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 3, "Column": 3, "IsMine": true,  "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 3, "Column": 4, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 3, "Column": 0, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 3, "Column": 1, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 3, "Column": 2, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 3, "Column": 3, "IsMine": true,  "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 3, "Column": 4, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
 
-            { "Row": 4, "Column": 0, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 4, "Column": 1, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 4, "Column": 2, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 4, "Column": 3, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 4, "Column": 4, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false }
-          ]
-        }
-        """;
+        { "Row": 4, "Column": 0, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 4, "Column": 1, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 4, "Column": 2, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 4, "Column": 3, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 4, "Column": 4, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false }
+      ]
+    }
+    """;
 
         File.WriteAllText(gameSessionFilePath, json);
 
@@ -1614,20 +1574,20 @@ public class MainWindowViewModelTests
 
         string json =
             """
-        {
-          "SelectedDifficulty": 3,
-          "Rows": 5,
-          "Columns": 5,
-          "MineCount": 3,
-          "GameState": 2,
-          "IsFirstRevealPending": false,
-          "ElapsedTimeInSeconds": 42,
-          "CustomRows": 5,
-          "CustomColumns": 5,
-          "CustomMines": 3,
-          "Cells": []
-        }
-        """;
+    {
+      "SelectedDifficulty": 3,
+      "Rows": 5,
+      "Columns": 5,
+      "MineCount": 3,
+      "GameState": 2,
+      "IsFirstRevealPending": false,
+      "ElapsedTimeInSeconds": 42,
+      "CustomRows": 5,
+      "CustomColumns": 5,
+      "CustomMines": 3,
+      "Cells": []
+    }
+    """;
 
         File.WriteAllText(gameSessionFilePath, json);
 
@@ -1663,22 +1623,22 @@ public class MainWindowViewModelTests
 
         string json =
             """
-        {
-          "SelectedDifficulty": 3,
-          "Rows": 2,
-          "Columns": 2,
-          "MineCount": 1,
-          "GameState": 1,
-          "IsFirstRevealPending": false,
-          "ElapsedTimeInSeconds": 42,
-          "CustomRows": 2,
-          "CustomColumns": 2,
-          "CustomMines": 1,
-          "Cells": [
-            { "Row": 0, "Column": 0, "IsMine": true, "IsRevealed": false, "IsFlagged": true, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false }
-          ]
-        }
-        """;
+    {
+      "SelectedDifficulty": 3,
+      "Rows": 2,
+      "Columns": 2,
+      "MineCount": 1,
+      "GameState": 1,
+      "IsFirstRevealPending": false,
+      "ElapsedTimeInSeconds": 42,
+      "CustomRows": 2,
+      "CustomColumns": 2,
+      "CustomMines": 1,
+      "Cells": [
+        { "Row": 0, "Column": 0, "IsMine": true, "IsRevealed": false, "IsFlagged": true, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false }
+      ]
+    }
+    """;
 
         File.WriteAllText(gameSessionFilePath, json);
 
@@ -1700,10 +1660,6 @@ public class MainWindowViewModelTests
     }
 
     /// <summary>
-    /// - (EN) Verifies that the constructor falls back to a fresh game when persisted cell coordinates are outside the board range.
-    /// - (VI) Kiểm tra constructor sẽ fallback về một ván mới khi tọa độ cell đã lưu nằm ngoài phạm vi board.
-    /// </summary>
-    /// <summary>
     /// - (EN) Verifies that the constructor falls back to a fresh game using the current applied preferences
     /// when persisted cell coordinates are outside the board range.
     /// - (VI) Kiểm tra constructor sẽ fallback về một ván mới theo các tùy chọn hiện đã được áp dụng
@@ -1719,25 +1675,25 @@ public class MainWindowViewModelTests
 
         string json =
             """
-        {
-          "SelectedDifficulty": 3,
-          "Rows": 2,
-          "Columns": 2,
-          "MineCount": 1,
-          "GameState": 1,
-          "IsFirstRevealPending": false,
-          "ElapsedTimeInSeconds": 42,
-          "CustomRows": 2,
-          "CustomColumns": 2,
-          "CustomMines": 1,
-          "Cells": [
-            { "Row": 0, "Column": 0, "IsMine": true,  "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 0, "Column": 1, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 1, "Column": 0, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 5, "Column": 5, "IsMine": false, "IsRevealed": true,  "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false }
-          ]
-        }
-        """;
+    {
+      "SelectedDifficulty": 3,
+      "Rows": 2,
+      "Columns": 2,
+      "MineCount": 1,
+      "GameState": 1,
+      "IsFirstRevealPending": false,
+      "ElapsedTimeInSeconds": 42,
+      "CustomRows": 2,
+      "CustomColumns": 2,
+      "CustomMines": 1,
+      "Cells": [
+        { "Row": 0, "Column": 0, "IsMine": true,  "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 0, "Column": 1, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 1, "Column": 0, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 5, "Column": 5, "IsMine": false, "IsRevealed": true,  "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false }
+      ]
+    }
+    """;
 
         File.WriteAllText(gameSessionFilePath, json);
 
@@ -1773,25 +1729,25 @@ public class MainWindowViewModelTests
 
         string json =
             """
-        {
-          "SelectedDifficulty": 3,
-          "Rows": 2,
-          "Columns": 2,
-          "MineCount": 1,
-          "GameState": 1,
-          "IsFirstRevealPending": true,
-          "ElapsedTimeInSeconds": 0,
-          "CustomRows": 2,
-          "CustomColumns": 2,
-          "CustomMines": 1,
-          "Cells": [
-            { "Row": 0, "Column": 0, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 0, "Column": 1, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 1, "Column": 0, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 1, "Column": 1, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false }
-          ]
-        }
-        """;
+    {
+      "SelectedDifficulty": 3,
+      "Rows": 2,
+      "Columns": 2,
+      "MineCount": 1,
+      "GameState": 1,
+      "IsFirstRevealPending": true,
+      "ElapsedTimeInSeconds": 0,
+      "CustomRows": 2,
+      "CustomColumns": 2,
+      "CustomMines": 1,
+      "Cells": [
+        { "Row": 0, "Column": 0, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 0, "Column": 1, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 1, "Column": 0, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 1, "Column": 1, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false }
+      ]
+    }
+    """;
 
         File.WriteAllText(gameSessionFilePath, json);
 
@@ -1827,25 +1783,25 @@ public class MainWindowViewModelTests
 
         string json =
             """
-        {
-          "SelectedDifficulty": 3,
-          "Rows": 2,
-          "Columns": 2,
-          "MineCount": 1,
-          "GameState": 1,
-          "IsFirstRevealPending": false,
-          "ElapsedTimeInSeconds": 42,
-          "CustomRows": 2,
-          "CustomColumns": 2,
-          "CustomMines": 1,
-          "Cells": [
-            { "Row": 0, "Column": 0, "IsMine": true,  "IsRevealed": false, "IsFlagged": true,  "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 0, "Column": 1, "IsMine": false, "IsRevealed": true,  "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 1, "Column": 0, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
-            { "Row": 1, "Column": 1, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false }
-          ]
-        }
-        """;
+    {
+      "SelectedDifficulty": 3,
+      "Rows": 2,
+      "Columns": 2,
+      "MineCount": 1,
+      "GameState": 1,
+      "IsFirstRevealPending": false,
+      "ElapsedTimeInSeconds": 42,
+      "CustomRows": 2,
+      "CustomColumns": 2,
+      "CustomMines": 1,
+      "Cells": [
+        { "Row": 0, "Column": 0, "IsMine": true,  "IsRevealed": false, "IsFlagged": true,  "AdjacentMines": 0, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 0, "Column": 1, "IsMine": false, "IsRevealed": true,  "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 1, "Column": 0, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false },
+        { "Row": 1, "Column": 1, "IsMine": false, "IsRevealed": false, "IsFlagged": false, "AdjacentMines": 1, "IsExplodedMine": false, "IsIncorrectFlag": false }
+      ]
+    }
+    """;
 
         File.WriteAllText(gameSessionFilePath, json);
 
@@ -2091,13 +2047,8 @@ public class MainWindowViewModelTests
     [Fact]
     public void RevealCellCommand_ShouldClearPreviousWarningMessage()
     {
-        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-        Directory.CreateDirectory(tempDirectory);
-
-        try
+        RunWithIsolatedViewModel(vm =>
         {
-            var vm = CreateViewModel(tempDirectory);
-
             foreach (var cell in vm.Cells.Take(vm.TotalMines))
             {
                 vm.ToggleFlagCommand.Execute(cell);
@@ -2111,14 +2062,7 @@ public class MainWindowViewModelTests
             vm.RevealCellCommand.Execute(vm.Cells.First(c => !c.IsFlagged));
 
             Assert.Null(vm.Message);
-        }
-        finally
-        {
-            if (Directory.Exists(tempDirectory))
-            {
-                Directory.Delete(tempDirectory, recursive: true);
-            }
-        }
+        });
     }
 
     /// <summary>
@@ -2128,13 +2072,8 @@ public class MainWindowViewModelTests
     [Fact]
     public void ChordCellCommand_ShouldClearPreviousWarningMessage()
     {
-        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-        Directory.CreateDirectory(tempDirectory);
-
-        try
+        RunWithIsolatedViewModel(vm =>
         {
-            var vm = CreateViewModel(tempDirectory);
-
             ConfigureDeterministicBoard(vm, 3, 3, (0, 0));
 
             foreach (var cell in vm.Cells.Where(c => !c.IsFlagged).Take(vm.TotalMines))
@@ -2154,14 +2093,7 @@ public class MainWindowViewModelTests
             vm.ChordCellCommand.Execute(numberedCell);
 
             Assert.Null(vm.Message);
-        }
-        finally
-        {
-            if (Directory.Exists(tempDirectory))
-            {
-                Directory.Delete(tempDirectory, recursive: true);
-            }
-        }
+        });
     }
     #endregion
 
@@ -2295,6 +2227,54 @@ public class MainWindowViewModelTests
             new PlayerStatisticsStore(bestTimesFilePath),
             new PlayerPreferencesStore(preferencesFilePath),
             new GameSessionStore(gameSessionFilePath));
+    }
+
+    /// <summary>
+    /// - (EN) Executes a test action with an isolated <see cref="MainWindowViewModel"/> instance
+    /// that uses temporary file storage to avoid affecting real user data.
+    /// - (VI) Thực thi một test với instance <see cref="MainWindowViewModel"/> được cô lập,
+    /// sử dụng file tạm để tránh ảnh hưởng đến dữ liệu thật của người dùng.
+    /// </summary>
+    /// <param name="action">
+    /// - (EN) The test logic to execute using the isolated view model instance.
+    /// - (VI) Logic test sẽ được thực thi với instance view model đã được cô lập.
+    /// </param>
+    /// <remarks>
+    /// - (EN)
+    ///   This helper creates a temporary directory and configures the view model to use
+    ///   temporary JSON files (best-times, player-preferences, game-session).
+    ///   After the test completes (even if it fails), the directory is deleted to ensure
+    ///   no leftover files remain on the system.
+    ///   
+    ///   This prevents unit tests from writing to real application data locations
+    ///   such as LocalApplicationData.
+    ///   
+    /// - (VI)
+    ///   Helper này tạo một thư mục tạm và cấu hình view model sử dụng các file JSON tạm
+    ///   (best-times, player-preferences, game-session).
+    ///   Sau khi test hoàn thành (kể cả khi bị lỗi), thư mục sẽ bị xóa để đảm bảo
+    ///   không còn file dư trên hệ thống.
+    ///   
+    ///   Điều này giúp tránh việc unit test ghi dữ liệu vào thư mục thật của ứng dụng
+    ///   như LocalApplicationData.
+    /// </remarks>
+    private static void RunWithIsolatedViewModel(Action<MainWindowViewModel> action)
+    {
+        string tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDirectory);
+
+        try
+        {
+            var vm = CreateViewModel(tempDirectory);
+            action(vm);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
     }
     #endregion
 }
