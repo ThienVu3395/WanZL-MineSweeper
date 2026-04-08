@@ -2,8 +2,16 @@
 
 namespace MineSweeper.Tests.App.Helpers;
 
+/// <summary>
+/// - (EN) Contains unit tests for RelayCommand.
+/// - (VI) Chứa các bài kiểm thử đơn vị cho RelayCommand.
+/// </summary>
 public class RelayCommandTests
 {
+    /// <summary>
+    /// - (EN) Should invoke the execute action when Execute is called.
+    /// - (VI) Phải gọi action thực thi khi phương thức Execute được gọi.
+    /// </summary>
     [Fact]
     public void Execute_ShouldInvokeAction()
     {
@@ -18,6 +26,10 @@ public class RelayCommandTests
         Assert.True(executed);
     }
 
+    /// <summary>
+    /// - (EN) Should return true when no canExecute predicate is provided.
+    /// - (VI) Phải trả về true khi không cung cấp predicate canExecute.
+    /// </summary>
     [Fact]
     public void CanExecute_ShouldReturnTrue_WhenNoPredicate()
     {
@@ -26,6 +38,10 @@ public class RelayCommandTests
         Assert.True(command.CanExecute(null));
     }
 
+    /// <summary>
+    /// - (EN) Should return false when the canExecute predicate returns false.
+    /// - (VI) Phải trả về false khi predicate canExecute trả về false.
+    /// </summary>
     [Fact]
     public void CanExecute_ShouldRespectPredicate()
     {
@@ -34,6 +50,10 @@ public class RelayCommandTests
         Assert.False(command.CanExecute(null));
     }
 
+    /// <summary>
+    /// - (EN) Should return true when the canExecute predicate returns true.
+    /// - (VI) Phải trả về true khi predicate canExecute trả về true.
+    /// </summary>
     [Fact]
     public void CanExecute_ShouldReturnTrue_WhenPredicateTrue()
     {
@@ -42,6 +62,10 @@ public class RelayCommandTests
         Assert.True(command.CanExecute(null));
     }
 
+    /// <summary>
+    /// - (EN) Should raise CanExecuteChanged event when RaiseCanExecuteChanged is called.
+    /// - (VI) Phải kích hoạt sự kiện CanExecuteChanged khi gọi RaiseCanExecuteChanged.
+    /// </summary>
     [Fact]
     public void RaiseCanExecuteChanged_ShouldTriggerEvent()
     {

@@ -1,21 +1,27 @@
 ﻿namespace MineSweeper.Core.Models
 {
     /// <summary>
-    /// Represents the game board that contains all cells
-    /// and basic board configuration such as dimensions and mine count.
-    /// - Quản lý toàn bộ grid, chứa:
-    /// + Kích thước
-    /// + Danh sách Cell
-    /// + Logic generate mìn
+    /// - (EN) Represents the game board containing all cells, dimensions, and mine configuration.
+    /// - (VI) Đại diện cho bàn chơi chứa toàn bộ các ô, kích thước và cấu hình mìn.
     /// </summary>
     public class Board
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="Board"/> class.
+        /// - (EN) Initializes a new instance of the Board class with specified dimensions and mine count.
+        /// - (VI) Khởi tạo một instance mới của Board với kích thước và số lượng mìn được chỉ định.
         /// </summary>
-        /// <param name="rows">The total number of rows on the board.</param>
-        /// <param name="columns">The total number of columns on the board.</param>
-        /// <param name="mineCount">The total number of mines configured for the board.</param>
+        /// <param name="rows">
+        /// - (EN) The total number of rows on the board.
+        /// - (VI) Tổng số hàng của bàn chơi.
+        /// </param>
+        /// <param name="columns">
+        /// - (EN) The total number of columns on the board.
+        /// - (VI) Tổng số cột của bàn chơi.
+        /// </param>
+        /// <param name="mineCount">
+        /// - (EN) The total number of mines configured for the board.
+        /// - (VI) Tổng số lượng mìn được cấu hình trên bàn chơi.
+        /// </param>
         public Board(int rows, int columns, int mineCount)
         {
             Rows = rows;
@@ -33,22 +39,26 @@
         }
 
         /// <summary>
-        /// Gets the total number of rows on the board.
+        /// - (EN) Gets the total number of rows on the board.
+        /// - (VI) Lấy tổng số hàng của bàn chơi.
         /// </summary>
         public int Rows { get; }
 
         /// <summary>
-        /// Gets the total number of columns on the board.
+        /// - (EN) Gets the total number of columns on the board.
+        /// - (VI) Lấy tổng số cột của bàn chơi.
         /// </summary>
         public int Columns { get; }
 
         /// <summary>
-        /// Gets the total number of mines configured for the board.
+        /// - (EN) Gets the total number of mines configured for the board.
+        /// - (VI) Lấy tổng số lượng mìn được cấu hình trên bàn chơi.
         /// </summary>
         public int MineCount { get; }
 
         /// <summary>
-        /// Gets the two-dimensional collection of cells that make up the board.
+        /// - (EN) Gets the two-dimensional collection of cells that make up the board.
+        /// - (VI) Lấy tập hợp hai chiều các ô tạo nên bàn chơi.
         /// </summary>
         public Cell[,] Cells { get; }
     }

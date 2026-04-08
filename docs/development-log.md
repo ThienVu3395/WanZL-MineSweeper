@@ -923,3 +923,40 @@ Expanded the automated test suite across the entire solution to improve regressi
 This commit focuses on test completeness and reliability across the full solution.
 It does not introduce new gameplay features.
 The main goal is to reduce regression risk and ensure persistence, restore, dialog, and UI-supporting behaviors are covered with stable, isolated automated tests.
+
+## Commit 49 - Update bilingual XML documentation across the entire project
+
+### Summary
+Standardized XML documentation across all layers of the solution using a consistent bilingual (EN/VI) format to improve code readability, maintainability, and developer experience. This ensures that both technical clarity (English) and contextual understanding (Vietnamese) are preserved throughout the codebase.
+
+### Completed
+- Applied bilingual XML comments to all core domain models:
+  - `Cell`
+  - `Board`
+  - Related enums and properties
+- Standardized documentation for application layer components:
+  - `CellViewModel`
+  - Converters (`NullToVisibilityConverter`, `DifficultyToStringConverter`)
+  - `RelayCommand`
+- Updated all unit test classes and methods to follow consistent documentation style:
+  - Applied `Should...When...` pattern in English
+  - Added Vietnamese equivalents for all test descriptions
+- Ensured all XML elements are consistently documented:
+  - `<summary>`
+  - `<param>`
+  - `<returns>`
+  - `<exception>` (where applicable)
+- Replaced legacy or mixed-language comments with unified `- (EN)` / `- (VI)` format
+- Fixed minor issues:
+  - Typographical errors in XML comments
+  - Inconsistent wording across similar components
+- Preserved inline bilingual comments for complex UI logic (e.g., `DisplayText` in `CellViewModel`) to document priority rules clearly
+
+### Notes
+This commit focuses purely on documentation standardization and does not introduce any functional changes.
+
+The bilingual XML format is intentionally designed to:
+- Maintain professional, tool-friendly English documentation
+- Support local developer readability with Vietnamese explanations
+
+This establishes a consistent documentation baseline for the entire project and aligns with production-quality code standards.

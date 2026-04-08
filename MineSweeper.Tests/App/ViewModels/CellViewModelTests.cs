@@ -4,11 +4,15 @@ using MineSweeper.Core.Models;
 namespace MineSweeper.Tests.App.ViewModels;
 
 /// <summary>
-/// - (EN) Verifies that the incorrect-flag marker takes priority over other display states.
-/// - (VI) Kiểm tra biểu tượng cờ sai sẽ được ưu tiên hiển thị hơn các trạng thái hiển thị khác.
+/// - (EN) Contains unit tests for CellViewModel, including coordinate mapping, display text rules, and property change notifications.
+/// - (VI) Chứa các bài kiểm thử đơn vị cho CellViewModel, bao gồm ánh xạ tọa độ, quy tắc hiển thị nội dung và thông báo thay đổi thuộc tính.
 /// </summary>
 public class CellViewModelTests
 {
+    /// <summary>
+    /// - (EN) Should expose the row and column values from the underlying cell correctly.
+    /// - (VI) Phải hiển thị đúng giá trị hàng và cột từ cell nền tảng.
+    /// </summary>
     [Fact]
     public void Constructor_ShouldExposeCoordinatesCorrectly()
     {
@@ -23,6 +27,10 @@ public class CellViewModelTests
         Assert.Equal(3, vm.Column);
     }
 
+    /// <summary>
+    /// - (EN) Should return an empty string when the cell is hidden and not flagged.
+    /// - (VI) Phải trả về chuỗi rỗng khi ô đang ẩn và không được cắm cờ.
+    /// </summary>
     [Fact]
     public void DisplayText_ShouldBeEmpty_WhenCellIsHidden()
     {
@@ -39,6 +47,10 @@ public class CellViewModelTests
         Assert.Equal(string.Empty, vm.DisplayText);
     }
 
+    /// <summary>
+    /// - (EN) Should show the flag icon when the cell is hidden and flagged.
+    /// - (VI) Phải hiển thị biểu tượng cờ khi ô đang ẩn và được cắm cờ.
+    /// </summary>
     [Fact]
     public void DisplayText_ShouldShowFlag_WhenCellIsFlagged()
     {
@@ -53,6 +65,10 @@ public class CellViewModelTests
         Assert.Equal("🚩", vm.DisplayText);
     }
 
+    /// <summary>
+    /// - (EN) Should show the mine icon when the cell is revealed and contains a mine.
+    /// - (VI) Phải hiển thị biểu tượng mìn khi ô đã được mở và có chứa mìn.
+    /// </summary>
     [Fact]
     public void DisplayText_ShouldShowMine_WhenRevealedAndIsMine()
     {
@@ -67,6 +83,10 @@ public class CellViewModelTests
         Assert.Equal("💣", vm.DisplayText);
     }
 
+    /// <summary>
+    /// - (EN) Should show the adjacent mine count when the cell is revealed and has adjacent mines.
+    /// - (VI) Phải hiển thị số lượng mìn lân cận khi ô đã được mở và có mìn ở các ô xung quanh.
+    /// </summary>
     [Fact]
     public void DisplayText_ShouldShowNumber_WhenRevealedAndHasAdjacentMines()
     {
@@ -82,6 +102,10 @@ public class CellViewModelTests
         Assert.Equal("4", vm.DisplayText);
     }
 
+    /// <summary>
+    /// - (EN) Should return an empty string when the cell is revealed and has zero adjacent mines.
+    /// - (VI) Phải trả về chuỗi rỗng khi ô đã được mở và không có mìn lân cận.
+    /// </summary>
     [Fact]
     public void DisplayText_ShouldBeEmpty_WhenRevealedAndAdjacentMinesIsZero()
     {
@@ -97,6 +121,10 @@ public class CellViewModelTests
         Assert.Equal(string.Empty, vm.DisplayText);
     }
 
+    /// <summary>
+    /// - (EN) Should raise PropertyChanged notifications for all relevant UI properties when Refresh is called.
+    /// - (VI) Phải phát sinh thông báo PropertyChanged cho tất cả thuộc tính UI liên quan khi gọi Refresh.
+    /// </summary>
     [Fact]
     public void Refresh_ShouldRaisePropertyChanged_ForAllRelevantProperties()
     {
@@ -126,6 +154,10 @@ public class CellViewModelTests
         Assert.Contains(nameof(vm.DisplayText), changedProperties);
     }
 
+    /// <summary>
+    /// - (EN) Should reflect the updated model state after Refresh is called.
+    /// - (VI) Phải phản ánh đúng trạng thái model đã được cập nhật sau khi gọi Refresh.
+    /// </summary>
     [Fact]
     public void Refresh_ShouldReflectUpdatedModelState()
     {

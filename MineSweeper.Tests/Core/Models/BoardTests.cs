@@ -3,14 +3,14 @@
 namespace MineSweeper.Tests.Core.Models
 {
     /// <summary>
-    /// Contains unit tests for verifying the behavior of the Board model.
-    /// Focuses on initialization and structural correctness.
+    /// - (EN) Contains unit tests for Board, focusing on initialization behavior and structural correctness.
+    /// - (VI) Chứa các bài kiểm thử đơn vị cho Board, tập trung vào hành vi khởi tạo và tính đúng đắn của cấu trúc.
     /// </summary>
     public class BoardTests
     {
         /// <summary>
-        /// Verifies that the board is created with the correct dimensions.
-        /// - Đảm bảo board được tạo đúng kích thước
+        /// - (EN) Should initialize the board with the correct dimensions and mine count.
+        /// - (VI) Phải khởi tạo board với đúng kích thước và số lượng mìn.
         /// </summary>
         [Fact]
         public void Constructor_ShouldInitializeBoard_WithCorrectDimensions()
@@ -30,8 +30,8 @@ namespace MineSweeper.Tests.Core.Models
         }
 
         /// <summary>
-        /// Verifies that all cells are initialized and not null.
-        /// - Kiểm tra toàn bộ cell đã được khởi tạo (không null)
+        /// - (EN) Should initialize all cells in the board and ensure none of them are null.
+        /// - (VI) Phải khởi tạo toàn bộ các ô trên board và đảm bảo không ô nào bị null.
         /// </summary>
         [Fact]
         public void Constructor_ShouldInitializeAllCells()
@@ -55,8 +55,8 @@ namespace MineSweeper.Tests.Core.Models
         }
 
         /// <summary>
-        /// Verifies that each cell has the correct row and column indices.
-        /// - Đảm bảo mỗi cell biết đúng vị trí của nó
+        /// - (EN) Should assign the correct row and column coordinates to each cell.
+        /// - (VI) Phải gán đúng tọa độ hàng và cột cho từng ô.
         /// </summary>
         [Fact]
         public void Constructor_ShouldAssignCorrectCellCoordinates()
@@ -83,8 +83,8 @@ namespace MineSweeper.Tests.Core.Models
         }
 
         /// <summary>
-        /// Verifies that all cells are initialized with default state.
-        /// - Kiểm tra trạng thái mặc định của cell
+        /// - (EN) Should initialize all cells with the default state values.
+        /// - (VI) Phải khởi tạo tất cả các ô với các giá trị trạng thái mặc định.
         /// </summary>
         [Fact]
         public void Constructor_ShouldInitializeCellsWithDefaultState()

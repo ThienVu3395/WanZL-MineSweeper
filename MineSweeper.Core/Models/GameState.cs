@@ -1,28 +1,32 @@
 ﻿namespace MineSweeper.Core.Models
 {
     /// <summary>
-    /// Represents the current lifecycle state of a MineSweeper game session.
-    /// - Chứa trạng thái của game
+    /// - (EN) Represents the current lifecycle state of a MineSweeper game session.
+    /// - (VI) Chứa trạng thái của game
     /// </summary>
     public enum GameState
     {
         /// <summary>
-        /// The game has not started yet.
+        /// - (EN) The game has not started yet.
+        /// - (VI) Game chưa bắt đầu
         /// </summary>
         NotStarted = 0,
 
         /// <summary>
-        /// The game is currently in progress.
+        /// - (EN) The game is currently in progress.
+        /// - (VI) Game đang bắt đầu
         /// </summary>
         InProgress = 1,
 
         /// <summary>
-        /// The player has successfully cleared the board and won the game.
+        /// - (EN) The player has successfully cleared the board and won the game.
+        /// - (VI) Game đã thắng
         /// </summary>
         Won = 2,
 
         /// <summary>
-        /// The player has revealed a mine and lost the game.
+        ///  - (EN) The player has revealed a mine and lost the game.
+        ///  - (VI) Game đã thua
         /// </summary>
         Lost = 3
     }

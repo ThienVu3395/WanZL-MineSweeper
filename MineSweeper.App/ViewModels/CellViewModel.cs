@@ -5,54 +5,61 @@ using MineSweeper.Core.Models;
 namespace MineSweeper.App.ViewModels;
 
 /// <summary>
-/// Represents the UI state of a single cell on the MineSweeper board.
-/// Acts as a bridge between the domain model (Cell) and the WPF UI.
+/// - (EN) Represents the UI state of a single cell on the MineSweeper board and acts as a bridge between the domain model (Cell) and the WPF UI.
+/// - (VI) Đại diện trạng thái UI của một ô trên bàn chơi MineSweeper và đóng vai trò trung gian giữa domain model (Cell) và giao diện WPF.
 /// </summary>
 public class CellViewModel : INotifyPropertyChanged
 {
     private readonly Cell _cell;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="CellViewModel"/> class.
+    //// <summary>
+    /// - (EN) Initializes a new instance of the CellViewModel class with the specified domain cell.
+    /// - (VI) Khởi tạo một instance mới của CellViewModel với domain cell được chỉ định.
     /// </summary>
-    /// <param name="cell">The underlying domain cell.</param>
     public CellViewModel(Cell cell)
     {
         _cell = cell;
     }
 
     /// <summary>
-    /// Gets the row index of the cell.
+    /// - (EN) Gets the row index of the cell.
+    /// - (VI) Lấy chỉ số hàng của ô.
     /// </summary>
     public int Row => _cell.Row;
 
     /// <summary>
-    /// Gets the column index of the cell.
+    /// - (EN) Gets the column index of the cell.
+    /// - (VI) Lấy chỉ số cột của ô.
     /// </summary>
     public int Column => _cell.Column;
 
     /// <summary>
-    /// Gets whether the cell has been revealed.
+    /// - (EN) Gets whether the cell has been revealed.
+    /// - (VI) Lấy giá trị cho biết ô đã được mở hay chưa.
     /// </summary>
     public bool IsRevealed => _cell.IsRevealed;
 
     /// <summary>
-    /// Gets whether the cell is flagged.
+    /// - (EN) Gets whether the cell is flagged.
+    /// - (VI) Lấy giá trị cho biết ô có đang được đánh dấu cờ hay không.
     /// </summary>
     public bool IsFlagged => _cell.IsFlagged;
 
     /// <summary>
-    /// Gets whether the cell contains a mine.
+    /// - (EN) Gets whether the cell contains a mine.
+    /// - (VI) Lấy giá trị cho biết ô có chứa mìn hay không.
     /// </summary>
     public bool IsMine => _cell.IsMine;
 
     /// <summary>
-    /// Gets whether the cell is hidden and not yet revealed.
+    /// - (EN) Gets whether the cell is hidden and not yet revealed.
+    /// - (VI) Lấy giá trị cho biết ô đang bị ẩn và chưa được mở.
     /// </summary>
     public bool IsHidden => !IsRevealed;
 
     /// <summary>
-    /// Gets the number of adjacent mines.
+    /// - (EN) Gets the number of adjacent mines.
+    /// - (VI) Lấy số lượng mìn ở các ô lân cận.
     /// </summary>
     public int AdjacentMines => _cell.AdjacentMines;
 
@@ -111,8 +118,8 @@ public class CellViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Refreshes all UI-related properties of the cell.
-    /// Should be called after any game state change.
+    /// - (EN) Refreshes all UI-related properties of the cell and notifies the UI of changes.
+    /// - (VI) Làm mới tất cả các thuộc tính liên quan đến UI của ô và thông báo thay đổi cho giao diện.
     /// </summary>
     public void Refresh()
     {
@@ -126,11 +133,20 @@ public class CellViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(DisplayText));
     }
 
+    /// <summary>
+    /// - (EN) Occurs when a property value changes.
+    /// - (VI) Xảy ra khi giá trị của một thuộc tính thay đổi.
+    /// </summary>
     public event PropertyChangedEventHandler? PropertyChanged;
 
     /// <summary>
-    /// Raises property changed notification.
+    /// - (EN) Raises the PropertyChanged event for the specified property.
+    /// - (VI) Kích hoạt sự kiện PropertyChanged cho thuộc tính được chỉ định.
     /// </summary>
+    /// <param name="propertyName">
+    /// - (EN) The name of the property that changed.
+    /// - (VI) Tên của thuộc tính đã thay đổi.
+    /// </param>
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
