@@ -960,3 +960,33 @@ The bilingual XML format is intentionally designed to:
 - Support local developer readability with Vietnamese explanations
 
 This establishes a consistent documentation baseline for the entire project and aligns with production-quality code standards.
+
+## Commit 50 - Add release notes and product usage guide
+
+### Summary
+Finalized project documentation by introducing release notes and a user-oriented usage guide. This marks the completion of the MineSweeper application, transitioning it from a development project into a production-ready and user-friendly product.
+
+### Completed
+- Added `docs/release-notes.md`:
+  - Summarized all major features implemented throughout the project
+  - Highlighted UI/UX improvements and gameplay enhancements
+  - Documented architectural decisions (MVVM, separation of concerns, service-based design)
+  - Included testing scope and overall coverage status
+- Added `docs/usage-guide.md`:
+  - Provided clear instructions on how to play the game
+  - Documented user interactions (mouse actions, keyboard shortcuts)
+  - Explained gameplay rules and expected behaviors
+  - Described persistence features (best time, preferences)
+- Updated documentation structure to clearly separate:
+  - Developer-focused documentation (development log, architecture)
+  - End-user documentation (usage guide, release notes)
+- Ensured consistency in tone and structure with existing project documentation
+
+### Notes
+This commit represents the final stage of the project.
+
+The focus is on:
+- Delivering a complete and understandable product to end users
+- Providing clear release documentation for stakeholders and reviewers
+
+No functional changes were introduced in this commit.
